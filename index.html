@@ -78,7 +78,7 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 </div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v14 / DEF CARRY-NEW + DAMAGE CAP";
+const VERSION="MENKO ENDURANCE 01 / v16 / CLONE COOLDOWN FIX";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -95,7 +95,8 @@ const CLONE_RESCUE_HP_RATIO=1/3;
 const CLONE_RESCUE_COOLDOWN_ROUNDS=3;
 const CLONE_RESCUE_BASE_CHANCE=.30;
 const CLONE_RESCUE_CHANCE_STEP=.10;
-let cloneRescueState={player:{cooldown:0,chance:CLONE_RESCUE_BASE_CHANCE},cpu:{cooldown:0,chance:CLONE_RESCUE_BASE_CHANCE}};
+let cloneRescueState={player:{chance:CLONE_RESCUE_BASE_CHANCE},cpu:{chance:CLONE_RESCUE_BASE_CHANCE}};
+let cloneRescueCooldown=0;
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
 const readCfg=()=>{const v=Object.fromEntries(cfgIds.map(id=>[id,Math.max(0,Number(document.getElementById(id).value)||0)]));config={redMaxHP:Math.max(1,v.cfgRedHP),blueMaxHP:Math.max(1,v.cfgBlueHP),redAttack:v.cfgRedAtk,blueAttack:v.cfgBlueAtk,redAttackCards:v.cfgRedAttackCards,blueAttackCards:v.cfgBlueAttackCards,redDefenseCards:v.cfgRedDefenseCards,blueDefenseCards:v.cfgBlueDefenseCards};linkedCount=config.redAttackCards+config.redDefenseCards+Math.max(0,config.blueAttackCards-config.redAttackCards)+Math.max(0,config.blueDefenseCards-config.redDefenseCards);countSelect.value=[8,16,24,32,40,48].includes(linkedCount)?String(linkedCount):"16"};
@@ -186,7 +187,8 @@ function newMatch(){
   linkedCount=Math.max(config.redAttackCards,config.blueAttackCards)+Math.max(config.redDefenseCards,config.blueDefenseCards);
   redHP=config.redMaxHP;blueHP=config.blueMaxHP;lastR=0;lastB=0;lastAttackLevel=0;lastDefenseLevel=0;lastDamage=0;turnCount=0;phase=0;condition=makeCondition();cards=[];dropper=null;impact=null;pendingLayerWave=null;pendingLandedCard=null;heldClone=null;
   roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;defenseStock={player:0,cpu:0};
-  cloneRescueState={player:{cooldown:0,chance:CLONE_RESCUE_BASE_CHANCE},cpu:{cooldown:0,chance:CLONE_RESCUE_BASE_CHANCE}};
+  cloneRescueState={player:{chance:CLONE_RESCUE_BASE_CHANCE},cpu:{chance:CLONE_RESCUE_BASE_CHANCE}};
+  cloneRescueCooldown=0;
   matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},rounds:[]};
   logEntries=[];debugLog.value="";clearPlayerLog();startToss();
 }
@@ -372,12 +374,13 @@ function prepareCloneRescueChance(actor){
   const hp=owner==="player"?redHP:blueHP;
   const maxHP=owner==="player"?config.redMaxHP:config.blueMaxHP;
   const st=cloneRescueState[owner];
-  if(hp>0&&hp<=maxHP*CLONE_RESCUE_HP_RATIO&&st.cooldown<=0){
-    const success=Math.random()<st.chance;
+  if(hp>0&&hp<=maxHP*CLONE_RESCUE_HP_RATIO&&cloneRescueCooldown<=0){
+    const attemptedChance=st.chance;
+    const success=Math.random()<attemptedChance;
     const clone=cards.find(c=>c.type==="clone"&&c.team===owner);
     if(clone)clone.cloneCanFlip=success;
     if(!success)st.chance=Math.min(1,st.chance+CLONE_RESCUE_CHANCE_STEP);
-    appendLog(`分身抽選 ${owner==="player"?"RED":"BLUE"}: ${success?"成功（この投擲のみ、物理めくり抽選を許可）":"失敗（分身はめくれない）"} / ${(st.chance*100).toFixed(0)}%`);
+    appendLog(`分身抽選 ${owner==="player"?"RED":"BLUE"}: ${success?"成功（この投擲のみ、物理めくり抽選を許可）":"失敗（分身はめくれない）"} / 抽選率 ${(attemptedChance*100).toFixed(0)}%${success?"":` → 次回 ${(st.chance*100).toFixed(0)}%`}`);
   }
 }
 function throwMenko(forcedGauge=null,forcedAim=null){
@@ -442,16 +445,14 @@ function beginCardMotion(i,impulse,sourceLabel){
   // めくれは挙動と別抽選。上に乗っている枚数は成功率を下げ、直撃は上げる。
   let flipChance={EDGE_LIFT:.035,SHORT_HOP:.25,HIGH_HOP:.53,DIRECT_HIT:.67}[behavior];
   // 分身は、持ち主がHP1/3以下かつ抽選成功・クールタイム終了時だけめくれる。
-  if(c.type==="clone"){
-    if(!c.cloneCanFlip)flipChance=0;
-    else flipChance*=.28;
-  }
+  const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
+  if(c.type==="clone"&&cloneFlipAllowed)flipChance*=.28;
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
-  flipChance=clamp(flipChance,.01,.88);
-  const willFlip=Math.random()<flipChance;
+  flipChance=cloneFlipAllowed?clamp(flipChance,.01,.88):0;
+  const willFlip=cloneFlipAllowed&&Math.random()<flipChance;
   const targetFace=willFlip?1-c.face:c.face;
 
   const side=(Math.random()<.5?-1:1);
@@ -695,10 +696,10 @@ function updateExpel(){
 }
 function applyCloneRescue(actor,owner){
   // 分身の効果を得るのは「分身の持ち主」ではなく、相手分身をめくった投擲側。
-  // 抽選率とクールタイムは、めくられた分身の持ち主側で管理する。
-  const st=cloneRescueState[owner];
-  st.cooldown=CLONE_RESCUE_COOLDOWN_ROUNDS;
-  st.chance=CLONE_RESCUE_BASE_CHANCE;
+  // 抽選率は分身の持ち主ごと、クールタイムはRED／BLUE共通で管理する。
+  cloneRescueCooldown=CLONE_RESCUE_COOLDOWN_ROUNDS;
+  cloneRescueState.player.chance=CLONE_RESCUE_BASE_CHANCE;
+  cloneRescueState.cpu.chance=CLONE_RESCUE_BASE_CHANCE;
   const actorIsPlayer=actor==="player";
   let choice;
   if(actorIsPlayer){
@@ -715,7 +716,7 @@ function applyCloneRescue(actor,owner){
 function resolveRoundEffects(){
   const red=roundResults.player||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
   const blue=roundResults.cpu||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
-  for(const side of ["player","cpu"])if(cloneRescueState[side].cooldown>0)cloneRescueState[side].cooldown--;
+  if(cloneRescueCooldown>0)cloneRescueCooldown--;
   const rescued=[];
   const cloneEvents=[...(red.cloneEvents||[]),...(blue.cloneEvents||[])];
   const seen=new Set();
