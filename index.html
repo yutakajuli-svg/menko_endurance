@@ -1104,7 +1104,7 @@ function handleIntegratedBattleResult(playerWon){
   if(runState.match===15){records.clears++;saveProgressRecords();renderProgressPanel("clear");progressPanel.style.display="block";return}
   saveProgressRecords();renderProgressPanel("reward");progressPanel.style.display="block";
 }
-const rewardDefs=[{key:"atk",label:"攻撃 +1"},{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +1"}];
+const rewardDefs=[{key:"atk",label:"攻撃 +1"},{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 function renderProgressPanel(mode="match"){
   const title=document.getElementById("progressTitle"),sum=document.getElementById("progressSummary"),stats=document.getElementById("progressStats"),choices=document.getElementById("rewardChoices"),actions=document.getElementById("progressActions");
@@ -1137,7 +1137,7 @@ function renderProgressPanel(mode="match"){
     el.addEventListener("touchend",run,{passive:false});
   };
 
-  bindTap("confirmGrowthBtn",()=>{selectedRewards.forEach(k=>runState.player[k]+=1);runState.match++;prepareIntegratedMatch()});
+  bindTap("confirmGrowthBtn",()=>{selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));runState.match++;prepareIntegratedMatch()});
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
   fixedStart.style.display=mode==="match"?"block":"none";
   fixedRestart.textContent=(mode==="lose"||mode==="clear")?"もう一度挑戦":"最初から";
