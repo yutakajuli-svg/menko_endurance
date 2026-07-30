@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>共用メンコ 色比較</title>
+<style>
+:root{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;padding:16px;background:#181818;color:#fff;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+h1{margin:0 0 6px;font-size:20px}
+p{margin:0 0 16px;color:#aaa;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.choice{border:1px solid #555;background:#222;padding:10px}
+.choice h2{font-size:14px;margin:0 0 8px;font-weight:500}
+.swatch{display:inline-block;width:14px;height:14px;border:1px solid #888;vertical-align:-2px;margin-right:7px}
+iframe{display:block;width:100%;height:390px;border:0;background:#181818}
+@media(max-width:760px){.grid{grid-template-columns:1fr}iframe{height:420px}}
+</style>
+</head>
+<body>
+<h1>共用 攻撃・防御メンコ：黒〜濃いグレー比較</h1>
+<p>形状・厚み・折り線・攻撃／防御アイコンはFIX版と同一。変更点は表面色のみです。</p>
+<main class="grid">
+  <section class="choice">
+    <h2><span class="swatch" style="background:rgb(0 0 0)"></span>A　黒　RGB 0 / 0 / 0</h2>
+    <iframe src="shared-menko-black.html" title="A 黒の共用メンコ"></iframe>
+  </section>
+  <section class="choice">
+    <h2><span class="swatch" style="background:rgb(20 20 20)"></span>B　ほぼ黒　RGB 20 / 20 / 20</h2>
+    <iframe src="shared-menko-near-black.html" title="B ほぼ黒の共用メンコ"></iframe>
+  </section>
+  <section class="choice">
+    <h2><span class="swatch" style="background:rgb(40 40 40)"></span>C　チャコール　RGB 40 / 40 / 40</h2>
+    <iframe src="shared-menko-charcoal.html" title="C チャコールの共用メンコ"></iframe>
+  </section>
+  <section class="choice">
+    <h2><span class="swatch" style="background:rgb(60 60 60)"></span>D　濃いグレー　RGB 60 / 60 / 60</h2>
+    <iframe src="shared-menko-dark-gray.html" title="D 濃いグレーの共用メンコ"></iframe>
+  </section>
+</main>
+</body>
+</html>
