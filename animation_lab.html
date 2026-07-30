@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>MENKO ANIMATION LAB v3</title>
+<style>
+:root{--bg:#181818;--panel:#262626;--ink:#f5f5f5;--muted:#aaa;--line:#555;--red:#f00;--blue:#00f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+button,select,input{font:inherit}
+#app{width:min(1080px,100%);margin:auto;padding:12px;display:grid;gap:12px}
+h1{font-size:18px;margin:0}
+.sub{color:var(--muted);font-size:12px}
+#stage{width:100%;height:min(56vw,520px);min-height:310px;display:block;background:#111;border:2px solid #777;touch-action:none}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;background:var(--panel);border:1px solid var(--line)}
+label{display:grid;gap:5px;font-size:12px;color:var(--muted)}
+select,input[type=range]{width:100%}
+.buttons{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+button{border:1px solid #aaa;background:#111;color:#fff;padding:8px 12px;cursor:pointer}
+button.primary{background:#fff;color:#111}
+#readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+#readout div{background:var(--panel);padding:9px;font-size:12px}
+#readout b{display:block;color:#fff;font-size:15px;margin-top:3px}
+@media(max-width:700px){
+  #app{padding:8px}
+  #stage{height:58vh;min-height:390px}
+  .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #readout{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</head>
+<body>
+<main id="app">
+  <div>
+    <h1>MENKO ANIMATION LAB v3</h1>
+    <div class="sub">左：現行挙動　／　右：高さ・影・厚みを強調した調整案</div>
+  </div>
+  <canvas id="stage"></canvas>
+  <section class="controls" aria-label="アニメーション設定">
+    <label>力加減
+      <select id="power">
+        <option value="tooWeak">弱すぎる</option>
+        <option value="weak">弱い</option>
+        <option value="normal" selected>普通</option>
+        <option value="just">ジャスト</option>
+        <option value="strong">強い</option>
+        <option value="tooStrong">強すぎる</option>
+      </select>
+    </label>
+    <label>めくれ
+      <select id="flip">
+        <option value="yes" selected>成功</option>
+        <option value="no">失敗</option>
+      </select>
+    </label>
+    <label>調整案の回転角
+      <select id="rotation">
+        <option value="1">180°（1回めくる）</option>
+        <option value="2" selected>360°（1回転）</option>
+      </select>
+    </label>
+    <label>再生速度 <span id="speedValue">1.00×</span>
+      <input id="speed" type="range" min="0.1" max="1.5" step="0.05" value="1">
+    </label>
+    <label>調整案の高さ <span id="liftValue">125%</span>
+      <input id="lift" type="range" min="0.7" max="1.8" step="0.05" value="1.25">
+    </label>
+    <label>調整案の滞空時間 <span id="durationValue">105%</span>
+      <input id="duration" type="range" min="0.7" max="1.5" step="0.05" value="1.05">
+    </label>
+    <label>調整案の移動距離 <span id="travelValue">100%</span>
+      <input id="travel" type="range" min="0.5" max="1.6" step="0.05" value="1">
+    </label>
+    <label>影の最小サイズ <span id="shadowValue">42%</span>
+      <input id="shadow" type="range" min="0.2" max="0.75" step="0.01" value="0.42">
+    </label>
+    <label>縦付近のフレーム <span id="edgeFramesValue">150%</span>
+      <input id="edgeFrames" type="range" min="1" max="2" step="0.05" value="1.5">
+    </label>
+    <label>投擲側
+      <select id="team">
+        <option value="red" selected>RED / PLAYER</option>
+        <option value="blue">BLUE / CPU</option>
+      </select>
+    </label>
+    <div class="buttons">
+      <button id="replay" class="primary">同時に再生</button>
+      <button id="pause">一時停止</button>
+      <button id="step">1フレーム送り</button>
+    </div>
+  </section>
+  <section id="readout" aria-live="polite">
+    <div>経過時間<b id="timeOut">0.000 s</b></div>
+    <div>推定画面更新<b id="hzOut">-- Hz</b></div>
+    <div>現在の高さ<b id="heightOut">0.0 px</b></div>
+    <div>状態<b id="stateOut">待機</b></div>
+  </section>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById("stage"),ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const controls={power:$("power"),flip:$("flip"),rotation:$("rotation"),speed:$("speed"),lift:$("lift"),duration:$("duration"),travel:$("travel"),shadow:$("shadow"),edgeFrames:$("edgeFrames"),team:$("team")};
+const presets={
+  tooWeak:{name:"EDGE LIFT",lift:5,travel:2,duration:.40,peak:42},
+  weak:{name:"EDGE LIFT",lift:8,travel:4,duration:.45,peak:58},
+  normal:{name:"SHORT HOP",lift:22,travel:15,duration:.56,peak:92},
+  just:{name:"HIGH HOP",lift:48,travel:30,duration:.70,peak:165},
+  strong:{name:"DIRECT HIT",lift:63,travel:43,duration:.76,peak:215},
+  tooStrong:{name:"DIRECT HIT",lift:76,travel:62,duration:.82,peak:250}
+};
+let W=0,H=0,DPR=1,playing=false,paused=false,t=0,last=null,frameSamples=[],frameStep=1/60;
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function resize(){
+  const r=canvas.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);
+  W=r.width;H=r.height;canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);draw();
+}
+function values(adjusted){
+  const p=presets[controls.power.value],flip=controls.flip.value==="yes";
+  return {
+    ...p,flip,
+    lift:p.lift*(adjusted?+controls.lift.value:1),
+    travel:p.travel*(adjusted?+controls.travel.value:1),
+    // 360度回転でも角度が飛ばないよう、調整案の基準時間を増やす。
+    duration:p.duration*(adjusted?+controls.duration.value*1.85:1)
+  };
+}
+function stateAt(adjusted){
+  const v=values(adjusted),p=clamp(t/v.duration,0,1),arch=Math.sin(Math.PI*p);
+  const z=v.lift*Math.pow(Math.max(0,arch),adjusted?.62:.72);
+  const move=1-Math.pow(1-p,3),x=v.travel*move;
+  let tilt;
+  if(adjusted&&v.flip){
+    // 90度・270度など縦になる位置だけ角速度を落とす。
+    const turns=+controls.rotation.value;
+    const slow=clamp((+controls.edgeFrames.value-1)*.90,0,.88);
+    const wave=Math.PI*2*turns;
+    const angleProgress=p+slow/wave*Math.sin(wave*p);
+    tilt=Math.PI*turns*angleProgress;
+  }else if(adjusted&&!v.flip){
+    // めくれない場合も、斜めから縦へ近づく過程を省略せず、その後元の面へ戻す。
+    if(p<.38){const q=p/.38,e=q*q*(3-2*q);tilt=(Math.PI*.46)*e}
+    else if(p<.62){const q=(p-.38)/.24,e=q*q*(3-2*q);tilt=Math.PI*.46+(Math.PI*.08)*e}
+    else{const q=(p-.62)/.38,e=q*q*(3-2*q);tilt=Math.PI*.54*(1-e)}
+  }else if(v.flip){
+    if(p<.58){const q=p/.58,e=1-Math.pow(1-q,2.4);tilt=(v.peak*Math.PI/180)*e}
+    else{const q=(p-.58)/.42,e=q*q*(3-2*q);tilt=(v.peak*Math.PI/180)+(Math.PI-v.peak*Math.PI/180)*e}
+  }else{
+    if(p<.52){const q=p/.52,e=1-Math.pow(1-q,2.2);tilt=(v.peak*Math.PI/180)*e}
+    else{const q=(p-.52)/.48,e=q*q*(3-2*q);tilt=(v.peak*Math.PI/180)*(1-e)}
+  }
+  return {v,p,z,x,tilt,done:p>=1};
+}
+function roundedBPath(r){
+  const c=r*.10;ctx.beginPath();ctx.moveTo(-r+c,-r);ctx.lineTo(r-c,-r);ctx.lineTo(r,-r+c);
+  ctx.lineTo(r,r-c);ctx.lineTo(r-c,r);ctx.lineTo(-r+c,r);ctx.lineTo(-r,r-c);ctx.lineTo(-r,-r+c);ctx.closePath();
+}
+function drawMenko(cx,ground,adjusted){
+  const st=stateAt(adjusted),r=Math.min(54,Math.max(34,(W<620?W*.105:48)));
+  const direction=controls.team.value==="red"?1:-1,x=cx+direction*st.x;
+  const maxLift=Math.max(1,st.v.lift),heightRatio=clamp(st.z/maxLift,0,1);
+  const shadowScale=adjusted
+    ? (+controls.shadow.value)+(1-(+controls.shadow.value))*(1-heightRatio)
+    : 1+st.z/280;
+  const shadowAlpha=adjusted?.18*(1-heightRatio*.72):clamp(.14-st.z/900,.02,.14);
+  ctx.save();ctx.globalAlpha=adjusted?.30:Math.max(.08,shadowAlpha*1.35);ctx.translate(x,ground+4);
+  ctx.rotate(direction*.08*Math.sin(Math.PI*st.p));
+  ctx.scale(shadowScale,shadowScale);
+  ctx.fillStyle=adjusted?"#fff":"#999";
+  if(adjusted){
+    // 確認用として角を丸めず、完全な四角形で描く。
+    ctx.fillRect(-r*.78,-r*.58,r*1.56,r*1.16);
+  }else{
+    ctx.scale(1,.28);
+    ctx.beginPath();ctx.arc(0,0,r*.82,0,Math.PI*2);
+  }
+  if(!adjusted)ctx.fill();
+  ctx.restore();
+
+  // 調整案はcosの符号を残す。90度を越えると上下が反転し、上辺と下辺が交差する。
+  const rawFace=Math.cos(st.tilt);
+  const faceScale=adjusted
+    ? (Math.abs(rawFace)<.08?(rawFace<0?-.08:.08):rawFace)
+    : Math.max(.10,Math.abs(rawFace));
+  const faceAbs=Math.abs(faceScale);
+  const edge=(1-faceAbs)*r*.42;
+  // 正の値は画面手前。上辺が立った後、カードの中心も手前へ寄せる。
+  const perspectiveY=adjusted?Math.sin(st.tilt)*r*.24:-edge*.08;
+  ctx.save();ctx.translate(x,ground-st.z+perspectiveY);ctx.rotate(direction*.08*Math.sin(Math.PI*st.p));
+
+  // 厚みは表面とは別に描き、縦姿勢でも一緒に潰れないようにする。
+  if(adjusted&&faceAbs<.82){
+    const thickness=2+(1-faceAbs)*9;
+    ctx.save();ctx.translate(0,Math.sin(st.tilt)>=0?thickness*.34:-thickness*.34);
+    ctx.fillStyle="#fff";ctx.strokeStyle="#777";ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-r*.90,-thickness/2);ctx.lineTo(r*.90,-thickness/2);
+    ctx.lineTo(r*.82,thickness/2);ctx.lineTo(-r*.82,thickness/2);ctx.closePath();
+    ctx.fill();ctx.stroke();ctx.restore();
+  }
+
+  ctx.scale(1,faceScale);
+  roundedBPath(r);ctx.fillStyle=controls.team.value==="red"?"#f00":"#00f";ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.fill();ctx.stroke();
+  ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-r*.82,-r*.82);ctx.lineTo(0,0);ctx.lineTo(r*.82,-r*.82);
+  ctx.moveTo(-r*.82,r*.82);ctx.lineTo(0,0);ctx.lineTo(r*.82,r*.82);ctx.stroke();
+  const back=Math.cos(st.tilt)<0;
+  if(back){
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(0,0,r*.50,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#111";ctx.font=`900 ${Math.floor(r*.36)}px system-ui`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("😣",0,1);
+  }else{
+    ctx.fillStyle="#fff";ctx.font=`900 ${Math.floor(r*.48)}px system-ui`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText("🤜",0,1);
+  }
+  ctx.restore();
+  return st;
+}
+function panel(x,y,w,h,label){
+  ctx.save();ctx.strokeStyle="#999";ctx.lineWidth=1;ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle="#fff";ctx.font="700 13px ui-monospace,monospace";ctx.fillText(label,x+10,y+20);
+  ctx.fillStyle="#aaa";ctx.font="11px ui-monospace,monospace";ctx.fillText(controls.power.options[controls.power.selectedIndex].text,x+10,y+38);ctx.restore();
+}
+function draw(){
+  if(!W||!H)return;ctx.clearRect(0,0,W,H);ctx.fillStyle="#111";ctx.fillRect(0,0,W,H);
+  const narrow=W<620,gap=12;
+  if(narrow){
+    const ph=(H-gap*3)/2;panel(8,8,W-16,ph,"CURRENT / 現行");
+    const a=drawMenko(W/2,8+ph*.76,false);panel(8,8+ph+gap,W-16,ph,"ADJUSTED / 調整案");
+    const b=drawMenko(W/2,8+ph+gap+ph*.76,true);updateReadout(b);
+  }else{
+    const pw=(W-gap*3)/2;panel(8,8,pw,H-16,"CURRENT / 現行");
+    const a=drawMenko(8+pw/2,H*.72,false);panel(8+pw+gap,8,pw,H-16,"ADJUSTED / 調整案");
+    const b=drawMenko(8+pw+gap+pw/2,H*.72,true);updateReadout(b);
+  }
+}
+function updateReadout(st){
+  $("timeOut").textContent=`${t.toFixed(3)} s`;$("heightOut").textContent=`${st.z.toFixed(1)} px`;
+  $("stateOut").textContent=st.done?"着地":paused?"一時停止":playing?"再生中":"待機";
+}
+function replay(){t=0;playing=true;paused=false;$("pause").textContent="一時停止";last=null;draw()}
+function tick(now){
+  if(last!=null){const dt=Math.min(.05,(now-last)/1000);frameSamples.push(dt);if(frameSamples.length>45)frameSamples.shift();
+    if(playing&&!paused){t+=dt*(+controls.speed.value);const max=Math.max(values(false).duration,values(true).duration);if(t>=max){t=max;playing=false}}
+  }
+  last=now;const avg=frameSamples.reduce((a,b)=>a+b,0)/Math.max(1,frameSamples.length);
+  $("hzOut").textContent=avg?`${Math.round(1/avg)} Hz`:"-- Hz";draw();requestAnimationFrame(tick);
+}
+$("replay").onclick=replay;
+$("pause").onclick=()=>{paused=!paused;$("pause").textContent=paused?"再開":"一時停止"};
+$("step").onclick=()=>{paused=true;playing=true;t+=frameStep;const max=Math.max(values(false).duration,values(true).duration);if(t>max)t=max;$("pause").textContent="再開";draw()};
+Object.values(controls).forEach(el=>el.addEventListener("input",()=>{
+  $("speedValue").textContent=`${(+controls.speed.value).toFixed(2)}×`;
+  $("liftValue").textContent=`${Math.round(+controls.lift.value*100)}%`;
+  $("durationValue").textContent=`${Math.round(+controls.duration.value*100)}%`;
+  $("travelValue").textContent=`${Math.round(+controls.travel.value*100)}%`;
+  $("shadowValue").textContent=`${Math.round(+controls.shadow.value*100)}%`;
+  $("edgeFramesValue").textContent=`${Math.round(+controls.edgeFrames.value*100)}%`;
+  replay();
+}));
+window.addEventListener("resize",resize);resize();replay();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
