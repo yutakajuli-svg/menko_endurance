@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MENKO MOVE EFFECT LAB - ALL MOVES</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#101010;
+      --panel:#1a1a1a;
+      --line:#494949;
+      --text:#f3f3f3;
+      --muted:#aaa;
+      --accent:#fff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      background:var(--bg);
+      color:var(--text);
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Noto Sans JP",monospace;
+    }
+    button,input{font:inherit}
+    .app{
+      width:min(100%,980px);
+      margin:0 auto;
+      padding:16px;
+    }
+    header{
+      display:flex;
+      align-items:end;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    h1{margin:0;font-size:clamp(17px,3vw,24px);font-weight:700}
+    .subtitle{color:var(--muted);font-size:12px}
+    .screen-wrap{
+      padding:20px;
+      overflow:hidden;
+      background:#050505;
+      border:1px solid var(--line);
+    }
+    .screen{
+      position:relative;
+      width:min(100%,800px);
+      aspect-ratio:4/3;
+      margin:auto;
+      overflow:hidden;
+      background:#fff;
+      transform:translate3d(0,0,0);
+    }
+    .screen img{
+      display:block;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      background:#fff;
+      transform:scaleX(1);
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .screen img.mirrored{transform:scaleX(-1)}
+    .frame-label{
+      position:absolute;
+      top:10px;
+      left:10px;
+      padding:5px 8px;
+      color:#fff;
+      background:rgba(0,0,0,.76);
+      font-size:12px;
+    }
+    .finish-label{
+      position:absolute;
+      top:10px;
+      right:10px;
+      padding:5px 8px;
+      color:#fff;
+      background:#111;
+      border:1px solid #fff;
+      font-size:12px;
+      opacity:0;
+    }
+    .finish-label.show{opacity:1}
+    .message{
+      min-height:62px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:12px;
+      padding:12px 16px;
+      border:2px solid var(--accent);
+      background:#111;
+      color:#fff;
+      text-align:center;
+      font-weight:700;
+      opacity:0;
+    }
+    .message.show{opacity:1}
+    .controls{
+      margin-top:14px;
+      padding:14px;
+      background:var(--panel);
+      border:1px solid var(--line);
+    }
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+    button{
+      min-height:42px;
+      padding:8px 18px;
+      color:#fff;
+      background:#2b2b2b;
+      border:1px solid #777;
+      cursor:pointer;
+    }
+    button.primary{color:#000;background:#fff;border-color:#fff;font-weight:700}
+    button:disabled{opacity:.45;cursor:default}
+    .selection-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:14px 22px;
+      margin-bottom:14px;
+    }
+    label{display:grid;gap:7px;font-size:13px}
+    select{
+      width:100%;
+      min-height:42px;
+      padding:7px 10px;
+      color:#fff;
+      background:#252525;
+      border:1px solid #777;
+    }
+    .side-buttons{display:flex;gap:8px}
+    .side-buttons button{flex:1}
+    button.active{color:#000;background:#fff;border-color:#fff;font-weight:700}
+    .direction{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding-top:14px;
+      border-top:1px solid var(--line);
+    }
+    .direction-copy{display:grid;gap:4px}
+    .direction-title{font-size:13px}
+    .direction-value{color:var(--muted);font-size:12px}
+    .status{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+    @media(max-width:640px){
+      .app{padding:10px}
+      header{align-items:start;flex-direction:column}
+      .screen-wrap{padding:8px}
+      .selection-grid{grid-template-columns:1fr}
+      .direction{align-items:stretch;flex-direction:column}
+      .message{min-height:54px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .screen{transform:none!important}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1 id="moveTitle">技演出ラボ：投げ技 Lv1</h1>
+      <div class="subtitle" id="moveCode">move001_001 / 4コマ</div>
+    </header>
+
+    <section class="screen-wrap" aria-label="技演出プレビュー">
+      <div class="screen" id="screen">
+        <img id="moveImage" src="assets/moves/move001_001_01.jpg" alt="投げ技レベル1の1コマ目">
+        <div class="frame-label" id="frameLabel">1 / 4</div>
+        <div class="finish-label" id="finishLabel">FINISH</div>
+      </div>
+    </section>
+
+    <div class="message" id="message" aria-live="polite">BLUEに3ダメージ！</div>
+
+    <section class="controls" aria-label="演出設定">
+      <div class="selection-grid">
+        <label>
+          <span>技種</span>
+          <select id="moveType">
+            <option value="001">投げ技</option>
+            <option value="002">打撃技</option>
+            <option value="003">関節技</option>
+          </select>
+        </label>
+        <label>
+          <span>技Lv</span>
+          <select id="moveLevel">
+            <option value="001">Lv1</option>
+            <option value="002">Lv2</option>
+            <option value="003">Lv3</option>
+          </select>
+        </label>
+        <div>
+          <span style="display:block;margin-bottom:7px;font-size:13px">攻撃側</span>
+          <div class="side-buttons">
+            <button type="button" class="active" id="redButton" aria-pressed="true">RED</button>
+            <button type="button" id="blueButton" aria-pressed="false">BLUE</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="playButton">再生</button>
+        <button type="button" id="stepButton">1コマ進める</button>
+        <button type="button" id="resetButton">最初に戻す</button>
+      </div>
+
+      <div class="direction">
+        <div class="direction-copy">
+          <span class="direction-title">この技の表示方向</span>
+          <span class="direction-value" id="directionValue">RED：原画のまま ／ BLUE：左右反転</span>
+        </div>
+        <button type="button" id="directionButton">REDの向きを切り替える</button>
+      </div>
+      <div class="status" id="status">最後のコマに切り替わった瞬間だけ画面が揺れます</div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const FRAME_DURATION = 320;
+      const FINISH_HOLD = 700;
+      const SHAKE_STRENGTH = 7;
+      const SHAKE_DURATION = 300;
+      const ASSET_VERSION = "202607301100";
+      const typeNames = {
+        "001": "投げ技",
+        "002": "打撃技",
+        "003": "関節技"
+      };
+      const frameCounts = {
+        "001_001": 4,
+        "001_002": 3,
+        "001_003": 3,
+        "002_001": 2,
+        "002_002": 2,
+        "002_003": 3,
+        "003_001": 2,
+        "003_002": 2,
+        "003_003": 3
+      };
+      const redMirrored = {
+        "001_001": false,
+        "001_002": false,
+        "001_003": true,
+        "002_001": false,
+        "002_002": true,
+        "002_003": false,
+        "003_001": false,
+        "003_002": true,
+        "003_003": false
+      };
+      const screen = document.getElementById("screen");
+      const moveImage = document.getElementById("moveImage");
+      const frameLabel = document.getElementById("frameLabel");
+      const finishLabel = document.getElementById("finishLabel");
+      const message = document.getElementById("message");
+      const moveTitle = document.getElementById("moveTitle");
+      const moveCode = document.getElementById("moveCode");
+      const moveType = document.getElementById("moveType");
+      const moveLevel = document.getElementById("moveLevel");
+      const redButton = document.getElementById("redButton");
+      const blueButton = document.getElementById("blueButton");
+      const directionButton = document.getElementById("directionButton");
+      const directionValue = document.getElementById("directionValue");
+      const playButton = document.getElementById("playButton");
+      const stepButton = document.getElementById("stepButton");
+      const resetButton = document.getElementById("resetButton");
+      const status = document.getElementById("status");
+
+      let frameIndex = 0;
+      let playing = false;
+      let attacker = "red";
+      let timerId = 0;
+      let shakeId = 0;
+      let files = [];
+
+      function currentKey(){
+        return `${moveType.value}_${moveLevel.value}`;
+      }
+
+      const wait = ms => new Promise(resolve => {
+        timerId = window.setTimeout(resolve, ms);
+      });
+
+      function buildFiles(){
+        const key = currentKey();
+        const count = frameCounts[key];
+        files = Array.from({length: count}, (_, index) => {
+          const frame = String(index + 1).padStart(2, "0");
+          return `assets/moves/move${key}_${frame}.jpg?v=${ASSET_VERSION}`;
+        });
+        files.forEach(src => {
+          const image = new Image();
+          image.src = src;
+        });
+      }
+
+      function renderFrame(index){
+        frameIndex = Math.max(0, Math.min(files.length - 1, index));
+        moveImage.src = files[frameIndex];
+        moveImage.alt = `${typeNames[moveType.value]}レベル${Number(moveLevel.value)}の${frameIndex + 1}コマ目`;
+        frameLabel.textContent = `${frameIndex + 1} / ${files.length}`;
+        const isFinish = frameIndex === files.length - 1;
+        finishLabel.classList.toggle("show", isFinish);
+        return isFinish;
+      }
+
+      function updateDirection(){
+        const redIsMirrored = redMirrored[currentKey()];
+        const isMirrored = attacker === "red" ? redIsMirrored : !redIsMirrored;
+        moveImage.classList.toggle("mirrored", isMirrored);
+        directionValue.textContent = redIsMirrored
+          ? "RED：左右反転 ／ BLUE：原画のまま"
+          : "RED：原画のまま ／ BLUE：左右反転";
+        redButton.classList.toggle("active", attacker === "red");
+        blueButton.classList.toggle("active", attacker === "blue");
+        redButton.setAttribute("aria-pressed", String(attacker === "red"));
+        blueButton.setAttribute("aria-pressed", String(attacker === "blue"));
+        message.textContent = attacker === "red" ? "BLUEに3ダメージ！" : "REDに3ダメージ！";
+      }
+
+      function updateMove(){
+        window.clearTimeout(timerId);
+        stopShake();
+        setPlaying(false);
+        message.classList.remove("show");
+        buildFiles();
+        const level = Number(moveLevel.value);
+        moveTitle.textContent = `技演出ラボ：${typeNames[moveType.value]} Lv${level}`;
+        moveCode.textContent = `move${currentKey()} / ${files.length}コマ`;
+        updateDirection();
+        renderFrame(0);
+        status.textContent = `最後の${files.length}コマ目に切り替わった瞬間だけ画面が揺れます`;
+      }
+
+      function stopShake(){
+        cancelAnimationFrame(shakeId);
+        screen.style.transform = "translate3d(0,0,0)";
+      }
+
+      function shake(){
+        stopShake();
+        const strength = SHAKE_STRENGTH;
+        const duration = SHAKE_DURATION;
+        if(strength <= 0 || window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+          return Promise.resolve();
+        }
+        const start = performance.now();
+        return new Promise(resolve => {
+          const tick = now => {
+            const elapsed = now - start;
+            if(elapsed >= duration){
+              stopShake();
+              resolve();
+              return;
+            }
+            const fade = 1 - elapsed / duration;
+            const x = (Math.random() * 2 - 1) * strength * fade;
+            const y = (Math.random() * 2 - 1) * strength * fade;
+            screen.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0)`;
+            shakeId = requestAnimationFrame(tick);
+          };
+          shakeId = requestAnimationFrame(tick);
+        });
+      }
+
+      function setPlaying(value){
+        playing = value;
+        playButton.disabled = value;
+        stepButton.disabled = value;
+        resetButton.disabled = value;
+        playButton.textContent = value ? "再生中…" : "再生";
+      }
+
+      function reset(){
+        window.clearTimeout(timerId);
+        stopShake();
+        setPlaying(false);
+        message.classList.remove("show");
+        renderFrame(0);
+        status.textContent = `最後の${files.length}コマ目に切り替わった瞬間だけ画面が揺れます`;
+      }
+
+      async function play(){
+        if(playing) return;
+        reset();
+        setPlaying(true);
+        status.textContent = "技を再生しています";
+
+        for(let index = 0; index < files.length; index += 1){
+          renderFrame(index);
+          if(index < files.length - 1){
+            await wait(FRAME_DURATION);
+          }
+        }
+
+        await shake();
+        await wait(FINISH_HOLD);
+        message.classList.add("show");
+        status.textContent = "フィニッシュ後にダメージメッセージを表示";
+        setPlaying(false);
+      }
+
+      function step(){
+        message.classList.remove("show");
+        const next = frameIndex >= files.length - 1 ? 0 : frameIndex + 1;
+        const isFinish = renderFrame(next);
+        if(isFinish){
+          shake();
+          status.textContent = "フィニッシュコマ：画面揺れ";
+        }else{
+          status.textContent = `${next + 1}コマ目`;
+        }
+      }
+
+      moveType.addEventListener("change", updateMove);
+      moveLevel.addEventListener("change", updateMove);
+      redButton.addEventListener("click", () => {
+        attacker = "red";
+        updateDirection();
+        reset();
+      });
+      blueButton.addEventListener("click", () => {
+        attacker = "blue";
+        updateDirection();
+        reset();
+      });
+      directionButton.addEventListener("click", () => {
+        redMirrored[currentKey()] = !redMirrored[currentKey()];
+        updateDirection();
+        reset();
+      });
+      playButton.addEventListener("click", play);
+      stepButton.addEventListener("click", step);
+      resetButton.addEventListener("click", reset);
+
+      updateMove();
+    })();
+  </script>
+</body>
+</html>
