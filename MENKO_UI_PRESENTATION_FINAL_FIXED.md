@@ -62,6 +62,18 @@ Back to front:
 
 - RED frame: exact RGB red (`255, 0, 0`)
 - BLUE frame: exact RGB blue (`0, 0, 255`)
+
+### Provisional expression timing
+
+- The relevant character expression changes when the first feedback flash
+  begins.
+- For clone maximum damage and healing, the expression changes with the first
+  of the two flashes.
+- The changed expression remains visible after the flash and throughout the
+  1.2-second message display.
+- The portrait returns to its normal expression when the message window closes.
+- Recheck the perceived timing after the final portrait and expression assets
+  are available.
 - The information window must never show through the portrait window.
 - The portrait and information windows behave as one group during hit effects.
 
@@ -189,6 +201,9 @@ Back to front:
 - One side flips nothing and the other has defense only:
   - Dedicated no-attack presentation
 - Defense presentation appears only in response to an actual attack.
+- Defense and no-attack illustrations may use two or three frames.
+- When the final illustration frame appears, the corresponding feedback and
+  message begin at the same moment.
 
 ### Feedback
 
@@ -214,12 +229,38 @@ Back to front:
   - Only the defender status group moves and flashes
   - HP number and HP bar do not decrease
 - Partial defense with remaining damage uses the red flash.
-- No-attack presentation uses neither shake nor flash.
+- No-attack presentation:
+  - RED and BLUE portrait and information areas flash white simultaneously
+  - The white flash is slightly softer than the complete-defense flash
+  - Neither status group shakes
+  - The ring does not flash
+  - Neither HP number nor HP bar changes
+- Clone effect presentation:
+  - Clone maximum damage and healing use the same illustration-window sequence
+    as techniques
+  - The placeholder test uses three frames for maximum damage and two frames
+    for healing; the final assets may use two or three frames
+  - When the final frame appears, the feedback and message begin together
+  - Maximum damage:
+    - Two strong red flashes over approximately 0.52 seconds
+    - The fourth and strongest shake
+    - Only the victim status group flashes and shakes
+    - The victim HP number and HP bar decrease during the two flashes
+    - The victim's carry and new defense values reset to zero when the feedback
+      begins
+  - Healing:
+    - Two soft white flashes over approximately 0.52 seconds
+    - Only the healing side's status group flashes
+    - No shake
+    - HP increases by one third of maximum HP during the two flashes
+  - The ring does not flash for either clone effect
 
 ### Commentary style
 
 - Use short, simple wrestling-style commentary.
-- Keep it to approximately two lines.
+- Keep normal attack, defense, and no-attack messages to approximately two
+  lines.
+- Clone effect messages use three lines and a slightly taller message window.
 - The message window opens when the finishing frame appears and the damage
   feedback begins.
 - The message window closes automatically after 1.2 seconds.
@@ -232,11 +273,21 @@ Back to front:
   - `BLUEは攻撃を防いだ！`
   - `うまくかわした！`
   - `うまく防いだ！`
+- Clone maximum-damage example:
+  - `REDの得意技が決まったーっ！`
+  - `BLUEは大ダメージ！`
+  - `3ダメージ`
+- Clone healing example:
+  - `REDは呼吸を整えている！`
+  - `REDの体力が回復！`
+  - `体力+6`
 
 ## Still provisional / not fixed
 
-- Character bust illustrations and expression variants
+- Character bust illustrations, expression variants, and final timing
+  confirmation with the completed assets
 - Defense illustration assets
 - No-attack illustration assets
+- Clone maximum-damage and healing illustration assets
 - Final in-game light source and shadow integration
 - Integration into `index.html`
