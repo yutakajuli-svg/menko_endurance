@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>MENKO ANIMATION LAB v4 DESIGN INTEGRATION</title>
+<style>
+:root{--bg:#181818;--panel:#262626;--ink:#f5f5f5;--muted:#aaa;--line:#555;--red:#f00;--blue:#00f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+button,select,input{font:inherit}
+#app{width:min(1080px,100%);margin:auto;padding:12px;display:grid;gap:12px}
+h1{font-size:18px;margin:0}
+.sub{color:var(--muted);font-size:12px}
+#stage{width:100%;height:min(56vw,520px);min-height:310px;display:block;background:#111;border:2px solid #777;touch-action:none}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px;background:var(--panel);border:1px solid var(--line)}
+label{display:grid;gap:5px;font-size:12px;color:var(--muted)}
+select,input[type=range]{width:100%}
+.buttons{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px}
+button{border:1px solid #aaa;background:#111;color:#fff;padding:8px 12px;cursor:pointer}
+button.primary{background:#fff;color:#111}
+#readout{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+#readout div{background:var(--panel);padding:9px;font-size:12px}
+#readout b{display:block;color:#fff;font-size:15px;margin-top:3px}
+@media(max-width:700px){
+  #app{padding:8px}
+  #stage{height:58vh;min-height:390px}
+  .controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #readout{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+</style>
+</head>
+<body>
+<main id="app">
+  <div>
+    <h1>MENKO ANIMATION LAB v4 / FIXED DESIGN</h1>
+    <div class="sub">v3 FIXアニメーションに、FIX済みメンコデザインを統合</div>
+  </div>
+  <canvas id="stage"></canvas>
+  <section class="controls" aria-label="アニメーション設定">
+    <label>力加減
+      <select id="power">
+        <option value="tooWeak">弱すぎる</option>
+        <option value="weak">弱い</option>
+        <option value="normal" selected>普通</option>
+        <option value="just">ジャスト</option>
+        <option value="strong">強い</option>
+        <option value="tooStrong">強すぎる</option>
+      </select>
+    </label>
+    <label>めくれ
+      <select id="flip">
+        <option value="yes" selected>成功</option>
+        <option value="no">失敗</option>
+      </select>
+    </label>
+    <label>メンコデザイン
+      <select id="design">
+        <option value="sharedAttack" selected>共用・攻撃（C）</option>
+        <option value="sharedDefense">共用・防御（C）</option>
+        <option value="redAttack">赤専用・攻撃</option>
+        <option value="redDefense">赤専用・防御</option>
+        <option value="blueAttack">青専用・攻撃</option>
+        <option value="blueDefense">青専用・防御</option>
+        <option value="redClone">赤分身</option>
+        <option value="blueClone">青分身</option>
+      </select>
+    </label>
+    <label>調整案の回転角
+      <select id="rotation">
+        <option value="auto" selected>強さと成否に連動</option>
+      </select>
+    </label>
+    <label>再生速度 <span id="speedValue">1.00×</span>
+      <input id="speed" type="range" min="0.1" max="1.5" step="0.05" value="1">
+    </label>
+    <label>調整案の高さ <span id="liftValue">125%</span>
+      <input id="lift" type="range" min="0.7" max="1.8" step="0.05" value="1.25">
+    </label>
+    <label>調整案の滞空時間 <span id="durationValue">105%</span>
+      <input id="duration" type="range" min="0.7" max="1.5" step="0.05" value="1.05">
+    </label>
+    <label>調整案の移動距離 <span id="travelValue">100%</span>
+      <input id="travel" type="range" min="0.5" max="1.6" step="0.05" value="1">
+    </label>
+    <label>空中での最小サイズ <span id="shadowValue">70%</span>
+      <input id="shadow" type="range" min="0.5" max="0.9" step="0.01" value="0.70">
+    </label>
+    <label>縦付近のフレーム <span id="edgeFramesValue">175%</span>
+      <input id="edgeFrames" type="range" min="1" max="2" step="0.05" value="1.75">
+    </label>
+    <label>投擲側
+      <select id="team">
+        <option value="red" selected>RED / PLAYER</option>
+        <option value="blue">BLUE / CPU</option>
+      </select>
+    </label>
+    <div class="buttons">
+      <button id="replay" class="primary">同時に再生</button>
+      <button id="pause">一時停止</button>
+      <button id="step">1フレーム送り</button>
+    </div>
+  </section>
+  <section id="readout" aria-live="polite">
+    <div>経過時間<b id="timeOut">0.000 s</b></div>
+    <div>推定画面更新<b id="hzOut">-- Hz</b></div>
+    <div>現在の高さ<b id="heightOut">0.0 px</b></div>
+    <div>状態<b id="stateOut">待機</b></div>
+  </section>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById("stage"),ctx=canvas.getContext("2d");
+const $=id=>document.getElementById(id);
+const controls={power:$("power"),flip:$("flip"),design:$("design"),rotation:$("rotation"),speed:$("speed"),lift:$("lift"),duration:$("duration"),travel:$("travel"),shadow:$("shadow"),edgeFrames:$("edgeFrames"),team:$("team")};
+const presets={
+  tooWeak:{name:"EDGE LIFT",lift:5,travel:2,duration:.40,peak:42},
+  weak:{name:"EDGE LIFT",lift:8,travel:4,duration:.45,peak:58},
+  normal:{name:"SHORT HOP",lift:22,travel:15,duration:.56,peak:92},
+  just:{name:"HIGH HOP",lift:48,travel:30,duration:.70,peak:165},
+  strong:{name:"DIRECT HIT",lift:63,travel:43,duration:.76,peak:215},
+  tooStrong:{name:"DIRECT HIT",lift:76,travel:62,duration:.82,peak:250}
+};
+function createAttackIcon(){
+  const source=document.createElement("canvas");
+  source.width=96;source.height=96;
+  const sourceContext=source.getContext("2d",{willReadFrequently:true});
+  sourceContext.font='72px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+  sourceContext.textAlign="center";sourceContext.textBaseline="middle";
+  sourceContext.fillText("🤜",48,51);
+  const sample=document.createElement("canvas");
+  sample.width=24;sample.height=24;
+  const sampleContext=sample.getContext("2d",{willReadFrequently:true});
+  sampleContext.imageSmoothingEnabled=true;
+  sampleContext.drawImage(source,0,0,24,24);
+  const pixels=sampleContext.getImageData(0,0,24,24).data;
+  const icon=document.createElement("canvas");
+  icon.width=24;icon.height=24;
+  const iconContext=icon.getContext("2d");
+  for(let y=0;y<24;y++){
+    for(let x=0;x<24;x++){
+      const offset=(y*24+x)*4,alpha=pixels[offset+3]/255;
+      if(alpha<.08)continue;
+      const luminance=(pixels[offset]*.2126+pixels[offset+1]*.7152+pixels[offset+2]*.0722)/255;
+      iconContext.globalAlpha=alpha;
+      iconContext.fillStyle=luminance>=.68?"#fff":(luminance>=.3?"#969696":"#000");
+      iconContext.fillRect(x,y,1,1);
+    }
+  }
+  iconContext.globalAlpha=1;
+  return icon;
+}
+function createDefenseIcon(){
+  const whiteBounds=[[2,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]];
+  const grayBounds=[null,null,[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8]];
+  const icon=document.createElement("canvas");
+  icon.width=18;icon.height=18;
+  const iconContext=icon.getContext("2d");
+  whiteBounds.forEach((bounds,y)=>{
+    iconContext.fillStyle="#fff";
+    iconContext.fillRect(bounds[0],y,bounds[1]-bounds[0]+1,1);
+  });
+  grayBounds.forEach((bounds,y)=>{
+    if(!bounds)return;
+    iconContext.fillStyle="#969696";
+    iconContext.fillRect(bounds[0],y,bounds[1]-bounds[0]+1,1);
+  });
+  return icon;
+}
+const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon();
+function designSpec(){
+  const value=controls.design.value;
+  const color=value.startsWith("red")?"#f00":value.startsWith("blue")?"#00f":"rgb(40 40 40)";
+  const kind=value.endsWith("Attack")?"attack":value.endsWith("Defense")?"defense":"clone";
+  return {color,kind};
+}
+function drawCloneFace(r){
+  const scale=r/62;
+  ctx.save();
+  ctx.scale(scale,scale);ctx.translate(-90,-90);
+  ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#000";
+  ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));
+  ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);
+  ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));
+  ctx.restore();ctx.restore();
+}
+function drawFaceDesign(r,spec,back){
+  const showIcon=spec.kind==="clone"?back:!back;
+  if(!showIcon)return;
+  if(spec.kind==="clone"){
+    drawCloneFace(r);
+    return;
+  }
+  const icon=spec.kind==="attack"?attackIcon:defenseIcon;
+  const size=spec.kind==="attack"?r*1.18:r*1.02;
+  ctx.imageSmoothingEnabled=false;
+  ctx.drawImage(icon,-size/2,-size/2,size,size);
+}
+let W=0,H=0,DPR=1,playing=false,paused=false,t=0,last=null,frameSamples=[],frameStep=1/60;
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function resize(){
+  const r=canvas.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);
+  W=r.width;H=r.height;canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);draw();
+}
+function values(adjusted){
+  const p=presets[controls.power.value],flip=controls.flip.value==="yes";
+  const adjustedDuration={
+    tooWeak:.68,weak:.82,normal:.74,just:.66,strong:.58,tooStrong:.52
+  };
+  const power=controls.power.value;
+  const lowPowerScale=adjusted&&(power==="tooWeak"||power==="weak")?.55:1;
+  const highPowerLift=adjusted
+    ? ({strong:1.15,tooStrong:1.25}[power]||1)
+    : 1;
+  return {
+    ...p,flip,
+    lift:p.lift*(adjusted?+controls.lift.value:1)*lowPowerScale*highPowerLift,
+    travel:adjusted&&power==="weak"
+      ? 0
+      : p.travel*(adjusted?+controls.travel.value:1)*lowPowerScale,
+    // 強くなるほど、浮上と回転の両方を段階的に速くする。
+    duration:adjusted
+      ? adjustedDuration[controls.power.value]*(+controls.duration.value)
+      : p.duration
+  };
+}
+function stateAt(adjusted){
+  const v=values(adjusted),p=clamp(t/v.duration,0,1),arch=Math.sin(Math.PI*p);
+  let z=v.lift*Math.pow(Math.max(0,arch),adjusted?.62:.72);
+  const move=1-Math.pow(1-p,3),x=v.travel*move;
+  const power=controls.power.value;
+  const rotationExponent=adjusted
+    ? ({strong:.86,tooStrong:.78}[power]||1)
+    : 1;
+  const rotationP=Math.pow(p,rotationExponent);
+  let tilt;
+  const adjustedFlip=v.flip&&power!=="tooWeak";
+  const ease=q=>q*q*(3-2*q);
+  if(adjusted&&(power==="strong"||power==="tooStrong")){
+    // 270度で辺が一度接地し、少し跳ねてから成功面／失敗面へ倒れる。
+    const contactP=power==="strong"?.72:.66;
+    if(p<contactP){
+      const q=p/contactP;
+      tilt=Math.PI*1.5*ease(q);
+      z=v.lift*Math.pow(Math.max(0,Math.sin(Math.PI*q)),.62);
+    }else{
+      const q=(p-contactP)/(1-contactP);
+      const finalTilt=adjustedFlip?Math.PI:Math.PI*2;
+      tilt=Math.PI*1.5+(finalTilt-Math.PI*1.5)*ease(q);
+      const bounceHeight=power==="strong"?8:13;
+      z=bounceHeight*Math.pow(Math.max(0,Math.sin(Math.PI*q)),.72);
+    }
+  }else if(adjusted&&power==="weak"){
+    // 90度で一度ため、重力でどちらかへ静かに倒れる。
+    z=0;
+    const riseEnd=.56,holdEnd=.68;
+    if(p<riseEnd){
+      const q=p/riseEnd;tilt=Math.PI*.5*ease(q);
+    }else if(p<holdEnd){
+      tilt=Math.PI*.5;
+    }else{
+      const q=(p-holdEnd)/(1-holdEnd);
+      const finalTilt=adjustedFlip?Math.PI:0;
+      tilt=Math.PI*.5+(finalTilt-Math.PI*.5)*ease(q);
+    }
+  }else if(adjusted&&adjustedFlip){
+    // 成功時は必ず裏面で着地する。強打は余分な一回転を加える。
+    const successTurns={weak:1,normal:1,just:1,strong:1,tooStrong:1};
+    const turns=successTurns[controls.power.value];
+    const isPowerSpin=controls.power.value==="strong"||controls.power.value==="tooStrong";
+    const slow=clamp((+controls.edgeFrames.value-1)*(isPowerSpin?.52:.90),0,isPowerSpin?.55:.88);
+    const wave=Math.PI*2*turns;
+    const angleProgress=rotationP+slow/wave*Math.sin(wave*rotationP);
+    tilt=Math.PI*turns*angleProgress;
+  }else if(adjusted&&!adjustedFlip){
+    // 弱すぎるは短く反応、ジャスト失敗は一回転、普通は代表角度から表へ戻る。
+    if(power==="tooWeak"){
+      const peak=12*Math.PI/180;
+      const riseEnd=.32,holdEnd=.42;
+      if(p<riseEnd){
+        const q=p/riseEnd;tilt=peak*ease(q);
+      }else if(p<holdEnd){
+        tilt=peak;
+      }else{
+        const q=(p-holdEnd)/(1-holdEnd);tilt=peak*(1-ease(q));
+      }
+    }else if(power==="just"){
+      const slow=clamp((+controls.edgeFrames.value-1)*.52,0,.55);
+      const wave=Math.PI*4;
+      const angleProgress=p+slow/wave*Math.sin(wave*p);
+      tilt=Math.PI*2*angleProgress;
+    }else{
+      const peakDegrees={normal:135};
+      const peak=peakDegrees[power]*Math.PI/180;
+      const riseEnd=.52;
+      if(p<riseEnd){
+        const q=p/riseEnd,e=q*q*(3-2*q);tilt=peak*e;
+      }else{
+        const q=(p-riseEnd)/(1-riseEnd),e=q*q*(3-2*q);tilt=peak*(1-e);
+      }
+    }
+  }else if(v.flip){
+    if(p<.58){const q=p/.58,e=1-Math.pow(1-q,2.4);tilt=(v.peak*Math.PI/180)*e}
+    else{const q=(p-.58)/.42,e=q*q*(3-2*q);tilt=(v.peak*Math.PI/180)+(Math.PI-v.peak*Math.PI/180)*e}
+  }else{
+    if(p<.52){const q=p/.52,e=1-Math.pow(1-q,2.2);tilt=(v.peak*Math.PI/180)*e}
+    else{const q=(p-.52)/.48,e=q*q*(3-2*q);tilt=(v.peak*Math.PI/180)*(1-e)}
+  }
+  const rollTarget=adjusted&&adjustedFlip
+    ? ({just:0,strong:Math.PI/7.2,tooStrong:Math.PI/3.3}[controls.power.value]||0)
+    : 0;
+  const rollEase=rotationP*rotationP*(3-2*rotationP);
+  const roll=rollTarget*rollEase;
+  return {v,p,z,x,tilt,roll,done:p>=1};
+}
+function roundedBPath(r){
+  const c=r*.10;ctx.beginPath();ctx.moveTo(-r+c,-r);ctx.lineTo(r-c,-r);ctx.lineTo(r,-r+c);
+  ctx.lineTo(r,r-c);ctx.lineTo(r-c,r);ctx.lineTo(-r+c,r);ctx.lineTo(-r,r-c);ctx.lineTo(-r,-r+c);ctx.closePath();
+}
+function drawMenko(cx,ground,adjusted){
+  const st=stateAt(adjusted),r=Math.min(54,Math.max(34,(W<620?W*.105:48)));
+  const spec=designSpec();
+  const direction=controls.team.value==="red"?1:-1,x=cx+direction*st.x;
+  const maxLift=Math.max(1,st.v.lift);
+  // 調整案の遠近は「その投げ自身の最高点」ではなく、ジャストの高さを基準にする。
+  // これにより弱い投げは、低いまま静かに立ち上がって見える。
+  const perspectiveReference=Math.max(1,presets.just.lift*(+controls.lift.value));
+  const heightRatio=adjusted
+    ? clamp(st.z/perspectiveReference,0,1)
+    : clamp(st.z/maxLift,0,1);
+  const shadowAirScale=adjusted
+    ? (+controls.shadow.value)+(1-(+controls.shadow.value))*(1-heightRatio)
+    : 1;
+  const cardAirScale=adjusted?1+heightRatio*.30:1;
+  const shadowScale=adjusted?shadowAirScale:1+st.z/280;
+  const shadowAlpha=adjusted?.18*(1-heightRatio*.72):clamp(.14-st.z/900,.02,.14);
+  const shadowOffsetX=adjusted?8+heightRatio*10:0;
+  const shadowOffsetY=adjusted?7+heightRatio*7:4;
+  const hideWeakShadow=adjusted&&controls.power.value==="weak";
+  ctx.save();ctx.globalAlpha=hideWeakShadow?0:(adjusted?.30:Math.max(.08,shadowAlpha*1.35));ctx.translate(x+shadowOffsetX,ground+shadowOffsetY);
+  ctx.rotate(direction*(.08*Math.sin(Math.PI*st.p)+(st.roll||0)));
+  ctx.scale(shadowScale,shadowScale);
+  if(adjusted){
+    // メンコの傾きに合わせ、影も水平→細い線→水平へ回転して見せる。
+    const shadowTurnScale=.18+.82*Math.abs(Math.cos(st.tilt));
+    ctx.scale(1,shadowTurnScale);
+  }
+  ctx.fillStyle=adjusted?"#fff":"#999";
+  if(adjusted){
+    // 正方形らしさを残したまま、影の角だけをわずかに丸める。
+    const sw=r*1.56,sh=r*1.16,cr=r*.10;
+    ctx.beginPath();
+    ctx.moveTo(-sw/2+cr,-sh/2);ctx.lineTo(sw/2-cr,-sh/2);
+    ctx.quadraticCurveTo(sw/2,-sh/2,sw/2,-sh/2+cr);
+    ctx.lineTo(sw/2,sh/2-cr);ctx.quadraticCurveTo(sw/2,sh/2,sw/2-cr,sh/2);
+    ctx.lineTo(-sw/2+cr,sh/2);ctx.quadraticCurveTo(-sw/2,sh/2,-sw/2,sh/2-cr);
+    ctx.lineTo(-sw/2,-sh/2+cr);ctx.quadraticCurveTo(-sw/2,-sh/2,-sw/2+cr,-sh/2);
+    ctx.closePath();ctx.fill();
+  }else{
+    ctx.scale(1,.28);
+    ctx.beginPath();ctx.arc(0,0,r*.82,0,Math.PI*2);
+  }
+  if(!adjusted)ctx.fill();
+  ctx.restore();
+
+  // 弱い投げだけ、90度に立った時に背後の光源で落ちる四角い影を描く。
+  if(adjusted&&controls.power.value==="weak"){
+    const upright=Math.abs(Math.sin(st.tilt));
+    if(upright>.01){
+      const halfWidth=r*cardAirScale;
+      const halfHeight=r*cardAirScale*upright;
+      const radius=Math.min(r*.07,halfHeight*.45);
+      const topY=ground-r*cardAirScale+2;
+      const sy=topY+halfHeight;
+      ctx.save();
+      ctx.globalAlpha=.30*Math.pow(upright,.72);
+      ctx.translate(x,sy);
+      ctx.rotate(direction*.035*Math.sin(Math.PI*st.p));
+      ctx.fillStyle="#777";
+      ctx.beginPath();
+      ctx.moveTo(-halfWidth+radius,-halfHeight);ctx.lineTo(halfWidth-radius,-halfHeight);
+      ctx.quadraticCurveTo(halfWidth,-halfHeight,halfWidth,-halfHeight+radius);
+      ctx.lineTo(halfWidth,halfHeight-radius);ctx.quadraticCurveTo(halfWidth,halfHeight,halfWidth-radius,halfHeight);
+      ctx.lineTo(-halfWidth+radius,halfHeight);ctx.quadraticCurveTo(-halfWidth,halfHeight,-halfWidth,halfHeight-radius);
+      ctx.lineTo(-halfWidth,-halfHeight+radius);ctx.quadraticCurveTo(-halfWidth,-halfHeight,-halfWidth+radius,-halfHeight);
+      ctx.closePath();ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // 調整案はcosの符号を残す。90度を越えると上下が反転し、上辺と下辺が交差する。
+  const rawFace=Math.cos(st.tilt);
+  const faceScale=adjusted
+    ? (Math.abs(rawFace)<.08?(rawFace<0?-.08:.08):rawFace)
+    : Math.max(.10,Math.abs(rawFace));
+  const faceAbs=Math.abs(faceScale);
+  const edge=(1-faceAbs)*r*.42;
+  // 正の値は画面手前。上辺が立った後、カードの中心も手前へ寄せる。
+  const perspectiveY=adjusted?0:-edge*.08;
+  ctx.save();ctx.translate(x,ground-st.z+perspectiveY);
+  ctx.rotate(direction*(.08*Math.sin(Math.PI*st.p)+(st.roll||0)));
+  if(adjusted)ctx.scale(cardAirScale,cardAirScale);
+
+  if(adjusted){
+    // 薄い立体の全頂点を同じ角度で回転・遠近投影する。
+    const c=r*.10,halfDepth=2.25,camera=420;
+    const pivotY=controls.power.value==="weak"?-r:0;
+    ctx.lineJoin="bevel";
+    ctx.miterLimit=1;
+    const outline=[
+      [-r+c,-r],[r-c,-r],[r,-r+c],[r,r-c],
+      [r-c,r],[-r+c,r],[-r,r-c],[-r,-r+c]
+    ];
+    const cos=Math.cos(st.tilt),sin=Math.sin(st.tilt);
+    const project=(px,py,pz)=>{
+      const localY=py-pivotY;
+      const ry=localY*cos-pz*sin+pivotY;
+      const rz=localY*sin+pz*cos;
+      const perspective=camera/(camera-rz);
+      return {x:px*perspective,y:ry*perspective,z:rz,k:perspective};
+    };
+    const plane=z=>outline.map(([px,py])=>project(px,py,z));
+    const front=plane(halfDepth),rear=plane(-halfDepth);
+    const polygon=points=>{
+      ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);
+      for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+      ctx.closePath();
+    };
+
+    // 奥の側面から順番に描くことで、回り込みに合わせて前後関係も変える。
+    const sides=outline.map((_,i)=>{
+      const j=(i+1)%outline.length;
+      const points=[front[i],front[j],rear[j],rear[i]];
+      return {points,z:points.reduce((sum,p)=>sum+p.z,0)/4,index:i};
+    }).sort((a,b)=>a.z-b.z);
+    for(const side of sides){
+      polygon(side.points);
+      const light=.68+(side.index%4)*.055;
+      const shade=Math.round(255*Math.min(.92,light));
+      ctx.fillStyle=`rgb(${shade},${shade},${shade})`;
+      ctx.strokeStyle="#777";ctx.lineWidth=.8;
+      ctx.fill();ctx.stroke();
+    }
+
+    // 見えている面を最後に描く。裏返る瞬間に表面と裏面を切り替える。
+    const back=cos<0,visibleZ=back?-halfDepth:halfDepth;
+    const face=back?rear:front;
+    polygon(face);
+    ctx.fillStyle=spec.color;
+    ctx.strokeStyle="#fff";ctx.lineWidth=1.5+2.5*Math.min(1,Math.abs(cos)*3);
+    ctx.fill();ctx.stroke();
+
+    const center=project(0,0,visibleZ);
+    const foldCorners=[0,1,4,5];
+    ctx.strokeStyle="#fff";ctx.lineWidth=2;
+    ctx.beginPath();
+    for(const index of foldCorners){
+      ctx.moveTo(face[index].x,face[index].y);
+      ctx.lineTo(center.x,center.y);
+    }
+    ctx.stroke();
+
+    // FIX済みアイコンも面と同じ遠近・傾きで追従させる。
+    const iconYScale=Math.max(.055,Math.abs(cos))*center.k;
+    ctx.save();
+    ctx.translate(center.x,center.y);
+    ctx.scale(center.k,iconYScale);
+    drawFaceDesign(r,spec,back);
+    ctx.restore();
+    ctx.restore();
+    return st;
+  }
+
+  ctx.scale(1,faceScale);
+  roundedBPath(r);ctx.fillStyle=spec.color;ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.fill();ctx.stroke();
+  ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-r*.82,-r*.82);ctx.lineTo(0,0);ctx.lineTo(r*.82,-r*.82);
+  ctx.moveTo(-r*.82,r*.82);ctx.lineTo(0,0);ctx.lineTo(r*.82,r*.82);ctx.stroke();
+  const back=Math.cos(st.tilt)<0;
+  drawFaceDesign(r,spec,back);
+  ctx.restore();
+  return st;
+}
+function panel(x,y,w,h,label){
+  ctx.save();ctx.strokeStyle="#999";ctx.lineWidth=1;ctx.strokeRect(x,y,w,h);
+  ctx.fillStyle="#fff";ctx.font="700 13px ui-monospace,monospace";ctx.fillText(label,x+10,y+20);
+  ctx.fillStyle="#aaa";ctx.font="11px ui-monospace,monospace";ctx.fillText(controls.power.options[controls.power.selectedIndex].text,x+10,y+38);ctx.restore();
+}
+function draw(){
+  if(!W||!H)return;ctx.clearRect(0,0,W,H);ctx.fillStyle="#111";ctx.fillRect(0,0,W,H);
+  const narrow=W<620,gap=12;
+  if(narrow){
+    const ph=(H-gap*3)/2;panel(8,8,W-16,ph,"CURRENT / 現行");
+    const a=drawMenko(W/2,8+ph*.76,false);panel(8,8+ph+gap,W-16,ph,"ADJUSTED / 調整案");
+    const b=drawMenko(W/2,8+ph+gap+ph*.76,true);updateReadout(b);
+  }else{
+    const pw=(W-gap*3)/2;panel(8,8,pw,H-16,"CURRENT / 現行");
+    const a=drawMenko(8+pw/2,H*.72,false);panel(8+pw+gap,8,pw,H-16,"ADJUSTED / 調整案");
+    const b=drawMenko(8+pw+gap+pw/2,H*.72,true);updateReadout(b);
+  }
+}
+function updateReadout(st){
+  $("timeOut").textContent=`${t.toFixed(3)} s`;$("heightOut").textContent=`${st.z.toFixed(1)} px`;
+  $("stateOut").textContent=st.done?"着地":paused?"一時停止":playing?"再生中":"待機";
+}
+function replay(){t=0;playing=true;paused=false;$("pause").textContent="一時停止";last=null;draw()}
+function tick(now){
+  if(last!=null){const dt=Math.min(.05,(now-last)/1000);frameSamples.push(dt);if(frameSamples.length>45)frameSamples.shift();
+    if(playing&&!paused){t+=dt*(+controls.speed.value);const max=Math.max(values(false).duration,values(true).duration);if(t>=max){t=max;playing=false}}
+  }
+  last=now;const avg=frameSamples.reduce((a,b)=>a+b,0)/Math.max(1,frameSamples.length);
+  $("hzOut").textContent=avg?`${Math.round(1/avg)} Hz`:"-- Hz";draw();requestAnimationFrame(tick);
+}
+$("replay").onclick=replay;
+$("pause").onclick=()=>{paused=!paused;$("pause").textContent=paused?"再開":"一時停止"};
+$("step").onclick=()=>{paused=true;playing=true;t+=frameStep;const max=Math.max(values(false).duration,values(true).duration);if(t>max)t=max;$("pause").textContent="再開";draw()};
+Object.values(controls).forEach(el=>el.addEventListener("input",()=>{
+  $("speedValue").textContent=`${(+controls.speed.value).toFixed(2)}×`;
+  $("liftValue").textContent=`${Math.round(+controls.lift.value*100)}%`;
+  $("durationValue").textContent=`${Math.round(+controls.duration.value*100)}%`;
+  $("travelValue").textContent=`${Math.round(+controls.travel.value*100)}%`;
+  $("shadowValue").textContent=`${Math.round(+controls.shadow.value*100)}%`;
+  $("edgeFramesValue").textContent=`${Math.round(+controls.edgeFrames.value*100)}%`;
+  replay();
+}));
+window.addEventListener("resize",resize);resize();replay();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
