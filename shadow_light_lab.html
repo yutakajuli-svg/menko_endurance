@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>MENKO SHADOW / FIXED LIGHT TEST</title>
+<style>
+:root{color-scheme:dark;--bg:#181818;--panel:#252525;--ink:#fff;--muted:#aaa;--line:#555}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+main{width:min(1080px,100%);margin:auto;padding:12px;display:grid;gap:10px}
+h1{font-size:18px;margin:0}
+.sub{font-size:12px;color:var(--muted)}
+canvas{display:block;width:100%;height:min(64vw,620px);min-height:390px;background:#111;border:1px solid #666;touch-action:none}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;background:var(--panel);border:1px solid var(--line)}
+button{font:inherit;color:#fff;background:#111;border:1px solid #aaa;padding:8px 12px;cursor:pointer}
+button.primary{background:#fff;color:#111}
+.status{margin-left:auto;color:var(--muted);font-size:12px}
+@media(max-width:600px){main{padding:8px}canvas{height:68vh}.status{width:100%;margin:0}}
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>MENKO SHADOW / FIXED PARALLEL LIGHT</h1>
+    <div class="sub">固定光源：画面左上・奥　→　影：右下方向</div>
+  </div>
+  <canvas id="stage" aria-label="ランダム配置された複数のメンコと固定光源による影のテスト"></canvas>
+  <div class="controls">
+    <button id="shuffle" class="primary">ランダム再配置</button>
+    <button id="pause">一時停止</button>
+    <button id="step">1フレーム</button>
+    <span class="status">演算・衝突判定なし／影の見え方のみ</span>
+  </div>
+</main>
+<script>
+(()=>{
+const canvas=document.getElementById("stage"),ctx=canvas.getContext("2d");
+const shuffleButton=document.getElementById("shuffle");
+const pauseButton=document.getElementById("pause");
+const stepButton=document.getElementById("step");
+let W=0,H=0,DPR=1,last=0,time=0,paused=false,cards=[];
+const TAU=Math.PI*2;
+const colors=["rgb(40 40 40)","#f00","#00f"];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function random(min,max){return min+Math.random()*(max-min)}
+function roundedMenkoPath(r){
+  const c=r*.1;
+  ctx.beginPath();ctx.moveTo(-r+c,-r);ctx.lineTo(r-c,-r);ctx.lineTo(r,-r+c);
+  ctx.lineTo(r,r-c);ctx.lineTo(r-c,r);ctx.lineTo(-r+c,r);ctx.lineTo(-r,r-c);
+  ctx.lineTo(-r,-r+c);ctx.closePath();
+}
+function makeCards(){
+  const count=W<620?8:12;
+  cards=Array.from({length:count},(_,i)=>{
+    const flying=i<count*.55;
+    return {
+      x:random(W*.10,W*.90),y:random(H*.22,H*.82),
+      r:random(W<620?21:25,W<620?31:38),
+      angle:random(-Math.PI*.22,Math.PI*.22),
+      color:colors[i%colors.length],
+      flying,phase:random(0,TAU),speed:random(.65,1.05),
+      maxHeight:flying?random(35,120):0,
+      flipSpeed:flying?random(.7,1.35):0,
+      drift:flying?random(-18,18):0
+    };
+  }).sort((a,b)=>a.y-b.y);
+}
+function resize(){
+  const rect=canvas.getBoundingClientRect();
+  W=rect.width;H=rect.height;DPR=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  makeCards();draw();
+}
+function state(card){
+  if(!card.flying)return {height:0,tilt:0,x:card.x,y:card.y};
+  const cycle=(time*card.speed+card.phase)%TAU;
+  const airborne=Math.max(0,Math.sin(cycle));
+  const height=card.maxHeight*Math.pow(airborne,.72);
+  const travel=Math.sin(cycle*.5)*card.drift;
+  const tilt=cycle*card.flipSpeed;
+  return {height,tilt,x:card.x+travel,y:card.y};
+}
+function drawShadow(card,st){
+  const heightRatio=clamp(st.height/120,0,1);
+  const lightX=11+st.height*.20;
+  const lightY=14+st.height*.27;
+  const scale=1-heightRatio*.30;
+  const tiltScale=.20+.80*Math.abs(Math.cos(st.tilt));
+  const alpha=.34*(1-heightRatio*.58);
+  ctx.save();
+  ctx.translate(st.x+lightX,st.y+lightY);
+  ctx.rotate(card.angle);
+  ctx.scale(scale,scale*tiltScale);
+  ctx.globalAlpha=alpha;
+  ctx.fillStyle="#777";
+  roundedMenkoPath(card.r);
+  ctx.fill();
+  ctx.restore();
+}
+function drawCard(card,st){
+  const heightRatio=clamp(st.height/120,0,1);
+  const airScale=1+heightRatio*.20;
+  const faceScale=.08+.92*Math.abs(Math.cos(st.tilt));
+  ctx.save();
+  ctx.translate(st.x,st.y-st.height);
+  ctx.rotate(card.angle);
+  ctx.scale(airScale,airScale*faceScale);
+  roundedMenkoPath(card.r);
+  ctx.fillStyle=card.color;ctx.strokeStyle="#fff";ctx.lineWidth=3;
+  ctx.fill();ctx.stroke();
+  ctx.strokeStyle="#fff";ctx.lineWidth=1.4;
+  ctx.beginPath();
+  ctx.moveTo(-card.r*.82,-card.r*.82);ctx.lineTo(0,0);ctx.lineTo(card.r*.82,-card.r*.82);
+  ctx.moveTo(-card.r*.82,card.r*.82);ctx.lineTo(0,0);ctx.lineTo(card.r*.82,card.r*.82);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawLightGuide(){
+  ctx.save();ctx.globalAlpha=.72;ctx.strokeStyle="#fff";ctx.fillStyle="#fff";ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(28,28,7,0,TAU);ctx.stroke();
+  for(let i=0;i<8;i++){
+    const a=i*TAU/8;ctx.beginPath();ctx.moveTo(28+Math.cos(a)*11,28+Math.sin(a)*11);
+    ctx.lineTo(28+Math.cos(a)*16,28+Math.sin(a)*16);ctx.stroke();
+  }
+  ctx.beginPath();ctx.moveTo(43,43);ctx.lineTo(68,68);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(68,68);ctx.lineTo(57,64);ctx.lineTo(64,57);ctx.closePath();ctx.fill();
+  ctx.font="11px ui-monospace,monospace";ctx.fillText("LIGHT",48,25);ctx.restore();
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);ctx.fillStyle="#111";ctx.fillRect(0,0,W,H);
+  drawLightGuide();
+  const states=cards.map(card=>state(card));
+  cards.forEach((card,i)=>drawShadow(card,states[i]));
+  cards.forEach((card,i)=>drawCard(card,states[i]));
+}
+function tick(now){
+  if(!last)last=now;
+  const dt=Math.min(.04,(now-last)/1000);last=now;
+  if(!paused)time+=dt;
+  draw();requestAnimationFrame(tick);
+}
+shuffleButton.onclick=()=>{makeCards();time=0;draw()};
+pauseButton.onclick=()=>{paused=!paused;pauseButton.textContent=paused?"再開":"一時停止"};
+stepButton.onclick=()=>{paused=true;pauseButton.textContent="再開";time+=1/60;draw()};
+window.addEventListener("resize",resize);
+resize();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
