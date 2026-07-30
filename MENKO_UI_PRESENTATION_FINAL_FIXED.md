@@ -11,6 +11,7 @@ Items that still require visual testing are separated at the end.
 - Menko design / animation notes: `MENKO_ANIMATION_DESIGN_FINAL_FIXED.md`
 - Ring design: `design/ring-design-final.html`
 - Player status panels: `design/player-status-panel-final.html`
+- Approved full-screen layout: `design/full-screen-ui-layout-final.html`
 - Technique illustration presentation: `move_effect_lab_final.html`
 
 These files are references for later integration. They are not yet integrated
@@ -20,6 +21,7 @@ into `index.html`.
 
 - Mobile portrait is the primary layout.
 - BLUE status area is at the top.
+- The strength bar is placed below the BLUE status area and above the ring.
 - A large square ring is in the center and is the core play area.
 - RED status area is at the bottom.
 - RED: character portrait on the left, status information on the right.
@@ -31,6 +33,17 @@ into `index.html`.
 - Their top edges are aligned; there is no vertical offset.
 - The portrait window is drawn in front of the information window.
 - The portrait window must not overlap the ring.
+
+## Strength bar
+
+- Approved design: B, the thick pixel rail.
+- The bar is placed below the BLUE status area and above the ring.
+- The outer bar aligns with the ring width in the approved layout.
+- The moving cursor is a wide rectangular pixel block rather than a thin line.
+- A thinner low-contrast rail runs through the center of the bar.
+- The six strength-result regions are not shown.
+- Region widths may continue to vary by match without revealing the correct
+  position to the player.
 
 ## Character and information window layers
 
@@ -192,7 +205,6 @@ Back to front:
 
 ## Still provisional / not fixed
 
-- Exact full-screen proportions after combining the ring and both status panels
 - Final technique illustration-window size inside the complete UI
 - Exact automatic message closing time
 - Whether tapping outside the ring also skips the message
@@ -202,4 +214,3 @@ Back to front:
 - No-attack illustration assets
 - Final in-game light source and shadow integration
 - Integration into `index.html`
-
