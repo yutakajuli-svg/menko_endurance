@@ -13,6 +13,7 @@ Items that still require visual testing are separated at the end.
 - Player status panels: `design/player-status-panel-final.html`
 - Approved full-screen layout: `design/full-screen-ui-layout-final.html`
 - Approved technique overlay layout: `design/technique-overlay-layout-final.html`
+- Approved damage feedback: `design/damage-feedback-final.html`
 - Technique illustration presentation: `move_effect_lab_final.html`
 
 These files are references for later integration. They are not yet integrated
@@ -27,6 +28,10 @@ into `index.html`.
 - RED status area is at the bottom.
 - RED: character portrait on the left, status information on the right.
 - BLUE: status information on the left, character portrait on the right.
+- The BLUE status-group right edge aligns with the strength-bar right edge.
+- The RED status-group left edge aligns with the strength-bar left edge.
+- Each status information window, portrait window, colored frame, and feedback
+  layer moves together as one group.
 - The portrait is always visible, with expression changes for attacking and
   taking damage.
 - The portrait window and information window are separate windows with a small
@@ -190,11 +195,21 @@ Back to front:
   - Lv3
 - Clone maximum-damage attack uses a fourth, strongest shake.
 - Damage received:
-  - Shake
-  - Red flash on the victim's portrait and information area
+  - One short shake
+  - One red flash on the victim's portrait and information area
+  - Approved duration: approximately 0.36 seconds
+  - HP number and HP bar start decreasing at the same moment as the flash and
+    shake
+  - HP number and HP bar finish decreasing in the same approximately
+    0.36-second duration
+  - Only the victim status group moves and flashes
+  - The ring, technique illustration, and attacker status group do not flash
 - Complete defense:
   - Shake based on the incoming attack level
-  - White flash on the defender's portrait and information area
+  - One white flash on the defender's portrait and information area
+  - The approved flash range and duration are the same as damage feedback
+  - Only the defender status group moves and flashes
+  - HP number and HP bar do not decrease
 - Partial defense with remaining damage uses the red flash.
 - No-attack presentation uses neither shake nor flash.
 
@@ -214,7 +229,6 @@ Back to front:
 
 - Exact automatic message closing time
 - Whether tapping outside the ring also skips the message
-- Exact HP-bar reduction timing after the finish-frame shake
 - Character bust illustrations and expression variants
 - Defense illustration assets
 - No-attack illustration assets
