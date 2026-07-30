@@ -170,6 +170,9 @@ Back to front:
 - If both sides have an event, presentation follows initiative order:
   1. First attacker illustration / effect / message
   2. Second attacker illustration / effect / message
+- The first attack presentation finishes completely before the second begins.
+- Use the approved short transition pause of approximately 0.18 seconds
+  between the two attack presentations.
 - If mutual damage causes a simultaneous knockout, RED (the player) loses.
 
 ### Result branches
@@ -217,6 +220,11 @@ Back to front:
 
 - Use short, simple wrestling-style commentary.
 - Keep it to approximately two lines.
+- The message window opens when the finishing frame appears and the damage
+  feedback begins.
+- The message window closes automatically after 1.2 seconds.
+- The message cannot be dismissed or skipped by tapping; it closes
+  automatically only.
 - Example:
   - `REDの投げ技！しかし攻撃は浅い！`
   - `BLUEに 1 ダメージ！`
@@ -227,8 +235,6 @@ Back to front:
 
 ## Still provisional / not fixed
 
-- Exact automatic message closing time
-- Whether tapping outside the ring also skips the message
 - Character bust illustrations and expression variants
 - Defense illustration assets
 - No-attack illustration assets
