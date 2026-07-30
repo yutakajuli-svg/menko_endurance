@@ -12,6 +12,7 @@ Items that still require visual testing are separated at the end.
 - Ring design: `design/ring-design-final.html`
 - Player status panels: `design/player-status-panel-final.html`
 - Approved full-screen layout: `design/full-screen-ui-layout-final.html`
+- Approved technique overlay layout: `design/technique-overlay-layout-final.html`
 - Technique illustration presentation: `move_effect_lab_final.html`
 
 These files are references for later integration. They are not yet integrated
@@ -103,11 +104,17 @@ Back to front:
 Back to front:
 
 1. Ring and menko play area
-2. Technique illustration window, covering the same central area
+2. Technique illustration window
 3. Commentary / damage message window
 
-- The message window is placed over the lower part of the technique
-  illustration.
+- The technique illustration window uses the source-image aspect ratio of 4:3.
+- The technique illustration and message windows use the same approved width,
+  slightly wider than the ring.
+- The message window is placed below the technique illustration with a small
+  gap and does not overlap the illustration.
+- The technique illustration and message group sits above the RED status area
+  with a visible gap.
+- The strength bar remains visible above the technique illustration.
 - The ring itself does not flash during damage presentation.
 
 ## Technique illustration presentation
@@ -205,7 +212,6 @@ Back to front:
 
 ## Still provisional / not fixed
 
-- Final technique illustration-window size inside the complete UI
 - Exact automatic message closing time
 - Whether tapping outside the ring also skips the message
 - Exact HP-bar reduction timing after the finish-frame shake
