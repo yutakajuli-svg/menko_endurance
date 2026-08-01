@@ -38,8 +38,12 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 @media(max-width:520px){#balanceGrid{grid-template-columns:1fr}}
 
 #progressFab{position:fixed;left:10px;bottom:calc(48px + max(8px,env(safe-area-inset-bottom)));z-index:22}
-#progressPanel{position:fixed;inset:0;background:rgba(17,17,17,.97);color:#f3f3f3;z-index:40;display:none;overflow:auto;touch-action:auto;padding:18px;pointer-events:auto;isolation:isolate}
-#progressBox{position:relative;z-index:1;max-width:760px;margin:auto;background:#1c1c1c;border:1px solid #555;border-radius:16px;padding:18px;pointer-events:auto}
+#progressPanel{position:relative;width:100%;min-height:100vh;min-height:100dvh;background:#111;color:#f3f3f3;display:none;overflow:visible;touch-action:auto;padding:18px;pointer-events:auto}
+#progressBox{position:relative;max-width:760px;margin:0 auto;background:#1c1c1c;border:1px solid #555;border-radius:16px;padding:18px;pointer-events:auto}
+body.progress-screen{overflow:auto}
+body.progress-screen #wrap{display:none}
+body.progress-screen #progressPanel{display:block}
+body.progress-screen #progressFab,body.progress-screen #balanceFab,body.progress-screen #logFab{display:none}
 #progressBox button{background:#262626;color:#f3f3f3;border-color:#666}
 #progressBox .primary{background:#f3f3f3;color:#111}
 #progressStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
@@ -225,6 +229,10 @@ const playerLog=document.getElementById("playerLog");
 const debugPanel=document.getElementById("debugPanel"),debugLog=document.getElementById("debugLog"),copyStatus=document.getElementById("copyStatus");
 const balancePanel=document.getElementById("balancePanel");
 const progressPanel=document.getElementById("progressPanel");
+function setProgressScreen(visible){
+  document.body.classList.toggle("progress-screen",visible);
+  progressPanel.setAttribute("aria-hidden",visible?"false":"true");
+}
 const BOSSES={5:{hp:20,atk:3,atkMenko:4,defMenko:3},10:{hp:26,atk:6,atkMenko:7,defMenko:2},15:{hp:34,atk:6,atkMenko:7,defMenko:5}};
 const PROGRESS_STORAGE_KEY="menko_progress_records_integrated_v1";
 const defaultRecords=()=>({runs:0,wins:0,boss1:0,boss2:0,boss3:0,clears:0});
@@ -1445,23 +1453,26 @@ function prepareIntegratedMatch(){
   runState.enemy=makeProgressEnemy(runState.match);
   const p=runState.player,e=runState.enemy;
   config={...config,name:e.isBoss?`第${progressArea(runState.match)}ボス`:`第${runState.match}試合の相手`,redMaxHP:p.hp,redAttack:p.atk,redAttackCards:p.atkMenko,redDefenseCards:p.defMenko,blueMaxHP:e.hp,blueAttack:e.atk,blueAttackCards:e.atkMenko,blueDefenseCards:e.defMenko};
-  writeCfg(config);syncPortrait("player");syncPortrait("cpu");renderProgressPanel("match");progressPanel.style.display="block";progressPanel.setAttribute("aria-hidden","false");
+  writeCfg(config);syncPortrait("player");syncPortrait("cpu");renderProgressPanel("match");setProgressScreen(true);
 }
 function startCurrentIntegratedBattle(){
   const errorBox=document.getElementById("progressError");
   errorBox.style.display="none";errorBox.textContent="";
   if(!runState)startIntegratedRun();
-  newMatch();
-  lastFrameTime=null;frameAccumulator=0;
-  progressPanel.style.display="none";progressPanel.setAttribute("aria-hidden","true");
+  try{
+    setProgressScreen(false);resize();newMatch();
+    lastFrameTime=null;frameAccumulator=0;
+  }catch(err){
+    setProgressScreen(true);throw err;
+  }
 }
 function handleIntegratedBattleResult(playerWon){
   if(!runState)return;
-  if(!playerWon){renderProgressPanel("lose");progressPanel.style.display="block";return}
+  if(!playerWon){renderProgressPanel("lose");setProgressScreen(true);return}
   runState.wins++;records.wins++;
   if(runState.enemy.isBoss){if(runState.match===5)records.boss1++;if(runState.match===10)records.boss2++;if(runState.match===15)records.boss3++}
-  if(runState.match===15){records.clears++;saveProgressRecords();renderProgressPanel("clear");progressPanel.style.display="block";return}
-  saveProgressRecords();renderProgressPanel("reward");progressPanel.style.display="block";
+  if(runState.match===15){records.clears++;saveProgressRecords();renderProgressPanel("clear");setProgressScreen(true);return}
+  saveProgressRecords();renderProgressPanel("reward");setProgressScreen(true);
 }
 const rewardDefs=[{key:"atk",label:"攻撃 +1"},{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
@@ -1525,7 +1536,7 @@ function bindControlActivation(id,action){
 }
 bindControlActivation("fixedStartBattleBtn",startCurrentIntegratedBattle);
 bindControlActivation("fixedRestartRunBtn",startIntegratedRun);
-document.getElementById("progressFab").onclick=()=>{renderProgressPanel(runState?"match":"match");progressPanel.style.display="block"};
+document.getElementById("progressFab").onclick=()=>{renderProgressPanel("match");setProgressScreen(true)};
 document.getElementById("differenceInitiativeMode").onchange=e=>differenceCardsCountForInitiative=e.target.value==="on";
 function loop(now){
   if(lastFrameTime==null)lastFrameTime=now;
