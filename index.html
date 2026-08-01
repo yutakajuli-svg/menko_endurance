@@ -38,8 +38,8 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 @media(max-width:520px){#balanceGrid{grid-template-columns:1fr}}
 
 #progressFab{position:fixed;left:10px;bottom:calc(48px + max(8px,env(safe-area-inset-bottom)));z-index:22}
-#progressPanel{position:fixed;inset:0;background:rgba(17,17,17,.97);color:#f3f3f3;z-index:40;display:none;overflow:auto;touch-action:auto;padding:18px}
-#progressBox{max-width:760px;margin:auto;background:#1c1c1c;border:1px solid #555;border-radius:16px;padding:18px}
+#progressPanel{position:fixed;inset:0;background:rgba(17,17,17,.97);color:#f3f3f3;z-index:40;display:none;overflow:auto;touch-action:auto;padding:18px;pointer-events:auto;isolation:isolate}
+#progressBox{position:relative;z-index:1;max-width:760px;margin:auto;background:#1c1c1c;border:1px solid #555;border-radius:16px;padding:18px;pointer-events:auto}
 #progressBox button{background:#262626;color:#f3f3f3;border-color:#666}
 #progressBox .primary{background:#f3f3f3;color:#111}
 #progressStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
@@ -198,6 +198,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
     <div id="messageWindow"></div>
   </div>
 </main>
+</div>
 <button id="progressFab">進行</button>
 <div id="progressPanel"><div id="progressBox">
   <h2 id="progressTitle">メンコ用進行装置</h2>
@@ -215,7 +216,6 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 <button id="balanceFab">数値設定</button><button id="logFab">ログ</button>
 <div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">ダメージ：攻撃メンコが0枚なら0。1枚以上なら「攻撃力＋攻撃レベル－防御レベル」。0未満は0とし、最終ダメージは攻撃力を上限とします。 防御はcarry（前ラウンドからの持ち越し）とnew（今回獲得）を別管理します。攻撃時はcarryから先に消費し、次ラウンドへ持ち越せるのは消費後に残ったnewだけです。carryの残りはラウンド終了時に消滅します。攻撃Lvが0なら攻撃は発生せず、今回のnewだけが次ラウンドのcarryになります。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。分身は表が陣営色、めくれた裏は白地に太い陣営色の枠と「裏／めくれ」で表示します。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時、物理めくれ候補になった場合だけ発動抽選を行います。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。最大ダメージ時は被攻撃側の防御在庫を0にします。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
-</div>
 <script>
 (()=>{
 const VERSION="MENKO ENDURANCE 01 / v19 / UI PRESENTATION INTEGRATION";
