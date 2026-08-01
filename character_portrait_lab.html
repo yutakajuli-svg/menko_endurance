@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>MENKO ENDURANCE / CHARACTER PORTRAIT LAB</title>
+  <style>
+    @font-face {
+      font-family: "Misaki";
+      src: url("fonts/misaki_ttf_2021-05-05/misaki_gothic.ttf") format("truetype");
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: dark;
+      --red: rgb(255 0 0);
+      --blue: rgb(0 0 255);
+      --page: #111;
+      --panel: #222;
+      --panel-border: #393939;
+      --ink: #fff;
+      --muted: #9b9b9b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: "Misaki", monospace;
+      image-rendering: pixelated;
+    }
+
+    button { font: inherit; }
+
+    .lab {
+      width: min(100%, 960px);
+      margin: 0 auto;
+      padding: 18px 14px 40px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(18px, 4vw, 26px);
+      font-weight: normal;
+      letter-spacing: .04em;
+    }
+
+    .lead {
+      margin: 0 0 14px;
+      color: #bdbdbd;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 430px) minmax(260px, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      overflow: hidden;
+      border: 2px solid #303030;
+      border-radius: 8px;
+      background:
+        linear-gradient(#151515cc, #151515cc),
+        repeating-linear-gradient(0deg, #181818 0 3px, #141414 3px 6px);
+      box-shadow: 0 14px 40px #0008;
+    }
+
+    .screen-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px 10px 24px;
+    }
+
+    .arena-placeholder {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 78%;
+      aspect-ratio: 1;
+      translate: -50% -50%;
+      border: 2px solid #2d2d2d;
+      background: #181818;
+      opacity: .68;
+    }
+
+    .arena-placeholder::before,
+    .arena-placeholder::after {
+      content: "";
+      position: absolute;
+      background: #262626;
+    }
+
+    .arena-placeholder::before { inset: 49% 7% auto; height: 2px; }
+    .arena-placeholder::after { inset: 7% auto 7% 49%; width: 2px; }
+
+    .side-block {
+      position: relative;
+      z-index: 2;
+    }
+
+    .side-label {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 0 4px;
+      color: #aaa;
+      font-size: 11px;
+      letter-spacing: .04em;
+    }
+
+    .side-block.red .side-label { flex-direction: row-reverse; }
+
+    .status-group {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      width: 100%;
+      isolation: isolate;
+    }
+
+    .status-group.blue { justify-content: flex-start; }
+    .status-group.red { justify-content: flex-start; }
+
+    .info-window {
+      position: relative;
+      z-index: 1;
+      width: calc(100% - 90px);
+      height: 116px;
+      padding: 10px 14px;
+      border: 2px solid var(--panel-border);
+      border-radius: 5px;
+      background: var(--panel);
+      box-shadow: inset 0 0 0 2px #292929;
+    }
+
+    .blue .info-window { padding-right: 26px; }
+    .red .info-window { padding-left: 26px; }
+
+    .portrait-window {
+      --portrait-scale: 1.5;
+      --portrait-offset-y: -20%;
+      position: relative;
+      z-index: 3;
+      flex: 0 0 112px;
+      width: 112px;
+      height: 112px;
+      overflow: hidden;
+      border: 4px solid;
+      border-radius: 5px;
+      background: #000;
+    }
+
+    .blue .portrait-window {
+      order: 2;
+      margin-left: -22px;
+      border-color: var(--blue);
+    }
+
+    .red .portrait-window {
+      order: 1;
+      border-color: var(--red);
+    }
+
+    .red .info-window {
+      order: 2;
+      margin-left: -22px;
+    }
+
+    .portrait-layer {
+      position: absolute;
+      top: var(--portrait-offset-y);
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(var(--portrait-scale));
+      transform-origin: 50% 0;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .portrait-window.paper { background: #fff; }
+
+    .hp-text,
+    .stat-text {
+      font-size: 20px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .hp-rail {
+      width: 100%;
+      height: 22px;
+      margin: 8px 0 10px;
+      padding: 3px;
+      border: 2px solid #fff;
+      background: #111;
+    }
+
+    .hp-fill { width: 66%; height: 100%; }
+    .blue .hp-fill { background: var(--blue); }
+    .red .hp-fill { background: var(--red); }
+
+    .defense-text {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 16px;
+      white-space: nowrap;
+    }
+
+    .status-group::after {
+      content: "";
+      position: absolute;
+      z-index: 8;
+      inset: 0;
+      border-radius: 5px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .status-group.feedback-red { animation: hit-shake 360ms steps(2, jump-none); }
+    .status-group.feedback-red::after { animation: flash-red 360ms linear; }
+    .status-group.feedback-white { animation: guard-shake 360ms steps(2, jump-none); }
+    .status-group.feedback-white::after { animation: flash-white 360ms linear; }
+    .status-group.feedback-soft::after { animation: flash-soft 360ms linear; }
+
+    @keyframes hit-shake {
+      0%, 100% { transform: translate(0); }
+      20% { transform: translate(-4px, 1px); }
+      40% { transform: translate(4px, -1px); }
+      60% { transform: translate(-3px, 0); }
+      80% { transform: translate(3px, 1px); }
+    }
+
+    @keyframes guard-shake {
+      0%, 100% { transform: translate(0); }
+      25% { transform: translate(-3px, 0); }
+      50% { transform: translate(3px, 0); }
+      75% { transform: translate(-2px, 0); }
+    }
+
+    @keyframes flash-red {
+      0%, 100% { opacity: 0; }
+      18%, 48% { opacity: .66; background: var(--red); }
+    }
+
+    @keyframes flash-white {
+      0%, 100% { opacity: 0; }
+      18%, 48% { opacity: .64; background: #fff; }
+    }
+
+    @keyframes flash-soft {
+      0%, 100% { opacity: 0; }
+      18%, 48% { opacity: .38; background: #fff; }
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    .control-card {
+      padding: 13px;
+      border: 1px solid #353535;
+      border-radius: 7px;
+      background: #1b1b1b;
+    }
+
+    .control-card h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: normal;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .button-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    button {
+      min-height: 38px;
+      padding: 7px 8px;
+      border: 1px solid #4a4a4a;
+      border-radius: 4px;
+      background: #292929;
+      color: #fff;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    button:hover { background: #333; }
+    button:active { translate: 0 1px; }
+    button.primary { border-color: #777; background: #3b3b3b; }
+    button.is-active { outline: 2px solid #fff; outline-offset: -3px; }
+
+    .rule-note {
+      margin: 0;
+      padding: 10px;
+      border-left: 4px solid #fff;
+      background: #151515;
+      color: #c8c8c8;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .selection-readout {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .selection-readout strong { color: #fff; font-weight: normal; }
+
+    @media (max-width: 760px) {
+      .workspace { grid-template-columns: 1fr; }
+      .screen { max-width: 430px; margin: 0 auto; }
+      .controls { max-width: 430px; margin: 0 auto; }
+    }
+
+    @media (max-width: 390px) {
+      .screen-content { padding-inline: 6px; }
+      .portrait-window { flex-basis: 104px; width: 104px; height: 104px; }
+      .info-window { height: 108px; padding-top: 9px; padding-bottom: 8px; }
+      .hp-text, .stat-text { font-size: 18px; }
+      .defense-text { font-size: 14px; }
+      .hp-rail { margin-block: 7px 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="lab">
+    <h1>CHARACTER PORTRAIT LAB</h1>
+    <p class="lead">実際のキャラクター枠で、組み合わせ・表情切替・被弾演出を確認します。</p>
+
+    <div class="workspace">
+      <section class="screen" aria-label="ゲーム画面での表示見本">
+        <div class="arena-placeholder" aria-hidden="true"></div>
+        <div class="screen-content">
+          <div class="side-block blue" data-side="blue">
+            <div class="side-label"><span>BLUE</span><span class="selection-label"></span></div>
+            <div class="status-group blue">
+              <div class="info-window">
+                <div class="hp-text">HP 12 / 18</div>
+                <div class="hp-rail"><div class="hp-fill"></div></div>
+                <div class="stat-text">ATK 3 DEF 2</div>
+                <div class="defense-text">NEW 1 + CARRY 1</div>
+              </div>
+              <div class="portrait-window">
+                <img class="portrait-layer hair-layer" alt="">
+                <img class="portrait-layer face-layer" alt="BLUEの表情">
+              </div>
+            </div>
+          </div>
+
+          <div class="side-block red" data-side="red">
+            <div class="side-label"><span>RED</span><span class="selection-label"></span></div>
+            <div class="status-group red">
+              <div class="portrait-window">
+                <img class="portrait-layer hair-layer" alt="">
+                <img class="portrait-layer face-layer" alt="REDの表情">
+              </div>
+              <div class="info-window">
+                <div class="hp-text">HP 12 / 18</div>
+                <div class="hp-rail"><div class="hp-fill"></div></div>
+                <div class="stat-text">ATK 3 DEF 2</div>
+                <div class="defense-text">NEW 1 + CARRY 1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="controls">
+        <section class="control-card">
+          <h2>組み合わせ</h2>
+          <div class="button-grid">
+            <button class="primary" id="reroll-both">両者を再選出</button>
+            <button id="toggle-paper">白背景で確認</button>
+          </div>
+          <div class="selection-readout">
+            <div>BLUE：<strong id="blue-selection"></strong></div>
+            <div>RED：<strong id="red-selection"></strong></div>
+          </div>
+        </section>
+
+        <section class="control-card">
+          <h2>キャラクター表示倍率</h2>
+          <div class="button-grid three" id="scale-controls">
+            <button data-scale="1">100%</button>
+            <button data-scale="1.1">110%</button>
+            <button data-scale="1.2">120%</button>
+            <button data-scale="1.3">130%</button>
+            <button data-scale="1.4">140%</button>
+            <button data-scale="1.5">150%</button>
+          </div>
+        </section>
+
+        <section class="control-card">
+          <h2>BLUE 表情</h2>
+          <div class="button-grid three" data-expression-controls="blue">
+            <button data-expression="normal">通常</button>
+            <button data-expression="attack">攻撃</button>
+            <button data-expression="damage">被弾</button>
+          </div>
+        </section>
+
+        <section class="control-card">
+          <h2>RED 表情</h2>
+          <div class="button-grid three" data-expression-controls="red">
+            <button data-expression="normal">通常</button>
+            <button data-expression="attack">攻撃</button>
+            <button data-expression="damage">被弾</button>
+          </div>
+        </section>
+
+        <section class="control-card">
+          <h2>試合中の切替テスト</h2>
+          <div class="button-grid">
+            <button id="red-attacks">RED 攻撃</button>
+            <button id="blue-attacks">BLUE 攻撃</button>
+            <button id="red-guards">RED 完全防御</button>
+            <button id="blue-guards">BLUE 完全防御</button>
+            <button id="no-attack">両者 攻撃なし</button>
+            <button id="reset-expression">通常へ戻す</button>
+          </div>
+        </section>
+
+        <p class="rule-note">
+          顔番号は選手生成時に固定します。例：FACE 02を選んだ選手は、通常・攻撃・被弾のすべてで02だけを使用します。
+        </p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const ASSET_ROOT = "assets/character_portrait_lab";
+      const expressions = ["normal", "attack", "damage"];
+      const faceSets = ["01", "02", "03"];
+      const cpuHairs = ["hair_01", "hair_02", "hair_03", "hair_04", "hair_05", "hair_06", "hair_07"];
+
+      class ShuffleBag {
+        constructor(values) {
+          this.values = values.slice();
+          this.queue = [];
+          this.last = null;
+        }
+
+        refill() {
+          this.queue = this.values.slice();
+          for (let i = this.queue.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
+          }
+          if (this.queue.length > 1 && this.queue.at(-1) === this.last) {
+            const lastIndex = this.queue.length - 1;
+            [this.queue[0], this.queue[lastIndex]] = [this.queue[lastIndex], this.queue[0]];
+          }
+        }
+
+        next() {
+          if (this.queue.length === 0) this.refill();
+          const value = this.queue.pop();
+          this.last = value;
+          return value;
+        }
+      }
+
+      const cpuCombos = cpuHairs.flatMap(hair => faceSets.map(faceSet => ({ hair, faceSet })));
+      const cpuBag = new ShuffleBag(cpuCombos);
+      const playerFaceBag = new ShuffleBag(faceSets);
+
+      const state = {
+        blue: { hair: "hair_01", faceSet: "01", expression: "normal" },
+        red: { hair: "player", faceSet: "01", expression: "normal" },
+        paper: true,
+        scale: 1.5,
+        resetTimer: null,
+      };
+
+      const sideBlocks = Object.fromEntries(
+        ["blue", "red"].map(side => [side, document.querySelector(`[data-side="${side}"]`)])
+      );
+
+      function facePath(character) {
+        return `${ASSET_ROOT}/face_png/face_${character.faceSet}_${character.expression}.png`;
+      }
+
+      function hairPath(character) {
+        return `${ASSET_ROOT}/hair_png/${character.hair}.png`;
+      }
+
+      function renderSide(side) {
+        const character = state[side];
+        const block = sideBlocks[side];
+        block.querySelector(".hair-layer").src = hairPath(character);
+        block.querySelector(".face-layer").src = facePath(character);
+        block.querySelector(".selection-label").textContent = `${character.hair.toUpperCase()} / FACE ${character.faceSet}`;
+        block.querySelector(".portrait-window").classList.toggle("paper", state.paper);
+        block.querySelector(".portrait-window").style.setProperty("--portrait-scale", state.scale);
+        document.getElementById(`${side}-selection`).textContent = `${character.hair.toUpperCase()} + FACE ${character.faceSet}`;
+        document.querySelectorAll(`[data-expression-controls="${side}"] [data-expression]`).forEach(button => {
+          button.classList.toggle("is-active", button.dataset.expression === character.expression);
+        });
+      }
+
+      function render() {
+        renderSide("blue");
+        renderSide("red");
+        document.getElementById("toggle-paper").textContent = state.paper ? "黒背景で確認" : "白背景で確認";
+        document.querySelectorAll("#scale-controls [data-scale]").forEach(button => {
+          button.classList.toggle("is-active", Number(button.dataset.scale) === state.scale);
+        });
+      }
+
+      function setExpression(side, expression) {
+        if (!expressions.includes(expression)) return;
+        state[side].expression = expression;
+        renderSide(side);
+      }
+
+      function resetExpressions() {
+        window.clearTimeout(state.resetTimer);
+        setExpression("blue", "normal");
+        setExpression("red", "normal");
+      }
+
+      function restartClass(side, className) {
+        const group = sideBlocks[side].querySelector(".status-group");
+        group.classList.remove("feedback-red", "feedback-white", "feedback-soft");
+        void group.offsetWidth;
+        group.classList.add(className);
+        window.setTimeout(() => group.classList.remove(className), 380);
+      }
+
+      function attack(attacker, victim) {
+        window.clearTimeout(state.resetTimer);
+        setExpression(attacker, "attack");
+        setExpression(victim, "damage");
+        restartClass(victim, "feedback-red");
+        state.resetTimer = window.setTimeout(resetExpressions, 1200);
+      }
+
+      function guard(attacker, defender) {
+        window.clearTimeout(state.resetTimer);
+        setExpression(attacker, "attack");
+        setExpression(defender, "normal");
+        restartClass(defender, "feedback-white");
+        state.resetTimer = window.setTimeout(resetExpressions, 1200);
+      }
+
+      function noAttack() {
+        window.clearTimeout(state.resetTimer);
+        setExpression("blue", "normal");
+        setExpression("red", "normal");
+        restartClass("blue", "feedback-soft");
+        restartClass("red", "feedback-soft");
+      }
+
+      function reroll() {
+        window.clearTimeout(state.resetTimer);
+        const nextCpu = cpuBag.next();
+        state.blue = { ...nextCpu, expression: "normal" };
+        state.red = { hair: "player", faceSet: playerFaceBag.next(), expression: "normal" };
+        render();
+      }
+
+      document.querySelectorAll("[data-expression-controls]").forEach(group => {
+        const side = group.dataset.expressionControls;
+        group.addEventListener("click", event => {
+          const button = event.target.closest("[data-expression]");
+          if (button) setExpression(side, button.dataset.expression);
+        });
+      });
+
+      document.getElementById("reroll-both").addEventListener("click", reroll);
+      document.getElementById("toggle-paper").addEventListener("click", () => {
+        state.paper = !state.paper;
+        render();
+      });
+      document.getElementById("scale-controls").addEventListener("click", event => {
+        const button = event.target.closest("[data-scale]");
+        if (!button) return;
+        state.scale = Number(button.dataset.scale);
+        render();
+      });
+      document.getElementById("red-attacks").addEventListener("click", () => attack("red", "blue"));
+      document.getElementById("blue-attacks").addEventListener("click", () => attack("blue", "red"));
+      document.getElementById("red-guards").addEventListener("click", () => guard("blue", "red"));
+      document.getElementById("blue-guards").addEventListener("click", () => guard("red", "blue"));
+      document.getElementById("no-attack").addEventListener("click", noAttack);
+      document.getElementById("reset-expression").addEventListener("click", resetExpressions);
+
+      reroll();
+    })();
+  </script>
+</body>
+</html>
