@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>MENKO DROP v4.3 boss select + simulator rules</title>
+<title>MENKO ENDURANCE</title>
 <style>
 :root{--ink:#111;--paper:#f8f8f3;--red:#b00020;--blue:#0057b8}
 *{box-sizing:border-box}
@@ -52,10 +52,147 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 #progressFixedActions button{flex:1 1 140px}
 .ruleRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin:10px 0}
 @media(max-width:520px){#progressStats{grid-template-columns:1fr}}
+
+@font-face{font-family:MisakiGothic;src:url("fonts/misaki_ttf_2021-05-05/misaki_gothic.ttf") format("truetype");font-display:swap}
+:root{--ink:#fff;--paper:#111;--red:#f00;--blue:#00f;--panel:#202020;--muted:#999}
+html,body{width:100%;height:100%;background:#0b0b0b;color:#fff;font-family:MisakiGothic,ui-monospace,monospace;overflow:hidden}
+button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
+#wrap{position:relative;width:100vw;height:100vh;height:100dvh;display:block;background:#0b0b0b}
+#battleUi{position:relative;width:min(100%,430px);height:100%;margin:0 auto;padding:max(6px,env(safe-area-inset-top)) 6px max(6px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:5px;background:#111;overflow:hidden}
+.corner-block{position:relative;z-index:5;min-width:0}
+.corner-label{display:flex;justify-content:space-between;align-items:center;height:15px;padding:0 4px;font-size:11px;line-height:1;color:#aaa}
+.corner-label strong{font-weight:400;color:#fff}
+.status-group{position:relative;display:flex;align-items:center;height:102px}
+.status-group.blue{justify-content:flex-end}.status-group.red{justify-content:flex-start}
+.info-window{position:relative;z-index:1;flex:1;min-width:0;height:94px;padding:10px 12px;border:3px solid #444;background:#202020;overflow:hidden}
+.status-group.blue .info-window{margin-right:-4px;padding-right:18px;border-radius:7px 0 0 7px}
+.status-group.red .info-window{margin-left:-4px;padding-left:18px;border-radius:0 7px 7px 0}
+.portrait-window{position:relative;z-index:2;flex:0 0 102px;width:102px;height:102px;overflow:hidden;border:6px solid;background:#fff}
+.status-group.blue .portrait-window{border-color:#00f;border-radius:8px}
+.status-group.red .portrait-window{border-color:#f00;border-radius:8px}
+.portrait-layer{position:absolute;left:50%;top:30%;width:150%;height:150%;max-width:none;object-fit:contain;transform:translate(-50%,-50%);image-rendering:auto}
+.hp-line{font-size:19px;line-height:1;white-space:nowrap}
+.hp-rail{height:18px;margin:8px 0;border:3px solid #fff;background:#111;overflow:hidden}
+.hp-fill{height:100%;transition:width .04s linear}
+.status-group.red .hp-fill{background:#f00}.status-group.blue .hp-fill{background:#00f}
+.stat-line{font-size:17px;line-height:1.1;white-space:nowrap}
+.defense-line{margin-top:5px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
+#strengthWrap{position:relative;z-index:6;width:100%;max-width:420px;justify-self:center}
+#strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
+#bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:4px solid #fff;background:#111;overflow:hidden;pointer-events:none}
+#bar::after{content:"";position:absolute;inset:5px;background:#242424}
+#needle{z-index:2;top:1px;width:18px;height:14px;background:#fff;box-shadow:0 0 0 2px #111}
+#ringArea{position:relative;z-index:1;height:100%;max-height:410px;max-width:100%;aspect-ratio:420/410;justify-self:center;align-self:center;background:#111}
+#ringVisual,#c{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ringVisual{z-index:0}#c{z-index:1;background:transparent;touch-action:none}
+#presentationLayer{position:absolute;z-index:20;inset:0;display:none;pointer-events:none}
+#presentationLayer.show{display:block}
+#illustrationWindow{position:absolute;left:6px;right:6px;top:128px;aspect-ratio:4/3;overflow:hidden;border:3px solid #fff;background:#050505}
+#moveImage{width:100%;height:100%;display:block;object-fit:cover}
+#moveImage.mirrored{transform:scaleX(-1)}
+#frameCounter{position:absolute;right:6px;bottom:5px;padding:3px 5px;background:#000c;font-size:11px}
+#messageWindow{position:absolute;left:4px;right:4px;top:clamp(400px,calc(75vw + 135px),462px);display:none;min-height:68px;padding:10px 13px;border:3px solid #fff;background:#050505;color:#fff;font-size:17px;line-height:1.45;white-space:pre-line}
+#messageWindow.show{display:block}#messageWindow.tall{min-height:88px}
+.status-group.feedback-red{animation:statusShake .36s steps(1,end),statusRedFlash .36s steps(1,end)}
+.status-group.feedback-white{animation:statusShake .36s steps(1,end),statusWhiteFlash .36s steps(1,end)}
+.status-group.feedback-soft{animation:statusSoftFlash .36s steps(1,end)}
+.status-group.feedback-red-double{animation:statusShakeStrong .52s steps(1,end),statusRedDouble .52s steps(1,end)}
+.status-group.feedback-white-double{animation:statusWhiteDouble .52s steps(1,end)}
+@keyframes statusShake{0%,100%{transform:none}18%{transform:translate(-5px,1px)}35%{transform:translate(4px,-1px)}52%{transform:translate(-3px,0)}70%{transform:translate(2px,1px)}}
+@keyframes statusShakeStrong{0%,100%{transform:none}10%{transform:translate(-8px,2px)}22%{transform:translate(7px,-2px)}36%{transform:translate(-6px,1px)}50%{transform:translate(5px,-1px)}65%{transform:translate(-4px,1px)}82%{transform:translate(3px,0)}}
+@keyframes statusRedFlash{0%,100%{filter:none}15%,44%{filter:brightness(1.7) sepia(1) saturate(7) hue-rotate(315deg)}}
+@keyframes statusWhiteFlash{0%,100%{filter:none}15%,48%{filter:brightness(2.5) grayscale(1)}}
+@keyframes statusSoftFlash{0%,100%{filter:none}18%,52%{filter:brightness(1.65) grayscale(1)}}
+@keyframes statusRedDouble{0%,32%,62%,100%{filter:none}10%,45%{filter:brightness(1.9) sepia(1) saturate(8) hue-rotate(315deg)}}
+@keyframes statusWhiteDouble{0%,32%,62%,100%{filter:none}10%,45%{filter:brightness(2.4) grayscale(1)}}
+#ui{display:none}
+#progressFab,#balanceFab,#logFab{position:fixed;z-index:24;top:max(5px,env(safe-area-inset-top));bottom:auto;min-height:26px;padding:4px 6px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.48}
+#progressFab{left:max(5px,calc(50vw - 210px))}#balanceFab{right:max(42px,calc(50vw - 174px))}#logFab{right:max(5px,calc(50vw - 210px))}
+#progressFab:hover,#balanceFab:hover,#logFab:hover{opacity:1}
+#playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
+#playerLog .detail,#playerLog .total{color:#fff}#playerLog .red{color:#f00}#playerLog .blue{color:#00f}
+@media(max-width:370px){#battleUi{padding-inline:4px}.status-group{height:88px}.info-window{height:82px;padding-block:8px}.portrait-window{flex-basis:88px;width:88px;height:88px}.hp-line{font-size:16px}.hp-rail{height:15px;margin:6px 0}.stat-line{font-size:14px}.defense-line{font-size:11px}.illustration-window{top:112px}#messageWindow{top:clamp(370px,calc(75vw + 115px),405px);font-size:15px}}
 </style>
 </head>
 <body>
 <div id="wrap">
+<main id="battleUi" aria-label="MENKO ENDURANCE バトル画面">
+  <section class="corner-block blue" aria-label="BLUEステータス">
+    <div class="corner-label"><strong>BLUE</strong><span id="blueIdentity">OPPONENT</span></div>
+    <div class="status-group blue" id="blueStatusGroup">
+      <div class="info-window">
+        <div class="hp-line">HP <span id="blueHpCurrent">0</span> / <span id="blueHpMax">0</span></div>
+        <div class="hp-rail"><div class="hp-fill" id="blueHpFill"></div></div>
+        <div class="stat-line">ATK <span id="blueAtk">0</span>　DEF <span id="blueDefTotal">0</span></div>
+        <div class="defense-line">NEW <span id="blueDefNew">?</span> + CARRY <span id="blueDefCarry">0</span></div>
+      </div>
+      <div class="portrait-window">
+        <img class="portrait-layer" id="blueHair" alt="">
+        <img class="portrait-layer" id="blueFace" alt="BLUEの表情">
+      </div>
+    </div>
+  </section>
+
+  <div id="strengthWrap">
+    <div id="strengthCaption"><span>POWER</span><span id="turnCaption">ROUND 1</span></div>
+    <div id="bar"><div id="needle"></div></div>
+  </div>
+
+  <div id="ringArea">
+    <svg id="ringVisual" viewBox="0 0 420 410" role="img" aria-labelledby="ringTitle ringDesc">
+      <title id="ringTitle">メンコを置くリング</title>
+      <desc id="ringDesc">真上から見た正方形のリング面。上辺三本、左右二本のロープと四本のポストがあります。</desc>
+      <rect x="72" y="54" width="276" height="276" rx="3" fill="#2a2a2a" stroke="#555" stroke-width="2"/>
+      <g fill="none" stroke="#fff" stroke-width="2" opacity=".82">
+        <path d="M72 54H348"/><path d="M72 64H348"/><path d="M72 74H348"/>
+        <path d="M72 54V330"/><path d="M82 54V330"/><path d="M338 54V330"/><path d="M348 54V330"/>
+      </g>
+      <g stroke="#fff" stroke-width="2">
+        <g stroke="#555">
+          <path d="M72 82V41C72 36 88 36 88 41V82Z" fill="#aaa" stroke="none"/><path d="M72 82Q80 90 88 82Z" fill="#aaa" stroke="none"/>
+          <path d="M72 82V41M88 41V82M72 82Q80 90 88 82" fill="none"/><ellipse cx="80" cy="41" rx="8" ry="4" fill="#aaa"/><path d="M83 46V77" fill="none" opacity=".4"/>
+        </g>
+        <g>
+          <path d="M332 82V41C332 36 348 36 348 41V82Z" fill="rgb(0 0 255)" stroke="none"/><path d="M332 82Q340 90 348 82Z" fill="rgb(0 0 255)" stroke="none"/>
+          <path d="M332 82V41M348 41V82M332 82Q340 90 348 82" fill="none"/><ellipse cx="340" cy="41" rx="8" ry="4" fill="rgb(0 0 255)"/><path d="M343 46V77" fill="none" opacity=".4"/>
+        </g>
+        <g>
+          <path d="M72 330V289C72 284 88 284 88 289V330Z" fill="rgb(255 0 0)" stroke="none"/><path d="M72 330Q80 338 88 330Z" fill="rgb(255 0 0)" stroke="none"/>
+          <path d="M72 330V289M88 289V330M72 330Q80 338 88 330" fill="none"/><ellipse cx="80" cy="289" rx="8" ry="4" fill="rgb(255 0 0)"/><path d="M83 294V325" fill="none" opacity=".4"/>
+        </g>
+        <g stroke="#555">
+          <path d="M332 330V289C332 284 348 284 348 289V330Z" fill="#aaa" stroke="none"/><path d="M332 330Q340 338 348 330Z" fill="#aaa" stroke="none"/>
+          <path d="M332 330V289M348 289V330M332 330Q340 338 348 330" fill="none"/><ellipse cx="340" cy="289" rx="8" ry="4" fill="#aaa"/><path d="M343 294V325" fill="none" opacity=".4"/>
+        </g>
+      </g>
+    </svg>
+    <canvas id="c" aria-label="メンコを投げるリング"></canvas>
+  </div>
+
+  <section class="corner-block red" aria-label="REDステータス">
+    <div class="corner-label"><strong>RED</strong><span id="redIdentity">PLAYER</span></div>
+    <div class="status-group red" id="redStatusGroup">
+      <div class="portrait-window">
+        <img class="portrait-layer" id="redHair" alt="">
+        <img class="portrait-layer" id="redFace" alt="REDの表情">
+      </div>
+      <div class="info-window">
+        <div class="hp-line">HP <span id="redHpCurrent">0</span> / <span id="redHpMax">0</span></div>
+        <div class="hp-rail"><div class="hp-fill" id="redHpFill"></div></div>
+        <div class="stat-line">ATK <span id="redAtk">0</span>　DEF <span id="redDefTotal">0</span></div>
+        <div class="defense-line">NEW <span id="redDefNew">?</span> + CARRY <span id="redDefCarry">0</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="presentationLayer" aria-live="polite">
+    <div id="illustrationWindow">
+      <img id="moveImage" alt="技・イベントイラスト">
+      <span id="frameCounter">1 / 1</span>
+    </div>
+    <div id="messageWindow"></div>
+  </div>
+</main>
 <button id="progressFab">進行</button>
 <div id="progressPanel"><div id="progressBox">
   <h2 id="progressTitle">メンコ用進行装置</h2>
@@ -69,16 +206,14 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
   <p style="font-size:12px;color:#bbb">カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p>
   <h3>通算戦績</h3><div id="careerRecords"></div>
 </div></div>
-<canvas id="c"></canvas>
 <div id="playerLog" aria-live="polite"></div>
-<div id="bar"><div id="needle"></div></div>
 <button id="balanceFab">数値設定</button><button id="logFab">ログ</button>
 <div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">ダメージ：攻撃メンコが0枚なら0。1枚以上なら「攻撃力＋攻撃レベル－防御レベル」。0未満は0とし、最終ダメージは攻撃力を上限とします。 防御はcarry（前ラウンドからの持ち越し）とnew（今回獲得）を別管理します。攻撃時はcarryから先に消費し、次ラウンドへ持ち越せるのは消費後に残ったnewだけです。carryの残りはラウンド終了時に消滅します。攻撃Lvが0なら攻撃は発生せず、今回のnewだけが次ラウンドのcarryになります。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。分身は表が陣営色、めくれた裏は白地に太い陣営色の枠と「裏／めくれ」で表示します。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時、物理めくれ候補になった場合だけ発動抽選を行います。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。最大ダメージ時は被攻撃側の防御在庫を0にします。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
 </div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v18 / FRAME RATE FIX";
+const VERSION="MENKO ENDURANCE 01 / v19 / UI PRESENTATION INTEGRATION";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -99,6 +234,27 @@ const CLONE_RESCUE_MAX_ACTIVATIONS=2;
 let cloneRescueState={player:{chance:CLONE_RESCUE_BASE_CHANCE},cpu:{chance:CLONE_RESCUE_BASE_CHANCE}};
 let cloneRescueCooldown=0;
 let cloneRescueActivations=0;
+
+const PORTRAIT_ROOT="assets/character_portrait_lab";
+const MOVE_ROOT="assets/moves";
+const ui={
+  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),defTotal:document.getElementById("redDefTotal"),defNew:document.getElementById("redDefNew"),defCarry:document.getElementById("redDefCarry"),identity:document.getElementById("redIdentity")},
+  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),defTotal:document.getElementById("blueDefTotal"),defNew:document.getElementById("blueDefNew"),defCarry:document.getElementById("blueDefCarry"),identity:document.getElementById("blueIdentity")}
+};
+const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
+const portraitFaceSets=["01","02","03"],cpuPortraitHairs=["hair_01","hair_02","hair_03","hair_04","hair_05","hair_06","hair_07"];
+const cpuPortraitCombos=cpuPortraitHairs.flatMap(hair=>portraitFaceSets.map(faceSet=>({hair,faceSet})));
+class ShuffleBag{
+  constructor(values){this.values=values.slice();this.queue=[];this.last=null}
+  refill(){this.queue=this.values.slice();for(let i=this.queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.queue[i],this.queue[j]]=[this.queue[j],this.queue[i]]}if(this.queue.length>1&&this.queue[this.queue.length-1]===this.last)[this.queue[0],this.queue[this.queue.length-1]]=[this.queue[this.queue.length-1],this.queue[0]]}
+  next(){if(!this.queue.length)this.refill();const value=this.queue.pop();this.last=value;return value}
+}
+let cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
+let portraitState={player:{hair:"player",faceSet:portraitFaceSets[Math.floor(Math.random()*portraitFaceSets.length)],expression:"normal"},cpu:{...cpuPortraitBag.next(),expression:"normal"}};
+let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
+let presentationDefenseReset={player:false,cpu:false};
+const moveFrameCounts={"001_001":4,"001_002":3,"001_003":3,"002_001":2,"002_002":2,"002_003":3,"003_001":2,"003_002":2,"003_003":3};
+const redMoveMirrored={"001_001":false,"001_002":false,"001_003":true,"002_001":false,"002_002":true,"002_003":false,"003_001":false,"003_002":true,"003_003":false};
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
 const readCfg=()=>{const v=Object.fromEntries(cfgIds.map(id=>[id,Math.max(0,Number(document.getElementById(id).value)||0)]));config={redMaxHP:Math.max(1,v.cfgRedHP),blueMaxHP:Math.max(1,v.cfgBlueHP),redAttack:v.cfgRedAtk,blueAttack:v.cfgBlueAtk,redAttackCards:v.cfgRedAttackCards,blueAttackCards:v.cfgBlueAttackCards,redDefenseCards:v.cfgRedDefenseCards,blueDefenseCards:v.cfgBlueDefenseCards};linkedCount=config.redAttackCards+config.redDefenseCards+Math.max(0,config.blueAttackCards-config.redAttackCards)+Math.max(0,config.blueDefenseCards-config.redDefenseCards);countSelect.value=[8,16,24,32,40,48].includes(linkedCount)?String(linkedCount):"16"};
@@ -155,17 +311,99 @@ let turn="player",turnCount=0,cpuWait=0,zoneResult="";
 let playerAimReadyAt=0; // 新しいプレイヤーターン直後の持ち越しタップを無効化
 let condition=null,toss=null,tossWait=0;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const wait=ms=>new Promise(resolve=>window.setTimeout(resolve,ms));
+const oppositeActor=actor=>actor==="player"?"cpu":"player";
+const actorLabel=actor=>actor==="player"?"RED":"BLUE";
+const uiKey=actor=>actor==="player"?"red":"blue";
+
+function portraitPath(actor,layer){
+  const p=portraitState[actor];
+  return layer==="hair"?`${PORTRAIT_ROOT}/hair_png/${p.hair}.png`:`${PORTRAIT_ROOT}/face_png/face_${p.faceSet}_${p.expression}.png`;
+}
+function syncPortrait(actor){
+  const side=ui[uiKey(actor)],hair=portraitPath(actor,"hair"),face=portraitPath(actor,"face");
+  if(side.hair.dataset.src!==hair){side.hair.src=hair;side.hair.dataset.src=hair}
+  if(side.face.dataset.src!==face){side.face.src=face;side.face.dataset.src=face}
+}
+function setPortraitExpression(actor,expression){
+  if(!["normal","attack","damage"].includes(expression))return;
+  portraitState[actor].expression=expression;syncPortrait(actor);
+}
+function resetPortraitExpressions(){setPortraitExpression("player","normal");setPortraitExpression("cpu","normal")}
+function resetPortraitRun(){
+  cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
+  portraitState.player={hair:"player",faceSet:portraitFaceSets[Math.floor(Math.random()*portraitFaceSets.length)],expression:"normal"};
+  portraitState.cpu={...cpuPortraitBag.next(),expression:"normal"};
+}
+function chooseCpuPortrait(){portraitState.cpu={...cpuPortraitBag.next(),expression:"normal"}}
+function restartStatusFeedback(actor,className,duration){
+  const group=ui[uiKey(actor)].group;
+  group.classList.remove("feedback-red","feedback-white","feedback-soft","feedback-red-double","feedback-white-double");
+  void group.offsetWidth;group.classList.add(className);
+  window.setTimeout(()=>group.classList.remove(className),duration+30);
+}
+function displayedDefense(actor){
+  if(presentationDefenseReset[actor])return {newValue:0,carry:0,total:0};
+  const resultData=roundResults?.[actor]||null;
+  if(!resultData)return {newValue:null,carry:defenseStock?.[actor]??0,total:null};
+  const carry=resultData.defenseCarryBefore??defenseStock?.[actor]??0;
+  const newValue=resultData.defenseNewBefore??resultData.defenseLevel??0;
+  return {newValue,carry,total:newValue+carry};
+}
+function syncBattleUi(){
+  const data={
+    player:{hp:displayedHP.player,max:config.redMaxHP,atk:config.redAttack},
+    cpu:{hp:displayedHP.cpu,max:config.blueMaxHP,atk:config.blueAttack}
+  };
+  for(const actor of ["player","cpu"]){
+    const side=ui[uiKey(actor)],value=data[actor],def=displayedDefense(actor);
+    side.hp.textContent=String(Math.round(value.hp));side.max.textContent=String(value.max);
+    side.fill.style.width=`${clamp(value.hp/value.max,0,1)*100}%`;side.atk.textContent=String(value.atk);
+    side.defTotal.textContent=def.total==null?"?":String(def.total);
+    side.defNew.textContent=def.newValue==null?"?":String(def.newValue);side.defCarry.textContent=String(def.carry);
+    syncPortrait(actor);
+  }
+  ui.red.identity.textContent="PLAYER";ui.blue.identity.textContent=config.name||"OPPONENT";
+  turnCaption.textContent=`ROUND ${roundNo} / ${actorLabel(turn)}`;
+}
+function animateDisplayedHp(actor,target,duration){
+  const start=displayedHP[actor],end=clamp(target,0,actor==="player"?config.redMaxHP:config.blueMaxHP),started=performance.now();
+  return new Promise(resolve=>{
+    const tick=now=>{const p=clamp((now-started)/duration,0,1);displayedHP[actor]=start+(end-start)*p;syncBattleUi();if(p<1)requestAnimationFrame(tick);else{displayedHP[actor]=end;syncBattleUi();resolve()}};
+    requestAnimationFrame(tick);
+  });
+}
+function showPresentation(lines,tall=false){
+  presentationLayer.classList.add("show");illustrationWindow.style.display="";
+  messageWindow.classList.remove("show","tall");messageWindow.textContent=lines.join("\n");messageWindow.classList.toggle("tall",tall);
+}
+function hidePresentation(){presentationLayer.classList.remove("show");messageWindow.classList.remove("show","tall");illustrationWindow.style.display="";moveImage.classList.remove("mirrored")}
+function preloadImages(files){return Promise.all(files.map(src=>new Promise(resolve=>{const image=new Image();image.onload=resolve;image.onerror=resolve;image.src=src})))}
+function frameFiles(stem,count){return Array.from({length:count},(_,i)=>`${MOVE_ROOT}/${stem}_${String(i+1).padStart(2,"0")}.jpg`)}
+async function playIllustration({files,mirrored=false,lines,tall=false,alt="演出イラスト",feedback}){
+  await preloadImages(files);presentationRunning=true;showPresentation(lines,tall);moveImage.alt=alt;moveImage.classList.toggle("mirrored",mirrored);
+  for(let i=0;i<files.length;i++){moveImage.src=files[i];frameCounter.textContent=`${i+1} / ${files.length}`;if(i<files.length-1)await wait(320)}
+  messageWindow.classList.add("show");const effect=feedback?feedback():Promise.resolve();await Promise.all([effect,wait(700)]);
+  illustrationWindow.style.display="none";await wait(500);hidePresentation();resetPortraitExpressions();presentationRunning=false;syncBattleUi();
+}
 
 function ring(){
-  const uiH=60;
-  const s=Math.min(W-92,H-uiH-76,430);
-  return {x:(W-s)/2-14,y:Math.max(68,(H-uiH-s)/2+22),s};
+  const scale=Math.min(W/420,H/410);
+  const ox=(W-420*scale)/2,oy=(H-410*scale)/2;
+  return {x:ox+72*scale,y:oy+54*scale,s:276*scale,scale};
 }
 function resize(){
+  const oldR=W&&H?ring():null;
   DPR=Math.max(1,Math.min(2,devicePixelRatio||1));
   const r=canvas.getBoundingClientRect();
   W=r.width;H=r.height;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-  newMatch();
+  strengthWrap.style.width=`${Math.min(420,r.width)}px`;
+  const nextR=ring();
+  if(oldR&&oldR.s>0&&cards.length){
+    const ratio=nextR.s/oldR.s,movePoint=o=>{if(!o)return;o.x=nextR.x+(o.x-oldR.x)*ratio;o.y=nextR.y+(o.y-oldR.y)*ratio;if(Number.isFinite(o.r))o.r*=ratio};
+    cards.forEach(movePoint);movePoint(dropper);movePoint(toss);movePoint(impact);
+    if(aim){aim.x=nextR.x+(aim.x-oldR.x)*ratio;aim.y=nextR.y+(aim.y-oldR.y)*ratio}
+  }
 }
 function makeCondition(){
   // バー全体は20〜100%。6段階の順番は固定し、幅だけを試合ごとに変える。
@@ -189,6 +427,7 @@ function startToss(){
   state="toss";tossWait=0;msg="試合開始――コイントスメンコ！";
 }
 function newMatch(){
+  hidePresentation();presentationRunning=false;presentationDefenseReset={player:false,cpu:false};resetPortraitExpressions();
   linkedCount=Math.max(config.redAttackCards,config.blueAttackCards)+Math.max(config.redDefenseCards,config.blueDefenseCards);
   redHP=config.redMaxHP;blueHP=config.blueMaxHP;lastR=0;lastB=0;lastAttackLevel=0;lastDefenseLevel=0;lastDamage=0;turnCount=0;phase=0;condition=makeCondition();cards=[];dropper=null;impact=null;pendingLayerWave=null;pendingLandedCard=null;heldClone=null;
   roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;defenseStock={player:0,cpu:0};
@@ -196,7 +435,8 @@ function newMatch(){
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
   matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},rounds:[]};
-  logEntries=[];debugLog.value="";clearPlayerLog();startToss();
+  displayedHP={player:redHP,cpu:blueHP};
+  logEntries=[];debugLog.value="";clearPlayerLog();startToss();syncBattleUi();
 }
 function deck(){
   const d=[];
@@ -453,9 +693,10 @@ function beginCardMotion(i,impulse,sourceLabel){
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
   if(c.type==="clone")flipChance=cloneFlipAllowed?flipChance*.28:0;
+  const animationPower=["tooWeak","weak","normal","just","strong","tooStrong"][wave.zone.index]||"normal";
   let willFlip=false;
   if(c.type==="clone"){
-    const physicalCandidate=cloneFlipAllowed&&!c.cloneRescueRolled&&Math.random()<flipChance;
+    const physicalCandidate=animationPower!=="tooWeak"&&cloneFlipAllowed&&!c.cloneRescueRolled&&Math.random()<flipChance;
     if(physicalCandidate){
       c.cloneRescueRolled=true;
       const st=cloneRescueState[c.team];
@@ -467,38 +708,24 @@ function beginCardMotion(i,impulse,sourceLabel){
       appendLog(`分身発動抽選 ${c.team==="player"?"RED":"BLUE"}: ${success?"成功":"失敗"} / 抽選率 ${(attemptedChance*100).toFixed(0)}%${success?" → 30%へリセット":` → 次回 ${(st.chance*100).toFixed(0)}%`}`);
     }
   }else{
-    willFlip=Math.random()<flipChance;
+    willFlip=animationPower!=="tooWeak"&&Math.random()<flipChance;
   }
   const targetFace=willFlip?1-c.face:c.face;
 
   const side=(Math.random()<.5?-1:1);
   const tangentX=-uy*side,tangentY=ux*side;
-  let travel=0,lift=0,duration=.48,peakDeg=0,turns=0;
-  if(behavior==="EDGE_LIFT"){
-    travel=rand(.5,2.2)+c.r*impactPower*.035;
-    lift=rand(3.5,7.0);
-    duration=rand(.34,.46);
-    peakDeg=rand(28,55)+impactPower*22;
-    turns=willFlip?1:0;
-  }else if(behavior==="SHORT_HOP"){
-    travel=c.r*rand(.12,.28)*(0.75+impactPower);
-    lift=c.r*rand(.22,.38);
-    duration=rand(.48,.62);
-    peakDeg=rand(55,105)+impactPower*35;
-    turns=willFlip?1:0;
-  }else if(behavior==="HIGH_HOP"){
-    travel=c.r*rand(.36,.66)*(0.75+impactPower*.65);
-    lift=c.r*rand(.55,.90)*(0.80+impactPower*.30);
-    duration=rand(.60,.78);
-    peakDeg=rand(105,175)+impactPower*45;
-    turns=willFlip?1:0;
-  }else{
-    travel=c.r*rand(.48,.88)*(0.85+directOverlap*.55+impactPower*.28);
-    lift=c.r*rand(.75,1.20)*(0.90+directOverlap*.45);
-    duration=rand(.62,.82);
-    peakDeg=rand(135,205)+impactPower*55;
-    turns=willFlip?1:0;
-  }
+  const animationProfiles={
+    tooWeak:{lift:2.75,travel:1.10,duration:.68},
+    weak:{lift:4.40,travel:0,duration:.82},
+    normal:{lift:22,travel:15,duration:.74},
+    just:{lift:48,travel:30,duration:.66},
+    strong:{lift:72.45,travel:43,duration:.58},
+    tooStrong:{lift:95,travel:62,duration:.52}
+  };
+  const profile=animationProfiles[animationPower],sizeScale=c.r/54,variation=rand(.96,1.04);
+  let travel=profile.travel*sizeScale*variation;
+  let lift=profile.lift*sizeScale*variation;
+  const duration=profile.duration;
 
   // 波から外へ逃げる成分を主にし、少しだけ横方向を混ぜる。
   const lateral=behavior==="EDGE_LIFT"?.18:rand(.16,.36);
@@ -508,13 +735,13 @@ function beginCardMotion(i,impulse,sourceLabel){
 
   c.flip=true;c.settled=false;c.animStarted=true;c.z=0;c.vz=0;
   c.motionType=behavior;c.motionJP=behaviorJP;c.willFlip=willFlip;
+  c.animationPower=animationPower;c.animationSide=side;c.animRoll=0;
   c.animT=0;c.animDuration=duration;
   c.animStartX=c.x;c.animStartY=c.y;c.animStartTilt=c.tilt;c.animStartRot=c.rot||0;
   c.animEndX=c.x+moveX/mlen*travel;c.animEndY=c.y+moveY/mlen*travel;
   c.animLift=lift;
-  c.animPeakTilt=(c.tilt||0)+side*peakDeg*Math.PI/180;
   c.targetTilt=targetFace?Math.PI:0;
-  c.animRotDelta=side*rand(.08,.24)+(behavior==="DIRECT_HIT"?side*rand(.10,.22):0);
+  c.animRotDelta=side*rand(.04,.10);
   c.pivotUx=Math.cos((c.rot||0)+Math.atan2(moveY,moveX)+Math.PI);
   c.pivotUy=Math.sin((c.rot||0)+Math.atan2(moveY,moveX)+Math.PI);
   c.motionTravel=travel;c.waveImpulse=impulse;c.waveTransferred=false;
@@ -724,14 +951,54 @@ function applyCloneRescue(actor,owner){
   }else{
     choice=blueHP<=config.blueMaxHP/2?"heal":"damage";
   }
+  let amount=0;
   if(choice==="heal"){
-    if(actorIsPlayer)redHP=Math.min(config.redMaxHP,redHP+Math.ceil(config.redMaxHP/3));
-    else blueHP=Math.min(config.blueMaxHP,blueHP+Math.ceil(config.blueMaxHP/3));
+    if(actorIsPlayer){const before=redHP;redHP=Math.min(config.redMaxHP,redHP+Math.ceil(config.redMaxHP/3));amount=redHP-before}
+    else{const before=blueHP;blueHP=Math.min(config.blueMaxHP,blueHP+Math.ceil(config.blueMaxHP/3));amount=blueHP-before}
   }
   appendLog(`分身効果 ${actorIsPlayer?"RED":"BLUE"} が ${owner==="player"?"RED":"BLUE"}分身をめくって ${choice==="heal"?"最大HPの1/3回復":"防御貫通の最大ダメージ＋防御リセット"}（試合中 ${cloneRescueActivations}/${CLONE_RESCUE_MAX_ACTIVATIONS}回）`);
-  return {actor,owner,choice};
+  return {actor,owner,choice,amount};
+}
+function normalMovePresentation(actor,level){
+  const moveType=String(randInt(1,3)).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),key=`${moveType}_${moveLevel}`;
+  return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
+}
+async function playNormalAttackEvent(actor,damage,defenseUsed,level){
+  const victim=oppositeActor(actor),move=normalMovePresentation(actor,level),attacker=actorLabel(actor),target=actorLabel(victim);
+  const lines=defenseUsed>0?[`${attacker}の攻撃！`,`しかし攻撃は浅い！`,`${target}に ${damage} ダメージ！`]:[`${attacker}の攻撃！`,`${target}に ${damage} ダメージ！`];
+  await playIllustration({...move,lines,tall:lines.length>2,alt:`${attacker}の攻撃`,feedback:()=>{setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red",360);return animateDisplayedHp(victim,displayedHP[victim]-damage,360)}});
+}
+async function playDefenseEvent(actor,level){
+  const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
+  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:defender==="cpu",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+}
+async function playNoAttackEvent(firstActor){
+  await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="cpu",lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
+}
+async function playCloneDamageEvent(actor,damage){
+  const victim=oppositeActor(actor),label=actorLabel(actor),target=actorLabel(victim),type=randInt(1,3),stem=`sp_move${String(type).padStart(2,"0")}_001`;
+  await playIllustration({files:frameFiles(stem,4),mirrored:actor==="cpu",lines:[`${label}の得意技が決まったーっ！`,`${target}は大ダメージ！`,`${damage} ダメージ！`],tall:true,alt:`${label}の得意技`,feedback:()=>{presentationDefenseReset[victim]=true;setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red-double",520);return animateDisplayedHp(victim,displayedHP[victim]-damage,520)}});
+}
+async function playCloneHealEvent(rescue){
+  const actor=rescue.actor,label=actorLabel(actor);
+  await playIllustration({files:[`${MOVE_ROOT}/ex_move_heal.jpg`],mirrored:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
+}
+async function playRoundPresentations(data){
+  const {red,blue,rescued,redCloneOverride,blueCloneOverride}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
+  const order=[roundStarter,oppositeActor(roundStarter)];
+  for(const actor of order){const heal=rescued.find(r=>r.actor===actor&&r.choice==="heal");if(heal)await playCloneHealEvent(heal)}
+  let attackShown=false;
+  for(const actor of order){
+    const resultData=results[actor],damage=damages[actor];
+    if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
+    else if(resultData.attackLevel>0){attackShown=true;if(damage>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,resultData.attackLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
+    if(attackShown)await wait(120);
+  }
+  if(!attackShown)await playNoAttackEvent(roundStarter);
+  displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=.34;
 }
 function resolveRoundEffects(){
+  const roundStartRedHP=displayedHP.player,roundStartBlueHP=displayedHP.cpu;
   const red=roundResults.player||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
   const blue=roundResults.cpu||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
   if(cloneRescueCooldown>0)cloneRescueCooldown--;
@@ -826,7 +1093,7 @@ function resolveRoundEffects(){
     "========================"
   ].join("\n"));
 
-  const beforeRed=redHP,beforeBlue=blueHP;
+  const beforeRed=roundStartRedHP,beforeBlue=roundStartBlueHP;
   redHP=clamp(redHP-roundBlueDamage,0,config.redMaxHP);
   blueHP=clamp(blueHP-roundRedDamage,0,config.blueMaxHP);
   lastR=-roundBlueDamage;lastB=-roundRedDamage;lastDamage=roundRedDamage;
@@ -836,20 +1103,17 @@ function resolveRoundEffects(){
   const nextStarter=red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter;
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
   appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,`RED  ATK Lv ${red.attackLevel} - BLUE DEF使用 ${blueDefenseUsed} => ${roundRedDamage} damage`,`BLUE ATK Lv ${blue.attackLevel} - RED  DEF使用 ${redDefenseUsed} => ${roundBlueDamage} damage`,`DEF持越 RED ${red.defenseCarryAfter} / BLUE ${blue.defenseCarryAfter}`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
-  showPlayerRoundLog(red,blue,roundRedDamage,roundBlueDamage);
-  state="roundResult";resultT=1.55;
+  state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
+  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,roundRedDamage,roundBlueDamage}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
 }
 function finishMatch(){
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
   appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
   pendingIntegratedResult=winner==="RED";
-  const finalRound=matchStats.rounds[matchStats.rounds.length-1];
-  if(finalRound)showPlayerRoundLog(finalRound.red,finalRound.blue,finalRound.roundRedDamage,finalRound.roundBlueDamage,true);
-  else playerLog.innerHTML='<div class="total">試合終了</div><div class="actions"><button id="showResultBtn" type="button">リザルトへ</button></div>';
-  const resultBtn=document.getElementById("showResultBtn");
-  if(resultBtn)resultBtn.onclick=()=>{const won=pendingIntegratedResult;pendingIntegratedResult=null;clearPlayerLog();handleIntegratedBattleResult(won)};
+  clearPlayerLog();presentationLayer.classList.add("show");illustrationWindow.style.display="none";messageWindow.textContent=`${winner} WIN!`;messageWindow.classList.add("show");
+  window.setTimeout(()=>{const won=pendingIntegratedResult;pendingIntegratedResult=null;hidePresentation();handleIntegratedBattleResult(won)},950);
 }
 function advanceTurnAfterHold(){
   roundThrow++;
@@ -887,41 +1151,40 @@ function updateCards(){
     c.x=(c.animStartX??c.x)+((c.animEndX??c.x)-(c.animStartX??c.x))*moveEase;
     c.y=(c.animStartY??c.y)+((c.animEndY??c.y)-(c.animStartY??c.y))*moveEase;
 
-    // 動画に見られる「片側から起きる→姿勢が崩れる→落ちる」を誇張。
-    if(c.motionType==="EDGE_LIFT"){
-      const arch=Math.sin(Math.PI*p);
-      c.z=(c.animLift||0)*Math.pow(arch,.82);
-      if(c.willFlip){
-        const e=p*p*(3-2*p);
-        c.tilt=(c.animStartTilt??0)+((c.targetTilt??0)-(c.animStartTilt??0))*e;
+    const power=c.animationPower||"normal",side=c.animationSide||1,ease=q=>q*q*(3-2*q);
+    const startTilt=c.animStartTilt??0;
+    let relativeTilt=0,z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.62);
+    if(power==="strong"||power==="tooStrong"){
+      const contactP=power==="strong"?.72:.66;
+      if(p<contactP){
+        const q=p/contactP;relativeTilt=Math.PI*1.5*ease(q);
+        z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*q)),.62);
       }else{
-        c.tilt=(c.animStartTilt??0)+((c.animPeakTilt??0)-(c.animStartTilt??0))*arch;
+        const q=(p-contactP)/(1-contactP),finalTilt=c.willFlip?Math.PI:Math.PI*2;
+        relativeTilt=Math.PI*1.5+(finalTilt-Math.PI*1.5)*ease(q);
+        z=(power==="strong"?8:13)*(c.r/54)*Math.pow(Math.max(0,Math.sin(Math.PI*q)),.72);
       }
+    }else if(power==="weak"){
+      z=0;const riseEnd=.56,holdEnd=.68;
+      if(p<riseEnd)relativeTilt=Math.PI*.5*ease(p/riseEnd);
+      else if(p<holdEnd)relativeTilt=Math.PI*.5;
+      else{const q=(p-holdEnd)/(1-holdEnd),finalTilt=c.willFlip?Math.PI:0;relativeTilt=Math.PI*.5+(finalTilt-Math.PI*.5)*ease(q)}
+    }else if(c.willFlip){
+      relativeTilt=Math.PI*ease(p);
+    }else if(power==="tooWeak"){
+      const peak=12*Math.PI/180,riseEnd=.32,holdEnd=.42;
+      if(p<riseEnd)relativeTilt=peak*ease(p/riseEnd);
+      else if(p<holdEnd)relativeTilt=peak;
+      else relativeTilt=peak*(1-ease((p-holdEnd)/(1-holdEnd)));
+    }else if(power==="just"){
+      relativeTilt=Math.PI*2*p;
     }else{
-      const arch=Math.sin(Math.PI*p);
-      c.z=(c.animLift||0)*Math.pow(Math.max(0,arch),.72);
-      if(c.willFlip){
-        // 前半で勢いよく角が上がり、後半は着地面へ収束。
-        const peak=(c.animPeakTilt??c.targetTilt??0);
-        if(p<.58){
-          const q=p/.58,ee=1-Math.pow(1-q,2.4);
-          c.tilt=(c.animStartTilt??0)+(peak-(c.animStartTilt??0))*ee;
-        }else{
-          const q=(p-.58)/.42,ee=q*q*(3-2*q);
-          c.tilt=peak+((c.targetTilt??0)-peak)*ee;
-        }
-      }else{
-        // 飛んでもめくれない時は大きく傾くが、最後は元の面へ戻る。
-        const peak=(c.animPeakTilt??0);
-        if(p<.52){
-          const q=p/.52,ee=1-Math.pow(1-q,2.2);
-          c.tilt=(c.animStartTilt??0)+(peak-(c.animStartTilt??0))*ee;
-        }else{
-          const q=(p-.52)/.48,ee=q*q*(3-2*q);
-          c.tilt=peak+((c.targetTilt??0)-peak)*ee;
-        }
-      }
+      const peak=135*Math.PI/180,riseEnd=.52;
+      relativeTilt=p<riseEnd?peak*ease(p/riseEnd):peak*(1-ease((p-riseEnd)/(1-riseEnd)));
     }
+    c.z=z;c.tilt=startTilt+side*relativeTilt;
+    const rollTarget=c.willFlip?({just:0,strong:Math.PI/7.2,tooStrong:Math.PI/3.3}[power]||0):0;
+    c.animRoll=side*rollTarget*ease(Math.pow(p,power==="strong"?.86:power==="tooStrong"?.78:1));
     c.rot=(c.animStartRot??c.rot)+(c.animRotDelta||0)*Math.sin(Math.PI*p);
 
     if(p>=1){
@@ -939,7 +1202,7 @@ function updateCards(){
       }
       c.targetFace=null;c.targetTilt=null;c.motionTravel=0;c.animT=0;c.animDuration=0;
       c.animStartX=null;c.animStartY=null;c.animEndX=null;c.animEndY=null;c.animStartTilt=null;c.animStartRot=null;c.animLift=0;c.animRotDelta=0;c.animPeakTilt=0;
-      c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;
+      c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;c.animationPower=null;c.animationSide=0;c.animRoll=0;
     }
   }
   if(pendingLayerWave&&!pendingLayerWave.complete)advanceLayerWave();
@@ -965,7 +1228,7 @@ function update(){
     if(!m&&(!dropper||dropper.hit))result();
   }
   else if(state==="result"){resultT-=1/60;if(resultT<=0)beginExpel()}
-  else if(state==="roundResult"){resultT-=1/60;if(resultT<=0){if(redHP<=0||blueHP<=0)finishMatch();else{roundNo++;roundThrow=0;const lastRound=matchStats.rounds[matchStats.rounds.length-1];roundStarter=lastRound?.nextStarter||roundStarter;turn=roundStarter;roundResults={player:null,cpu:null};selectedCard=null;dropper=null;impact=null;deal();}}}
+  else if(state==="roundResult"){resultT-=1/60;if(resultT<=0){if(redHP<=0||blueHP<=0)finishMatch();else{roundNo++;roundThrow=0;const lastRound=matchStats.rounds[matchStats.rounds.length-1];roundStarter=lastRound?.nextStarter||roundStarter;turn=roundStarter;roundResults={player:null,cpu:null};presentationDefenseReset={player:false,cpu:false};selectedCard=null;dropper=null;impact=null;deal();}}}
   else if(state==="expel")updateExpel();
   else if(state==="postHold"){flowT-=1/60;if(flowT<=0)advanceTurnAfterHold()}
   if(state==="aim"&&turn==="cpu"&&!dropper){cpuWait-=1/60;if(cpuWait<=0)cpuThrow()}
@@ -1011,7 +1274,7 @@ function drawBackIcon(c,rr){
   ctx.restore();
 }
 
-function drawCard(c,isDrop=false){
+function drawCardLegacy(c,isDrop=false){
   let z=c.z||0,fs=isDrop?1:Math.cos(c.tilt||0),abs=Math.max(.12,Math.abs(fs));
   let back=isDrop?0:(!c.flip&&c.settled?c.face:(fs<0?1-c.face:c.face));
   const edgeAmount=isDrop?0:(1-abs)*c.r*.46;
@@ -1051,9 +1314,50 @@ function drawCard(c,isDrop=false){
   ctx.restore();
   if(z>1){ctx.save();ctx.globalAlpha=clamp(.14-z/900,.02,.14);ctx.translate(c.x,c.y);ctx.scale(1+z/280,.22+z/900);ctx.beginPath();ctx.arc(0,0,c.r*.82,0,Math.PI*2);ctx.fillStyle="#111";ctx.fill();ctx.restore()}
 }
-function drawTable(){let R=ring();ctx.save();ctx.lineWidth=2;ctx.strokeRect(R.x,R.y,R.s,R.s);ctx.beginPath();ctx.moveTo(R.x+10,R.y+10);ctx.lineTo(R.x+R.s-10,R.y+10);ctx.lineTo(R.x+R.s-14,R.y+R.s-12);ctx.lineTo(R.x+12,R.y+R.s-8);ctx.closePath();ctx.stroke();ctx.restore()}
+function drawTableLegacy(){let R=ring();ctx.save();ctx.lineWidth=2;ctx.strokeRect(R.x,R.y,R.s,R.s);ctx.beginPath();ctx.moveTo(R.x+10,R.y+10);ctx.lineTo(R.x+R.s-10,R.y+10);ctx.lineTo(R.x+R.s-14,R.y+R.s-12);ctx.lineTo(R.x+12,R.y+R.s-8);ctx.closePath();ctx.stroke();ctx.restore()}
 
-function drawImpact(){if(!impact)return;ctx.save();ctx.globalAlpha=impact.life;ctx.lineWidth=2;ctx.strokeStyle="#111";ctx.beginPath();ctx.arc(impact.x,impact.y,impact.r,0,Math.PI*2);ctx.stroke();for(let i=0;i<10;i++){let a=i/10*Math.PI*2+.15;ctx.beginPath();ctx.moveTo(impact.x+Math.cos(a)*impact.r*.5,impact.y+Math.sin(a)*impact.r*.5);ctx.lineTo(impact.x+Math.cos(a)*impact.r*.95,impact.y+Math.sin(a)*impact.r*.95);ctx.stroke()}ctx.restore()}
+function createAttackIcon(){
+  const source=document.createElement("canvas");source.width=96;source.height=96;
+  const sc=source.getContext("2d",{willReadFrequently:true});sc.font='72px "Segoe UI Emoji","Apple Color Emoji",sans-serif';sc.textAlign="center";sc.textBaseline="middle";sc.fillText("\u{1F91C}",48,51);
+  const sample=document.createElement("canvas");sample.width=24;sample.height=24;const pc=sample.getContext("2d",{willReadFrequently:true});pc.imageSmoothingEnabled=true;pc.drawImage(source,0,0,24,24);
+  const pixels=pc.getImageData(0,0,24,24).data,icon=document.createElement("canvas");icon.width=24;icon.height=24;const ic=icon.getContext("2d");
+  for(let y=0;y<24;y++)for(let x=0;x<24;x++){const o=(y*24+x)*4,a=pixels[o+3]/255;if(a<.08)continue;const l=(pixels[o]*.2126+pixels[o+1]*.7152+pixels[o+2]*.0722)/255;ic.globalAlpha=a;ic.fillStyle=l>=.68?"#fff":l>=.3?"#969696":"#000";ic.fillRect(x,y,1,1)}
+  ic.globalAlpha=1;return icon;
+}
+function createDefenseIcon(){
+  const white=[[2,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]],gray=[null,null,[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8]];
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");white.forEach((b,y)=>{ic.fillStyle="#fff";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});gray.forEach((b,y)=>{if(!b)return;ic.fillStyle="#969696";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});return icon;
+}
+const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon();
+function menkoSpec(c){return {kind:c.type,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
+function drawCloneFace(r){
+  const scale=r/62;ctx.save();ctx.scale(scale,scale);ctx.translate(-90,-90);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();ctx.fillStyle="#000";ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));ctx.restore();ctx.restore();
+}
+function drawFaceDesign(r,spec,back){const show=spec.kind==="clone"?back:!back;if(!show)return;if(spec.kind==="clone"){drawCloneFace(r);return}const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size)}
+function roundedShadowPath(w,h,r){ctx.beginPath();ctx.moveTo(-w/2+r,-h/2);ctx.lineTo(w/2-r,-h/2);ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);ctx.lineTo(w/2,h/2-r);ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);ctx.lineTo(-w/2+r,h/2);ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);ctx.lineTo(-w/2,-h/2+r);ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);ctx.closePath()}
+function drawCardShadow(c){
+  if(c.exiting)return;const r=c.r;
+  if(c.animationPower==="weak"){
+    const upright=Math.abs(Math.sin(c.tilt||0));if(upright<.01)return;const halfHeight=r*upright;
+    ctx.save();ctx.globalAlpha=.30*Math.pow(upright,.72);ctx.translate(c.x+3,c.y-r+halfHeight+2);ctx.rotate(.035*Math.sin(Math.PI*(c.animT||0)));ctx.fillStyle="#777";roundedShadowPath(r*2,halfHeight*2,r*.07);ctx.fill();ctx.restore();return;
+  }
+  const z=c.z||0,reference=Math.max(1,48*(r/54)),height=clamp(z/reference,0,1),scale=1-height*.30;
+  ctx.save();ctx.globalAlpha=1;ctx.translate(c.x+8+height*10,c.y+7+height*7);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(scale,scale*(.18+.82*Math.abs(Math.cos(c.tilt||0))));ctx.fillStyle="#4a4a4a";roundedShadowPath(r*1.56,r*1.16,r*.10);ctx.fill();ctx.restore();
+}
+function drawCard(c,isDrop=false){
+  const r=c.r,z=c.z||0,spec=menkoSpec(c),tilt=isDrop?0:(c.tilt||0),cos=Math.cos(tilt),sin=Math.sin(tilt),back=cos<0;
+  const height=clamp(z/Math.max(1,48*(r/54)),0,1),airScale=1+height*.30,depth=Math.max(.8,2.25*(r/54)),corner=r*.10,camera=Math.max(160,420*(r/54));
+  ctx.save();if(c.exiting)ctx.globalAlpha=1-(c.exitT||0);ctx.translate(c.x,c.y-z);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(airScale,airScale);ctx.lineJoin="bevel";ctx.miterLimit=1;
+  const pivotY=c.animationPower==="weak"?-r:0,outline=[[-r+corner,-r],[r-corner,-r],[r,-r+corner],[r,r-corner],[r-corner,r],[-r+corner,r],[-r,r-corner],[-r,-r+corner]];
+  const project=(px,py,pz)=>{const ly=py-pivotY,ry=ly*cos-pz*sin+pivotY,rz=ly*sin+pz*cos,k=camera/(camera-rz);return{x:px*k,y:ry*k,z:rz,k}};
+  const plane=pz=>outline.map(([px,py])=>project(px,py,pz)),front=plane(depth),rear=plane(-depth),polygon=pts=>{ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.closePath()};
+  outline.map((_,i)=>{const j=(i+1)%outline.length,pts=[front[i],front[j],rear[j],rear[i]];return{pts,z:pts.reduce((s,p)=>s+p.z,0)/4,index:i}}).sort((a,b)=>a.z-b.z).forEach(side=>{polygon(side.pts);const shade=Math.round(255*Math.min(.92,.68+(side.index%4)*.055));ctx.fillStyle=`rgb(${shade},${shade},${shade})`;ctx.strokeStyle="#777";ctx.lineWidth=.8;ctx.fill();ctx.stroke()});
+  const face=back?rear:front,visibleZ=back?-depth:depth;polygon(face);ctx.fillStyle=spec.color;ctx.strokeStyle="#fff";ctx.lineWidth=1.5+2.5*Math.min(1,Math.abs(cos)*3);ctx.fill();ctx.stroke();
+  const center=project(0,0,visibleZ);ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();for(const index of [0,1,4,5]){ctx.moveTo(face[index].x,face[index].y);ctx.lineTo(center.x,center.y)}ctx.stroke();ctx.save();ctx.translate(center.x,center.y);ctx.scale(center.k,Math.max(.055,Math.abs(cos))*center.k);drawFaceDesign(r,spec,back);ctx.restore();ctx.restore();
+}
+function drawTable(){}
+
+function drawImpact(){if(!impact)return;ctx.save();ctx.globalAlpha=impact.life;ctx.lineWidth=2;ctx.strokeStyle="#fff";ctx.beginPath();ctx.arc(impact.x,impact.y,impact.r,0,Math.PI*2);ctx.stroke();for(let i=0;i<10;i++){let a=i/10*Math.PI*2+.15;ctx.beginPath();ctx.moveTo(impact.x+Math.cos(a)*impact.r*.5,impact.y+Math.sin(a)*impact.r*.5);ctx.lineTo(impact.x+Math.cos(a)*impact.r*.95,impact.y+Math.sin(a)*impact.r*.95);ctx.stroke()}ctx.restore()}
 function signed(v){return v>0?`+${v}`:`${v}`}
 
 // 集計時イラスト差し込み用の準備枠。
@@ -1070,31 +1374,21 @@ function drawToss(){
   const fs=Math.cos(toss.rot),abs=Math.max(.10,Math.abs(fs));
   let redSide=toss.done?toss.redWins:(fs>=0);
   ctx.save();ctx.translate(toss.x,toss.y-toss.z);ctx.rotate(toss.rot*.12);ctx.scale(1,abs);
-  ctx.lineWidth=2.5;ctx.strokeStyle="#111";ctx.fillStyle=redSide?"#b00020":"#0057b8";
-  const pts=poly(8,toss.r,.82);ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle="#f8f8f3";ctx.font=`700 ${Math.floor(toss.r*.55)}px system-ui`;ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(redSide?"赤":"青",0,1);ctx.restore();
+  const r=toss.r,c=r*.10;ctx.beginPath();ctx.moveTo(-r+c,-r);ctx.lineTo(r-c,-r);ctx.lineTo(r,-r+c);ctx.lineTo(r,r-c);ctx.lineTo(r-c,r);ctx.lineTo(-r+c,r);ctx.lineTo(-r,r-c);ctx.lineTo(-r,-r+c);ctx.closePath();ctx.fillStyle=redSide?"#f00":"#00f";ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.fill();ctx.stroke();ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-r+c,-r);ctx.lineTo(0,0);ctx.lineTo(r-c,-r);ctx.moveTo(-r+c,r);ctx.lineTo(0,0);ctx.lineTo(r-c,r);ctx.stroke();ctx.restore();
 
 }
 function overlay(){
-  if(state!=="result"&&state!=="roundResult"&&state!=="gameover")return;ctx.save();
-  let bw=Math.min(350,W-48),bh=state==="gameover"?82:112,x=(W-bw)/2,y=H*.12;
-  ctx.fillStyle="#f8f8f3";ctx.strokeStyle="#111";ctx.lineWidth=2;ctx.fillRect(x,y,bw,bh);ctx.strokeRect(x,y,bw,bh);
-  ctx.textAlign="center";ctx.fillStyle="#111";ctx.font="700 20px system-ui";
-  if(state==="gameover"){
-    ctx.fillText(msg,W/2,y+34);ctx.font="14px system-ui";ctx.fillText("Rで再試合",W/2,y+58)
-  }else if(state==="roundResult"){
-    drawResultIllustrationSlot(W/2,y+16);
-    ctx.fillText(`RED ${roundRedDamage} / BLUE ${roundBlueDamage}`,W/2,y+42);
-    ctx.font="14px system-ui";ctx.fillText("両者の投擲結果を同時解決",W/2,y+68);ctx.fillText(`RED ${redHP}/${config.redMaxHP} / BLUE ${blueHP}/${config.blueMaxHP}`,W/2,y+92)
-  }else{
-    drawResultIllustrationSlot(W/2,y+16);
-    ctx.fillText("RESULT HELD",W/2,y+42);
-    ctx.font="14px system-ui";ctx.fillText(msg,W/2,y+68);ctx.fillText("後攻の投擲後に同時解決",W/2,y+92)
-  }
-  ctx.restore();
+  return;
 }
-function hud(){ctx.save();ctx.font="700 18px system-ui";ctx.fillStyle="#111";ctx.fillText(VERSION,14,28);ctx.font="700 15px system-ui";ctx.fillStyle="#b00020";ctx.fillText(`RED HP ${redHP}/${config.redMaxHP}  ATK ${config.redAttack}  DEF持越 ${defenseStock.player}`,14,52);ctx.fillStyle="#0057b8";ctx.fillText(`BLUE ${config.name||"相手"}  HP ${blueHP}/${config.blueMaxHP}  ATK ${config.blueAttack}  DEF持越 ${defenseStock.cpu}`,14,72);ctx.fillStyle="#111";ctx.font="12px system-ui";ctx.fillText(`ROUND ${roundNo}　${roundThrow===0?"先攻":"後攻"} / ${turn==="player"?"RED":"BLUE"}　場 ${cards.length}枚（赤 攻${config.redAttackCards} 防${config.redDefenseCards} / 青 攻${config.blueAttackCards} 防${config.blueDefenseCards} / 分身${cards.filter(c=>c.type==="clone").length}）`,14,90);ctx.fillText(msg,14,108);ctx.fillText("分身を構えたら投げる場所をタップ / R:再試合",14,H-14);ctx.restore()}
-function render(){const bar=document.getElementById("bar"),R=ring();bar.style.display=(turn==="cpu")?"none":"block";bar.style.opacity=(state==="aim"&&turn==="player")?"1":".16";bar.style.left=`${R.x}px`;bar.style.top=`${Math.max(116,R.y-38)}px`;bar.style.width=`${R.s}px`;bar.style.height="28px";ctx.clearRect(0,0,W,H);ctx.save();if(shake>.2&&state!=="result"&&state!=="gameover")ctx.translate(rand(-shake,shake),rand(-shake,shake));drawTable();drawToss();[...cards].sort((a,b)=>a.y-b.y).forEach(c=>drawCard(c));drawImpact();if(selectedCard){drawCard({x:W/2,y:132,z:0,rot:0,r:selectedCard.r*.82,tilt:0,face:0,type:selectedCard.type,team:"common"},true)}if(dropper&&!dropper.hide){drawCard({x:dropper.x,y:dropper.y,z:dropper.z,rot:dropper.rot,r:dropper.r,tilt:0,face:0,team:dropper.actor,type:"clone"},true);ctx.save();ctx.globalAlpha=.3;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(dropper.x,dropper.y-dropper.z);ctx.lineTo(dropper.x,dropper.y);ctx.stroke();ctx.restore()}ctx.restore();hud();overlay()}
+function hud(){syncBattleUi()}
+function render(){
+  const bar=document.getElementById("bar");bar.style.visibility=turn==="cpu"?"hidden":"visible";bar.style.opacity=state==="aim"&&turn==="player"?"1":".22";
+  ctx.clearRect(0,0,W,H);ctx.save();if(shake>.2&&state!=="result"&&state!=="gameover"&&state!=="presentation")ctx.translate(rand(-shake,shake),rand(-shake,shake));drawTable();drawToss();
+  const ordered=[...cards].sort((a,b)=>a.y-b.y);ordered.forEach(c=>drawCardShadow(c));ordered.forEach(c=>drawCard(c));drawImpact();
+  if(selectedCard)drawCard({x:W/2,y:Math.max(44,H*.18),z:0,rot:0,r:selectedCard.r*.82,tilt:0,face:0,type:selectedCard.type,team:"common",isDifference:false},true);
+  if(dropper&&!dropper.hide){const thrown={x:dropper.x,y:dropper.y,z:dropper.z,rot:dropper.rot,r:dropper.r,tilt:0,face:0,team:dropper.actor,type:"clone",isDifference:true};drawCardShadow(thrown);drawCard(thrown,true)}
+  ctx.restore();hud();overlay();
+}
 function loadProgressRecords(){try{return {...defaultRecords(),...(JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY))||{})}}catch{return defaultRecords()}}
 function saveProgressRecords(){localStorage.setItem(PROGRESS_STORAGE_KEY,JSON.stringify(records))}
 function progressPoints(x){return x.atk*3+x.atkMenko*2+x.defMenko*2}
@@ -1115,14 +1409,16 @@ function generateProgressEnemy(area){
 function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match))}
 function startIntegratedRun(){
   records.runs++;saveProgressRecords();
+  resetPortraitRun();
   runState={match:1,wins:0,player:{hp:15,atk:1,atkMenko:2,defMenko:2},enemy:null};
   prepareIntegratedMatch();
 }
 function prepareIntegratedMatch(){
+  if(runState.match>1)chooseCpuPortrait();
   runState.enemy=makeProgressEnemy(runState.match);
   const p=runState.player,e=runState.enemy;
   config={...config,name:e.isBoss?`第${progressArea(runState.match)}ボス`:`第${runState.match}試合の相手`,redMaxHP:p.hp,redAttack:p.atk,redAttackCards:p.atkMenko,redDefenseCards:p.defMenko,blueMaxHP:e.hp,blueAttack:e.atk,blueAttackCards:e.atkMenko,blueDefenseCards:e.defMenko};
-  writeCfg(config);renderProgressPanel("match");progressPanel.style.display="block";progressPanel.setAttribute("aria-hidden","false");
+  writeCfg(config);syncPortrait("player");syncPortrait("cpu");renderProgressPanel("match");progressPanel.style.display="block";progressPanel.setAttribute("aria-hidden","false");
 }
 function startCurrentIntegratedBattle(){progressPanel.style.display="none";progressPanel.setAttribute("aria-hidden","true");newMatch()}
 function handleIntegratedBattleResult(playerWon){
@@ -1205,4 +1501,3 @@ try{resize();startIntegratedRun();requestAnimationFrame(loop)}catch(err){showPro
 </script>
 </body>
 </html>
-
