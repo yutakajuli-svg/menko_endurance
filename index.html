@@ -204,7 +204,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   <div id="progressSummary"></div>
   <div id="progressStats"></div>
   <div id="rewardChoices"></div>
-  <div id="progressActions"></div><div id="progressFixedActions"><button class="primary" id="fixedStartBattleBtn" type="button">戦闘開始</button><button id="fixedRestartRunBtn" type="button">最初から</button></div><div id="progressError" style="display:none;margin-top:10px;padding:10px;background:#5b1d1d;border-radius:8px"></div>
+  <div id="progressActions"></div><div id="progressFixedActions"><button class="primary" id="fixedStartBattleBtn" type="button">試合開始</button><button id="fixedRestartRunBtn" type="button">最初から</button></div><div id="progressError" style="display:none;margin-top:10px;padding:10px;background:#5b1d1d;border-radius:8px"></div>
   <hr style="border:0;border-top:1px solid #555;margin:18px 0">
   <h3>差分メンコ設定</h3>
   <label class="ruleRow"><span>差分メンコを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label>
@@ -1447,7 +1447,14 @@ function prepareIntegratedMatch(){
   config={...config,name:e.isBoss?`第${progressArea(runState.match)}ボス`:`第${runState.match}試合の相手`,redMaxHP:p.hp,redAttack:p.atk,redAttackCards:p.atkMenko,redDefenseCards:p.defMenko,blueMaxHP:e.hp,blueAttack:e.atk,blueAttackCards:e.atkMenko,blueDefenseCards:e.defMenko};
   writeCfg(config);syncPortrait("player");syncPortrait("cpu");renderProgressPanel("match");progressPanel.style.display="block";progressPanel.setAttribute("aria-hidden","false");
 }
-function startCurrentIntegratedBattle(){progressPanel.style.display="none";progressPanel.setAttribute("aria-hidden","true");newMatch()}
+function startCurrentIntegratedBattle(){
+  const errorBox=document.getElementById("progressError");
+  errorBox.style.display="none";errorBox.textContent="";
+  if(!runState)startIntegratedRun();
+  newMatch();
+  lastFrameTime=null;frameAccumulator=0;
+  progressPanel.style.display="none";progressPanel.setAttribute("aria-hidden","true");
+}
 function handleIntegratedBattleResult(playerWon){
   if(!runState)return;
   if(!playerWon){renderProgressPanel("lose");progressPanel.style.display="block";return}
@@ -1505,8 +1512,19 @@ function showProgressError(err){
 }
 window.addEventListener("error",e=>showProgressError(e.error||e.message));
 window.addEventListener("unhandledrejection",e=>showProgressError(e.reason));
-document.getElementById("fixedStartBattleBtn").addEventListener("click",e=>{e.preventDefault();try{startCurrentIntegratedBattle()}catch(err){showProgressError(err)}});
-document.getElementById("fixedRestartRunBtn").addEventListener("click",e=>{e.preventDefault();try{startIntegratedRun()}catch(err){showProgressError(err)}});
+function bindControlActivation(id,action){
+  const button=document.getElementById(id);let lastActivation=-Infinity;
+  const activate=e=>{
+    if(e){if(e.cancelable)e.preventDefault();e.stopPropagation()}
+    const now=performance.now();if(now-lastActivation<350)return;lastActivation=now;
+    try{action()}catch(err){showProgressError(err)}
+  };
+  button.addEventListener("pointerup",activate,{passive:false});
+  button.addEventListener("touchend",activate,{passive:false});
+  button.addEventListener("click",activate);
+}
+bindControlActivation("fixedStartBattleBtn",startCurrentIntegratedBattle);
+bindControlActivation("fixedRestartRunBtn",startIntegratedRun);
 document.getElementById("progressFab").onclick=()=>{renderProgressPanel(runState?"match":"match");progressPanel.style.display="block"};
 document.getElementById("differenceInitiativeMode").onchange=e=>differenceCardsCountForInitiative=e.target.value==="on";
 function loop(now){
