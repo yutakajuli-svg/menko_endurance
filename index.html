@@ -57,61 +57,66 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 :root{--ink:#fff;--paper:#111;--red:#f00;--blue:#00f;--panel:#202020;--muted:#999}
 html,body{width:100%;height:100%;background:#0b0b0b;color:#fff;font-family:MisakiGothic,ui-monospace,monospace;overflow:hidden}
 button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
-#wrap{position:relative;width:100vw;height:100vh;height:100dvh;display:block;background:#0b0b0b}
-#battleUi{position:relative;width:min(100%,430px);height:100%;margin:0 auto;padding:max(6px,env(safe-area-inset-top)) 6px max(6px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:5px;background:#111;overflow:hidden}
+#wrap{position:relative;width:100vw;height:100vh;height:100dvh;display:block;background:#0b0b0b;overflow-y:auto;overflow-x:hidden}
+#battleUi{position:relative;width:min(100%,430px);height:auto;min-height:0;margin:0 auto;padding:max(10px,env(safe-area-inset-top)) 8px max(12px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto auto auto auto;gap:8px;background:#111;overflow:hidden}
 .corner-block{position:relative;z-index:5;min-width:0}
-.corner-label{display:flex;justify-content:space-between;align-items:center;height:15px;padding:0 4px;font-size:11px;line-height:1;color:#aaa}
+.corner-label{display:flex;justify-content:space-between;align-items:center;padding:0 3px 4px;font-size:10px;line-height:1;color:#aaa}
 .corner-label strong{font-weight:400;color:#fff}
-.status-group{position:relative;display:flex;align-items:center;height:102px}
+.status-group{position:relative;display:flex;align-items:flex-start;width:100%;height:108px;isolation:isolate}
 .status-group.blue{justify-content:flex-end}.status-group.red{justify-content:flex-start}
-.info-window{position:relative;z-index:1;flex:1;min-width:0;height:94px;padding:10px 12px;border:3px solid #444;background:#202020;overflow:hidden}
-.status-group.blue .info-window{margin-right:-4px;padding-right:18px;border-radius:7px 0 0 7px}
-.status-group.red .info-window{margin-left:-4px;padding-left:18px;border-radius:0 7px 7px 0}
-.portrait-window{position:relative;z-index:2;flex:0 0 102px;width:102px;height:102px;overflow:hidden;border:6px solid;background:#fff}
-.status-group.blue .portrait-window{border-color:#00f;border-radius:8px}
-.status-group.red .portrait-window{border-color:#f00;border-radius:8px}
-.portrait-layer{position:absolute;left:50%;top:30%;width:150%;height:150%;max-width:none;object-fit:contain;transform:translate(-50%,-50%);image-rendering:auto}
-.hp-line{font-size:19px;line-height:1;white-space:nowrap}
-.hp-rail{height:18px;margin:8px 0;border:3px solid #fff;background:#111;overflow:hidden}
+.info-window{position:relative;z-index:1;flex:1;min-width:0;height:108px;padding:9px 13px 7px;border:2px solid #444;border-radius:4px;background:#202020;box-shadow:inset 0 0 0 2px #292929;overflow:hidden}
+.status-group.blue .info-window{padding-right:25px}
+.status-group.red .info-window{order:2;margin-left:-22px;padding-left:25px}
+.portrait-window{--portrait-scale:1.5;--portrait-offset-y:-20%;position:relative;z-index:3;flex:0 0 104px;width:104px;height:104px;overflow:hidden;border:4px solid;border-radius:4px;background:#fff}
+.status-group.blue .portrait-window{order:2;margin-left:-22px;border-color:#00f}
+.status-group.red .portrait-window{order:1;border-color:#f00}
+.portrait-layer{position:absolute;left:0;top:var(--portrait-offset-y);width:100%;height:100%;max-width:none;object-fit:contain;transform:scale(var(--portrait-scale));transform-origin:50% 0;image-rendering:auto}
+.hp-line{font-size:18px;line-height:1;white-space:nowrap}
+.hp-rail{width:100%;height:20px;margin:7px 0 9px;padding:3px;border:2px solid #fff;background:#111;overflow:hidden}
 .hp-fill{height:100%;transition:width .04s linear}
 .status-group.red .hp-fill{background:#f00}.status-group.blue .hp-fill{background:#00f}
-.stat-line{font-size:17px;line-height:1.1;white-space:nowrap}
-.defense-line{margin-top:5px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
-#strengthWrap{position:relative;z-index:6;width:100%;max-width:420px;justify-self:center}
+.stat-line{font-size:18px;line-height:1;white-space:nowrap}
+.defense-line{margin-top:6px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
+#strengthWrap{position:relative;z-index:6;width:100%;display:grid;gap:4px}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
-#bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:4px solid #fff;background:#111;overflow:hidden;pointer-events:none}
-#bar::after{content:"";position:absolute;inset:5px;background:#242424}
-#needle{z-index:2;top:1px;width:18px;height:14px;background:#fff;box-shadow:0 0 0 2px #111}
-#ringArea{position:relative;z-index:1;height:100%;max-height:410px;max-width:100%;aspect-ratio:420/410;justify-self:center;align-self:center;background:#111}
+#bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
+#bar::after{content:"";position:absolute;left:4px;right:4px;top:50%;height:4px;transform:translateY(-50%);background:#555}
+#needle{z-index:2;top:2px;width:18px;height:14px;background:#fff;transform:translateX(-50%);transition:left .18s steps(4,jump-none)}
+#ringArea{position:relative;z-index:1;width:100%;height:auto;aspect-ratio:420/410;overflow:hidden;background:#111}
 #ringVisual,#c{position:absolute;inset:0;width:100%;height:100%;display:block}
 #ringVisual{z-index:0}#c{z-index:1;background:transparent;touch-action:none}
 #presentationLayer{position:absolute;z-index:20;inset:0;display:none;pointer-events:none}
 #presentationLayer.show{display:block}
-#illustrationWindow{position:absolute;left:6px;right:6px;top:128px;aspect-ratio:4/3;overflow:hidden;border:3px solid #fff;background:#050505}
+#illustrationWindow{position:absolute;left:6px;right:6px;top:158px;aspect-ratio:4/3;overflow:hidden;border:3px solid #fff;background:#050505}
 #moveImage{width:100%;height:100%;display:block;object-fit:cover}
 #moveImage.mirrored{transform:scaleX(-1)}
 #frameCounter{position:absolute;right:6px;bottom:5px;padding:3px 5px;background:#000c;font-size:11px}
-#messageWindow{position:absolute;left:4px;right:4px;top:clamp(400px,calc(75vw + 135px),462px);display:none;min-height:68px;padding:10px 13px;border:3px solid #fff;background:#050505;color:#fff;font-size:17px;line-height:1.45;white-space:pre-line}
+#messageWindow{position:absolute;left:4px;right:4px;top:478px;display:none;min-height:68px;padding:10px 13px;border:3px solid #fff;background:#050505;color:#fff;font-size:17px;line-height:1.45;white-space:pre-line}
 #messageWindow.show{display:block}#messageWindow.tall{min-height:88px}
-.status-group.feedback-red{animation:statusShake .36s steps(1,end),statusRedFlash .36s steps(1,end)}
-.status-group.feedback-white{animation:statusShake .36s steps(1,end),statusWhiteFlash .36s steps(1,end)}
-.status-group.feedback-soft{animation:statusSoftFlash .36s steps(1,end)}
-.status-group.feedback-red-double{animation:statusShakeStrong .52s steps(1,end),statusRedDouble .52s steps(1,end)}
-.status-group.feedback-white-double{animation:statusWhiteDouble .52s steps(1,end)}
-@keyframes statusShake{0%,100%{transform:none}18%{transform:translate(-5px,1px)}35%{transform:translate(4px,-1px)}52%{transform:translate(-3px,0)}70%{transform:translate(2px,1px)}}
-@keyframes statusShakeStrong{0%,100%{transform:none}10%{transform:translate(-8px,2px)}22%{transform:translate(7px,-2px)}36%{transform:translate(-6px,1px)}50%{transform:translate(5px,-1px)}65%{transform:translate(-4px,1px)}82%{transform:translate(3px,0)}}
-@keyframes statusRedFlash{0%,100%{filter:none}15%,44%{filter:brightness(1.7) sepia(1) saturate(7) hue-rotate(315deg)}}
-@keyframes statusWhiteFlash{0%,100%{filter:none}15%,48%{filter:brightness(2.5) grayscale(1)}}
-@keyframes statusSoftFlash{0%,100%{filter:none}18%,52%{filter:brightness(1.65) grayscale(1)}}
-@keyframes statusRedDouble{0%,32%,62%,100%{filter:none}10%,45%{filter:brightness(1.9) sepia(1) saturate(8) hue-rotate(315deg)}}
-@keyframes statusWhiteDouble{0%,32%,62%,100%{filter:none}10%,45%{filter:brightness(2.4) grayscale(1)}}
+.status-group::after{content:"";position:absolute;z-index:8;inset:0;border-radius:4px;opacity:0;pointer-events:none}
+.status-group.feedback-red{animation:statusShake .36s steps(2,jump-none)}
+.status-group.feedback-red::after{animation:statusRedFlash .36s linear}
+.status-group.feedback-white{animation:statusGuardShake .36s steps(2,jump-none)}
+.status-group.feedback-white::after{animation:statusWhiteFlash .36s linear}
+.status-group.feedback-soft::after{animation:statusSoftFlash .36s linear}
+.status-group.feedback-red-double{animation:statusShakeStrong .52s steps(2,jump-none)}
+.status-group.feedback-red-double::after{animation:statusRedDouble .52s linear}
+.status-group.feedback-white-double::after{animation:statusWhiteDouble .52s linear}
+@keyframes statusShake{0%,100%{transform:translate(0)}20%{transform:translate(-4px,1px)}40%{transform:translate(4px,-1px)}60%{transform:translate(-3px,0)}80%{transform:translate(3px,1px)}}
+@keyframes statusGuardShake{0%,100%{transform:translate(0)}25%{transform:translate(-3px,0)}50%{transform:translate(3px,0)}75%{transform:translate(-2px,0)}}
+@keyframes statusShakeStrong{0%,100%{transform:translate(0)}12%{transform:translate(-7px,2px)}24%{transform:translate(7px,-2px)}38%{transform:translate(-6px,1px)}52%{transform:translate(6px,-1px)}68%{transform:translate(-5px,1px)}84%{transform:translate(4px,0)}}
+@keyframes statusRedFlash{0%,100%{opacity:0}16%,50%{opacity:.66;background:#f00}}
+@keyframes statusWhiteFlash{0%,100%{opacity:0}16%,50%{opacity:.64;background:#fff}}
+@keyframes statusSoftFlash{0%,100%{opacity:0}16%,50%{opacity:.38;background:#fff}}
+@keyframes statusRedDouble{0%,100%{opacity:0}8%,24%,56%,73%{opacity:.72;background:#f00}34%,44%,82%{opacity:0}}
+@keyframes statusWhiteDouble{0%,100%{opacity:0}8%,24%,56%,73%{opacity:.48;background:#fff}34%,44%,82%{opacity:0}}
 #ui{display:none}
 #progressFab,#balanceFab,#logFab{position:fixed;z-index:24;top:max(5px,env(safe-area-inset-top));bottom:auto;min-height:26px;padding:4px 6px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.48}
 #progressFab{left:max(5px,calc(50vw - 210px))}#balanceFab{right:max(42px,calc(50vw - 174px))}#logFab{right:max(5px,calc(50vw - 210px))}
 #progressFab:hover,#balanceFab:hover,#logFab:hover{opacity:1}
 #playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
 #playerLog .detail,#playerLog .total{color:#fff}#playerLog .red{color:#f00}#playerLog .blue{color:#00f}
-@media(max-width:370px){#battleUi{padding-inline:4px}.status-group{height:88px}.info-window{height:82px;padding-block:8px}.portrait-window{flex-basis:88px;width:88px;height:88px}.hp-line{font-size:16px}.hp-rail{height:15px;margin:6px 0}.stat-line{font-size:14px}.defense-line{font-size:11px}.illustration-window{top:112px}#messageWindow{top:clamp(370px,calc(75vw + 115px),405px);font-size:15px}}
+@media(max-width:370px){#battleUi{padding-inline:6px}.status-group{height:100px}.info-window{height:100px;padding-block:8px}.portrait-window{flex-basis:96px;width:96px;height:96px}.hp-line,.stat-line{font-size:16px}.hp-rail{height:18px;margin:6px 0}.defense-line{font-size:12px}#illustrationWindow{top:148px}#messageWindow{top:448px;font-size:15px}}
 </style>
 </head>
 <body>
@@ -345,7 +350,7 @@ function restartStatusFeedback(actor,className,duration){
 function displayedDefense(actor){
   if(presentationDefenseReset[actor])return {newValue:0,carry:0,total:0};
   const resultData=roundResults?.[actor]||null;
-  if(!resultData)return {newValue:null,carry:defenseStock?.[actor]??0,total:null};
+  if(!resultData){const carry=defenseStock?.[actor]??0;return {newValue:0,carry,total:carry}}
   const carry=resultData.defenseCarryBefore??defenseStock?.[actor]??0;
   const newValue=resultData.defenseNewBefore??resultData.defenseLevel??0;
   return {newValue,carry,total:newValue+carry};
@@ -451,11 +456,22 @@ function deck(){
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
   return d;
 }
-function cardsOverlap(a,b){
-  const dx=a.x-b.x,dy=a.y-b.y;
-  // 八角形を円として近似。中心距離が半径合計の約78%以内なら重なり扱い。
-  return Math.hypot(dx,dy)<(a.r+b.r)*.78;
+function cardFootprint(c){
+  const r=c.r,corner=r*.10,rot=c.rot||0,cs=Math.cos(rot),sn=Math.sin(rot);
+  const local=[[-r+corner,-r],[r-corner,-r],[r,-r+corner],[r,r-corner],[r-corner,r],[-r+corner,r],[-r,r-corner],[-r,-r+corner]];
+  return local.map(([x,y])=>({x:c.x+x*cs-y*sn,y:c.y+x*sn+y*cs}));
 }
+function polygonsOverlap(a,b){
+  for(const polygon of [a,b])for(let i=0;i<polygon.length;i++){
+    const p=polygon[i],q=polygon[(i+1)%polygon.length],ax=-(q.y-p.y),ay=q.x-p.x;
+    let amin=Infinity,amax=-Infinity,bmin=Infinity,bmax=-Infinity;
+    for(const v of a){const n=v.x*ax+v.y*ay;amin=Math.min(amin,n);amax=Math.max(amax,n)}
+    for(const v of b){const n=v.x*ax+v.y*ay;bmin=Math.min(bmin,n);bmax=Math.max(bmax,n)}
+    if(amax<=bmin||bmax<=amin)return false;
+  }
+  return true;
+}
+function cardsOverlap(a,b){return polygonsOverlap(cardFootprint(a),cardFootprint(b))}
 function updateStackDepths(){
   // cards配列の後ろほど後から場に置かれた＝上にある。
   // coverDepthは、そのカードの上に直接または連鎖的に何枚重なっているか。
@@ -500,7 +516,9 @@ function sampleCardPoints(c,count=24){
   return pts;
 }
 function pointCoveredByCard(p,c){
-  return Math.hypot(p.x-c.x,p.y-c.y)<c.r*.86;
+  const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),dx=p.x-c.x,dy=p.y-c.y;
+  const x=Math.abs(dx*cs-dy*sn),y=Math.abs(dx*sn+dy*cs),r=c.r,corner=r*.10;
+  return x<=r&&y<=r&&x+y<=2*r-corner;
 }
 function upperCardsFor(index){
   const list=[];
@@ -657,7 +675,11 @@ function currentUpperCards(index){
 }
 function overlapAmount(a,b){
   const d=Math.hypot(a.x-b.x,a.y-b.y);
-  return clamp(1-d/((a.r+b.r)*.78),0,1);
+  if(!cardsOverlap(a,b))return 0;
+  if(d<.001)return 1;
+  const ux=(b.x-a.x)/d,uy=(b.y-a.y)/d;
+  const support=(c,dirX,dirY)=>{const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),x=Math.abs(dirX*cs-dirY*sn),y=Math.abs(dirX*sn+dirY*cs),corner=c.r*.10;return c.r*(x+y)-corner*Math.min(x,y)};
+  return clamp(1-d/(support(a,ux,uy)+support(b,-ux,-uy)),0,1);
 }
 function beginCardMotion(i,impulse,sourceLabel){
   const wave=pendingLayerWave,c=cards[i],zone=wave.zone;
@@ -1213,7 +1235,7 @@ function update(){
   time+=1/60;
   if(state==="aim")phase=(phase+.012)%1;
   const gauge=gaugeStrength();
-  needle.style.left=`calc(${gaugePosition(gauge)*100}% - 2px)`;
+  needle.style.left=`${gaugePosition(gauge)*100}%`;
   if(shake>0)shake*=.88;
   if(state==="deal")updateDeal();
   if(dropper){dropper.z+=dropper.vz;dropper.vz+=1.35;dropper.rot+=dropper.spin;
@@ -1346,7 +1368,7 @@ function drawCardShadow(c){
 }
 function drawCard(c,isDrop=false){
   const r=c.r,z=c.z||0,spec=menkoSpec(c),tilt=isDrop?0:(c.tilt||0),cos=Math.cos(tilt),sin=Math.sin(tilt),back=cos<0;
-  const height=clamp(z/Math.max(1,48*(r/54)),0,1),airScale=1+height*.30,depth=Math.max(.8,2.25*(r/54)),corner=r*.10,camera=Math.max(160,420*(r/54));
+  const height=clamp(z/Math.max(1,48*(r/54)),0,1),layerScale=(c.coverDepth||0)>0?Math.max(.45,c.layerFactor||1):1,airScale=1+height*.30*layerScale,depth=Math.max(.8,2.25*(r/54)),corner=r*.10,camera=Math.max(160,420*(r/54));
   ctx.save();if(c.exiting)ctx.globalAlpha=1-(c.exitT||0);ctx.translate(c.x,c.y-z);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(airScale,airScale);ctx.lineJoin="bevel";ctx.miterLimit=1;
   const pivotY=c.animationPower==="weak"?-r:0,outline=[[-r+corner,-r],[r-corner,-r],[r,-r+corner],[r,r-corner],[r-corner,r],[-r+corner,r],[-r,r-corner],[-r,-r+corner]];
   const project=(px,py,pz)=>{const ly=py-pivotY,ry=ly*cos-pz*sin+pivotY,rz=ly*sin+pz*cos,k=camera/(camera-rz);return{x:px*k,y:ry*k,z:rz,k}};
@@ -1384,7 +1406,8 @@ function hud(){syncBattleUi()}
 function render(){
   const bar=document.getElementById("bar");bar.style.visibility=turn==="cpu"?"hidden":"visible";bar.style.opacity=state==="aim"&&turn==="player"?"1":".22";
   ctx.clearRect(0,0,W,H);ctx.save();if(shake>.2&&state!=="result"&&state!=="gameover"&&state!=="presentation")ctx.translate(rand(-shake,shake),rand(-shake,shake));drawTable();drawToss();
-  const ordered=[...cards].sort((a,b)=>a.y-b.y);ordered.forEach(c=>drawCardShadow(c));ordered.forEach(c=>drawCard(c));drawImpact();
+  // cards配列は下層から上層の順。位置で並べ直すと、移動中に前後が入れ替わって見える。
+  const ordered=[...cards];ordered.forEach(c=>drawCardShadow(c));ordered.forEach(c=>drawCard(c));drawImpact();
   if(selectedCard)drawCard({x:W/2,y:Math.max(44,H*.18),z:0,rot:0,r:selectedCard.r*.82,tilt:0,face:0,type:selectedCard.type,team:"common",isDifference:false},true);
   if(dropper&&!dropper.hide){const thrown={x:dropper.x,y:dropper.y,z:dropper.z,rot:dropper.rot,r:dropper.r,tilt:0,face:0,team:dropper.actor,type:"clone",isDifference:true};drawCardShadow(thrown);drawCard(thrown,true)}
   ctx.restore();hud();overlay();
