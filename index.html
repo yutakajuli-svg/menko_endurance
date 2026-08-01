@@ -488,13 +488,15 @@ function polygonsOverlap(a,b){
   return true;
 }
 function cardsOverlap(a,b){return polygonsOverlap(cardFootprint(a),cardFootprint(b))}
+const MIN_STACK_OVERLAP=.08;
+function stackCardsOverlap(a,b){return cardsOverlap(a,b)&&overlapAmount(a,b)>=MIN_STACK_OVERLAP}
 function updateStackDepths(){
   // cards配列の後ろほど後から場に置かれた＝上にある。
   // coverDepthは、そのカードの上に直接または連鎖的に何枚重なっているか。
   for(let i=0;i<cards.length;i++){
     let depth=0;
     for(let j=i+1;j<cards.length;j++){
-      if(cardsOverlap(cards[i],cards[j]))depth++;
+      if(stackCardsOverlap(cards[i],cards[j]))depth++;
     }
     cards[i].coverDepth=depth;
     // 上に1枚増えるごとに衝撃伝達を緩やかに減らす。上面は従来通り1.0。
@@ -508,7 +510,7 @@ function buildDirectBelow(){
   for(let i=cards.length-1;i>=0;i--){
     let best=-1,bestScore=Infinity;
     for(let j=i-1;j>=0;j--){
-      if(!cardsOverlap(cards[i],cards[j]))continue;
+      if(!stackCardsOverlap(cards[i],cards[j]))continue;
       const d=Math.hypot(cards[i].x-cards[j].x,cards[i].y-cards[j].y);
       const layerGap=i-j;
       const score=layerGap*1000+d;
@@ -538,7 +540,7 @@ function pointCoveredByCard(p,c){
 }
 function upperCardsFor(index){
   const list=[];
-  for(let u=index+1;u<cards.length;u++)if(cardsOverlap(cards[index],cards[u]))list.push(u);
+  for(let u=index+1;u<cards.length;u++)if(stackCardsOverlap(cards[index],cards[u]))list.push(u);
   return list;
 }
 function layerImpactInfo(index,x,y,maxRadius){
@@ -686,7 +688,7 @@ function cpuThrow(){
 }
 function currentUpperCards(index){
   const list=[];
-  for(let u=index+1;u<cards.length;u++)if(cardsOverlap(cards[index],cards[u]))list.push(u);
+  for(let u=index+1;u<cards.length;u++)if(stackCardsOverlap(cards[index],cards[u]))list.push(u);
   return list;
 }
 function overlapAmount(a,b){
@@ -783,7 +785,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   c.animRotDelta=side*.08;
   c.pivotUx=Math.cos((c.rot||0)+Math.atan2(moveY,moveX)+Math.PI);
   c.pivotUy=Math.sin((c.rot||0)+Math.atan2(moveY,moveX)+Math.PI);
-  c.motionTravel=travel;c.waveImpulse=impulse;c.waveTransferred=false;
+  c.motionTravel=travel;
   c.targetFace=targetFace;c.flipChance=flipChance;
   wave.moved[i]=true;
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
@@ -800,37 +802,32 @@ function exposedImpactNow(i,wave){
 }
 function advanceLayerWave(){
   const wave=pendingLayerWave;if(!wave||wave.complete)return;
-  let activated=false,anyMoving=cards.some(c=>c.flip);
   updateStackDepths();
 
-  // 現在の形を毎フレーム見直す。上層が動いて空いた場所は、この時点で初めて下層に届く。
+  // 衝撃は投擲時の一度だけで確定する。上層の着地後に下層を再起動しない。
   for(let i=cards.length-1;i>=0;i--){
     if(wave.processed[i])continue;
-    const {inf,spatial}=exposedImpactNow(i,wave);
-    const uppers=currentUpperCards(i);
-    // 重なった札を同時に独立回転させない。現在いちばん上に露出している札だけを動かし、
-    // 上の札が実際に離れたフレームで初めて下の札へ衝撃を渡す。
-    if(uppers.length>0)continue;
+    const {inf,spatial}=wave.initialImpact[i];
+    // 元版と同じく、下層でも34%以上露出していれば上層と同じフレームで動く。
+    // 34%未満しか見えていない札（完全に覆われた札を含む）は今回は動かさない。
+    if(inf.uppers.length>0&&inf.exposedImpactFraction<.34){
+      wave.processed[i]=true;
+      wave.lines.push(`Card ${i+1}: STOPPED / covered at impact (${(inf.exposedImpactFraction*100).toFixed(1)}% exposed)`);
+      continue;
+    }
 
-    const direct=wave.power*wave.efficiency*spatial;
-    const received=wave.received[i];
-    const impulse=direct+received;
+    const impulse=wave.power*wave.efficiency*spatial;
     if(impulse>0.02){
-      const label=direct>0&&received>0?"newly exposed + released from upper":direct>0?"current exposed layer":"released from upper";
-      if(beginCardMotion(i,impulse,label))activated=true;
+      beginCardMotion(i,impulse,"initial exposed layer");
+    }else{
+      wave.processed[i]=true;
+      wave.lines.push(`Card ${i+1}: STOPPED / insufficient initial impact (${(spatial*100).toFixed(1)}%)`);
     }
   }
 
-  anyMoving=cards.some(c=>c.flip);
-  if(!anyMoving&&!activated){
-    // これ以上、上層の移動で開く可能性がないので残りを停止確定。
-    for(let i=0;i<cards.length;i++)if(!wave.processed[i]){
-      const {spatial}=exposedImpactNow(i,wave);
-      wave.processed[i]=true;
-      wave.lines.push(`Card ${i+1}: STOPPED / no newly opened impact (${(spatial*100).toFixed(1)}%)`);
-    }
+  if(wave.processed.every(Boolean)){
     wave.complete=true;
-    const entry=["===== THROW LOG =====",`Round     : ${roundNo} / ${roundThrow===0?"FIRST":"SECOND"}`,`Actor     : ${wave.actor}`,`Zone      : ${wave.zoneName}`,`Gauge     : ${(wave.gauge*100).toFixed(1)}`,"Rule      : WAVE IMPACT -> MOTION TYPE -> FLIP LOTTERY -> SEAMLESS RESULT",...wave.lines,"====================="].join("\n");
+    const entry=["===== THROW LOG =====",`Round     : ${roundNo} / ${roundThrow===0?"FIRST":"SECOND"}`,`Actor     : ${wave.actor}`,`Zone      : ${wave.zoneName}`,`Gauge     : ${(wave.gauge*100).toFixed(1)}`,"Rule      : SINGLE IMPACT -> EXPOSED CARDS MOVE TOGETHER -> RESULT",...wave.lines,"====================="].join("\n");
     appendLog(entry);
   }
 }
@@ -840,16 +837,16 @@ function hit(x,y,power,gauge,zone){
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
     c.faceBeforeThrow=c.face;c.throwStartX=c.x;c.throwStartY=c.y;c.provisionalFace=null;
-    c.waveImpulse=0;c.waveTransferred=false;c.flip=false;c.settled=true;
+    c.flip=false;c.settled=true;
   }
   pendingLayerWave={
     x,y,maxRadius:R.s*.40,power,gauge,zone,strikerRadius:Math.min(R.s*.08,30),
     efficiency:[.48,.66,.88,1.02,.96,.90][zone.index],
-    transmission:[.16,.21,.27,.32,.30,.27][zone.index],
     processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),
-    received:new Array(cards.length).fill(0),lines:[],complete:false,
+    initialImpact:[],lines:[],complete:false,
     actor:turn==="player"?"RED":"BLUE",zoneName:zoneNames[zone.index]
   };
+  pendingLayerWave.initialImpact=cards.map((_,i)=>exposedImpactNow(i,pendingLayerWave));
   advanceLayerWave();
   pendingLandedCard=dropper?.sourceClone||makeCloneCard(dropper?.actor||turn);
   Object.assign(pendingLandedCard,{team:dropper?.actor||turn,type:"clone",x:x+rand(-4,4),y:y+rand(-4,4),r:Math.min(R.s*.105,36)*MENKO_SIZE_SCALE,rot:dropper?.rot||rand(-.3,.3),z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:false,delay:0});
@@ -869,7 +866,7 @@ function resolveStackFaces(){
 
     for(let j=i+1;j<cards.length;j++){
       const upper=cards[j];
-      if(!cardsOverlap(c,upper))continue;
+      if(!stackCardsOverlap(c,upper))continue;
       const moved=Math.hypot((upper.x-(upper.throwStartX??upper.x)),(upper.y-(upper.throwStartY??upper.y)));
       const released=moved>upper.r*releaseDistanceFactor;
       const upperReturnedFront=finalFaces[j]===0;
@@ -1247,14 +1244,6 @@ function updateCards(){
       c.tilt=c.targetTilt??(c.face?Math.PI:0);
       c.provisionalFace=c.targetFace??c.face;
 
-      if(pendingLayerWave&&!c.waveTransferred){
-        c.waveTransferred=true;
-        for(let j=0;j<i;j++){
-          if(pendingLayerWave.processed[j])continue;
-          const ov=overlapAmount(c,cards[j]);if(ov<=0)continue;
-          pendingLayerWave.received[j]+=c.waveImpulse*pendingLayerWave.transmission*(.30+ov*.45);
-        }
-      }
       c.targetFace=null;c.targetTilt=null;c.motionTravel=0;c.animT=0;c.animDuration=0;
       c.animStartX=null;c.animStartY=null;c.animEndX=null;c.animEndY=null;c.animStartTilt=null;c.animStartRot=null;c.animLift=0;c.animRotDelta=0;c.animPeakTilt=0;
       c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;c.animationPower=null;c.animationSide=0;c.animRoll=0;
