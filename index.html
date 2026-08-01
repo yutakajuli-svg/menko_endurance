@@ -8,7 +8,6 @@
 :root{--ink:#111;--paper:#f8f8f3;--red:#b00020;--blue:#0057b8}
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:system-ui,-apple-system,sans-serif;overflow:hidden;touch-action:auto}
-#logFab{position:fixed;right:10px;bottom:calc(48px + max(8px,env(safe-area-inset-bottom)));z-index:20;padding:9px 12px;border:2px solid var(--ink);background:var(--paper);box-shadow:2px 2px 0 var(--ink)}
 #wrap{position:relative;width:100vw;height:100vh;display:grid;grid-template-rows:1fr auto}
 canvas{width:100vw;height:100%;display:block;background:var(--paper);touch-action:none}
 #bar{position:absolute;height:28px;border:2px solid var(--ink);background:none;overflow:hidden;pointer-events:none}
@@ -27,7 +26,6 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 #debugLog{width:100%;flex:1;min-height:0;resize:none;border:2px solid var(--ink);background:#fff;color:#111;padding:10px;font:12px/1.42 ui-monospace,SFMono-Regular,Consolas,monospace;touch-action:auto;user-select:text;-webkit-user-select:text}
 #copyStatus{font-size:12px;min-width:64px;align-self:center}
 #ui{padding-right:150px}
-#balanceFab{position:fixed;right:78px;bottom:calc(48px + max(8px,env(safe-area-inset-bottom)));z-index:20}
 #balancePanel{position:fixed;inset:0;background:rgba(248,248,243,.98);padding:max(14px,env(safe-area-inset-top)) 12px max(14px,env(safe-area-inset-bottom));display:none;z-index:31;overflow:auto;touch-action:auto}
 #balanceBox{max-width:620px;margin:0 auto;border:2px solid var(--ink);padding:14px;background:var(--paper)}
 #balanceGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}
@@ -37,13 +35,12 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 #balanceActions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 @media(max-width:520px){#balanceGrid{grid-template-columns:1fr}}
 
-#progressFab{position:fixed;left:10px;bottom:calc(48px + max(8px,env(safe-area-inset-bottom)));z-index:22}
 #progressPanel{position:relative;width:100%;min-height:100vh;min-height:100dvh;background:#111;color:#f3f3f3;display:none;overflow:visible;touch-action:auto;padding:18px;pointer-events:auto}
 #progressBox{position:relative;max-width:760px;margin:0 auto;background:#1c1c1c;border:1px solid #555;border-radius:16px;padding:18px;pointer-events:auto}
 body.progress-screen{overflow:auto}
 body.progress-screen #wrap{display:none}
 body.progress-screen #progressPanel{display:block}
-body.progress-screen #progressFab,body.progress-screen #balanceFab,body.progress-screen #logFab{display:none}
+body.progress-screen #testTools{display:none}
 #progressBox button{background:#262626;color:#f3f3f3;border-color:#666}
 #progressBox .primary{background:#f3f3f3;color:#111}
 #progressStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
@@ -62,7 +59,7 @@ body.progress-screen #progressFab,body.progress-screen #balanceFab,body.progress
 html,body{width:100%;height:100%;background:#0b0b0b;color:#fff;font-family:MisakiGothic,ui-monospace,monospace;overflow:hidden}
 button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #wrap{position:relative;width:100vw;height:100vh;height:100dvh;display:block;background:#0b0b0b;overflow-y:auto;overflow-x:hidden}
-#battleUi{position:relative;width:min(100%,430px);height:auto;min-height:0;margin:0 auto;padding:max(10px,env(safe-area-inset-top)) 8px max(12px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto auto auto auto;gap:8px;background:#111;overflow:hidden}
+#battleUi{position:relative;width:min(100%,430px);height:auto;min-height:0;margin:0 auto;padding:max(10px,env(safe-area-inset-top)) 8px max(12px,env(safe-area-inset-bottom));display:grid;grid-template-rows:auto auto auto auto auto;gap:8px;background:#111;overflow:hidden}
 .corner-block{position:relative;z-index:5;min-width:0}
 .corner-label{display:flex;justify-content:space-between;align-items:center;padding:0 3px 4px;font-size:10px;line-height:1;color:#aaa}
 .corner-label strong{font-weight:400;color:#fff}
@@ -115,12 +112,15 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 @keyframes statusRedDouble{0%,100%{opacity:0}8%,24%,56%,73%{opacity:.72;background:#f00}34%,44%,82%{opacity:0}}
 @keyframes statusWhiteDouble{0%,100%{opacity:0}8%,24%,56%,73%{opacity:.48;background:#fff}34%,44%,82%{opacity:0}}
 #ui{display:none}
-#progressFab,#balanceFab,#logFab{position:fixed;z-index:24;top:max(5px,env(safe-area-inset-top));bottom:auto;min-height:26px;padding:4px 6px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.48}
-#progressFab{left:max(5px,calc(50vw - 210px))}#balanceFab{right:max(42px,calc(50vw - 174px))}#logFab{right:max(5px,calc(50vw - 210px))}
-#progressFab:hover,#balanceFab:hover,#logFab:hover{opacity:1}
+#testTools{position:relative;z-index:24;display:flex;justify-content:flex-end;align-items:center;gap:5px;min-height:26px}
+#testToolsMenu{display:none;align-items:center;gap:5px}
+#testTools.open #testToolsMenu{display:flex}
+#testTools button{position:static;min-height:26px;padding:4px 7px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.72}
+#testTools button:hover,#testTools button:focus-visible{color:#fff;opacity:1}
+#testToolsToggle{min-width:42px}
 #playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
 #playerLog .detail,#playerLog .total{color:#fff}#playerLog .red{color:#f00}#playerLog .blue{color:#00f}
-@media(max-width:370px){#battleUi{padding-inline:6px}.status-group{height:100px}.info-window{height:100px;padding-block:8px}.portrait-window{flex-basis:96px;width:96px;height:96px}.hp-line,.stat-line{font-size:16px}.hp-rail{height:18px;margin:6px 0}.defense-line{font-size:12px}#illustrationWindow{top:148px}#messageWindow{top:448px;font-size:15px}}
+@media(max-width:370px){#battleUi{padding-inline:6px}.status-group{height:100px}.info-window{height:100px;padding-block:8px}.portrait-window{flex-basis:96px;width:96px;height:96px}.hp-line,.stat-line{font-size:16px}.hp-rail{height:18px;margin:6px 0}.defense-line{font-size:12px}#illustrationWindow{top:148px}#messageWindow{top:448px;font-size:15px}#testTools,#testToolsMenu{gap:3px}#testTools button{padding-inline:5px}}
 </style>
 </head>
 <body>
@@ -194,6 +194,15 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
     </div>
   </section>
 
+  <div id="testTools" aria-label="検証メニュー">
+    <div id="testToolsMenu">
+      <button id="progressFab" type="button">進行</button>
+      <button id="balanceFab" type="button">数値設定</button>
+      <button id="logFab" type="button">ログ</button>
+    </div>
+    <button id="testToolsToggle" type="button" aria-expanded="false" aria-controls="testToolsMenu">検証</button>
+  </div>
+
   <div id="presentationLayer" aria-live="polite">
     <div id="illustrationWindow">
       <img id="moveImage" alt="技・イベントイラスト">
@@ -203,7 +212,6 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   </div>
 </main>
 </div>
-<button id="progressFab">進行</button>
 <div id="progressPanel"><div id="progressBox">
   <h2 id="progressTitle">メンコ用進行装置</h2>
   <div id="progressSummary"></div>
@@ -217,7 +225,6 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   <h3>通算戦績</h3><div id="careerRecords"></div>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<button id="balanceFab">数値設定</button><button id="logFab">ログ</button>
 <div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">ダメージ：攻撃メンコが0枚なら0。1枚以上なら「攻撃力＋攻撃レベル－防御レベル」。0未満は0とし、最終ダメージは攻撃力を上限とします。 防御はcarry（前ラウンドからの持ち越し）とnew（今回獲得）を別管理します。攻撃時はcarryから先に消費し、次ラウンドへ持ち越せるのは消費後に残ったnewだけです。carryの残りはラウンド終了時に消滅します。攻撃Lvが0なら攻撃は発生せず、今回のnewだけが次ラウンドのcarryになります。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。分身は表が陣営色、めくれた裏は白地に太い陣営色の枠と「裏／めくれ」で表示します。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時、物理めくれ候補になった場合だけ発動抽選を行います。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。最大ダメージ時は被攻撃側の防御在庫を0にします。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
 <script>
@@ -1560,6 +1567,15 @@ function bindControlActivation(id,action){
 bindControlActivation("fixedStartBattleBtn",startCurrentIntegratedBattle);
 bindControlActivation("fixedRestartRunBtn",startIntegratedRun);
 document.getElementById("progressFab").onclick=()=>{renderProgressPanel("match");setProgressScreen(true)};
+const testTools=document.getElementById("testTools");
+const testToolsMenu=document.getElementById("testToolsMenu");
+const testToolsToggle=document.getElementById("testToolsToggle");
+function setTestToolsOpen(open){
+  testTools.classList.toggle("open",open);
+  testToolsToggle.setAttribute("aria-expanded",String(open));
+}
+testToolsToggle.onclick=()=>setTestToolsOpen(!testTools.classList.contains("open"));
+testToolsMenu.addEventListener("click",e=>{if(e.target.closest("button"))setTestToolsOpen(false)});
 document.getElementById("differenceInitiativeMode").onchange=e=>differenceCardsCountForInitiative=e.target.value==="on";
 function loop(now){
   if(lastFrameTime==null)lastFrameTime=now;
