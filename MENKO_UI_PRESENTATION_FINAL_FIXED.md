@@ -1,6 +1,6 @@
 # MENKO ENDURANCE UI / PRESENTATION FIXED
 
-Fixed: 2026-07-30
+Fixed: 2026-08-01
 
 This document records only the UI and presentation decisions approved so far.
 Items that still require visual testing are separated at the end.
@@ -16,8 +16,20 @@ Items that still require visual testing are separated at the end.
 - Approved damage feedback: `design/damage-feedback-final.html`
 - Technique illustration presentation: `move_effect_lab_final.html`
 
-These files are references for later integration. They are not yet integrated
-into `index.html`.
+The approved references are integrated into `index.html` as of v20.
+
+## v20 integration checkpoint
+
+- Main file: `index.html`
+- In-game UI, ring, strength bar, menko designs, animation, character portraits,
+  technique illustrations, messages, flashes, and HP animation are integrated.
+- The ring and menko scale have been adjusted for the final mobile layout.
+- The weak-success animation uses the approved fixed lower edge.
+- Overlapping menko react as one impact group without delayed lower-layer chain
+  reactions.
+- The test controls are consolidated under one `検証` button below the RED
+  status window. `進行`, `数値設定`, and `ログ` open from that button.
+- This state is the v20 UI integration FIX checkpoint.
 
 ## Main screen layout
 
@@ -311,8 +323,9 @@ Back to front:
   - `REDの体力が回復！`
   - `体力+6`
 
-## Still provisional / not fixed
+## Still provisional / requires play testing
 
-- Character bust illustrations, expression variants, and final timing
-  confirmation with the completed assets
-- Integration into `index.html`
+- Final confirmation of character-expression timing with completed artwork
+- Rare presentation branches such as mutual attacks, full defense, no attack,
+  clone maximum damage, clone healing, and simultaneous knockout
+- Final play-feel adjustment of normal and clone menko flip frequency
