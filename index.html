@@ -81,7 +81,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
 #bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
 #bar::after{content:"";position:absolute;left:4px;right:4px;top:50%;height:4px;transform:translateY(-50%);background:#555}
-#needle{z-index:2;top:2px;width:18px;height:14px;background:#fff;transform:translateX(-50%);transition:left .18s steps(4,jump-none)}
+#needle{z-index:2;top:2px;width:18px;height:14px;background:#fff;transform:translateX(-50%);will-change:left}
 #ringArea{position:relative;z-index:1;width:100%;height:auto;aspect-ratio:420/410;overflow:hidden;background:#111}
 #ringVisual,#c{position:absolute;inset:0;width:100%;height:100%;display:block}
 #ringVisual{z-index:0}#c{z-index:1;background:transparent;touch-action:none}
@@ -791,9 +791,9 @@ function advanceLayerWave(){
     if(wave.processed[i])continue;
     const {inf,spatial}=exposedImpactNow(i,wave);
     const uppers=currentUpperCards(i);
-    const movingBlockers=uppers.filter(u=>cards[u].flip);
-    const waitingUnderMoving=movingBlockers.length>0 && inf.exposedImpactFraction<.34;
-    if(waitingUnderMoving)continue;
+    // 重なった札を同時に独立回転させない。現在いちばん上に露出している札だけを動かし、
+    // 上の札が実際に離れたフレームで初めて下の札へ衝撃を渡す。
+    if(uppers.length>0)continue;
 
     const direct=wave.power*wave.efficiency*spatial;
     const received=wave.received[i];
@@ -836,10 +836,8 @@ function hit(x,y,power,gauge,zone){
   advanceLayerWave();
   pendingLandedCard=dropper?.sourceClone||makeCloneCard(dropper?.actor||turn);
   Object.assign(pendingLandedCard,{team:dropper?.actor||turn,type:"clone",x:x+rand(-4,4),y:y+rand(-4,4),r:Math.min(R.s*.105,36),rot:dropper?.rot||rand(-.3,.3),z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:false,delay:0});
-  // 投げた同じ分身メンコを場へ戻す。新しい分身は増やさない。
-  cards.push(pendingLandedCard);
-  pendingLandedCard=null;
-  updateStackDepths();
+  // 衝撃計算中にcardsの枚数を変えると、層判定とprocessed配列がずれる。
+  // 投げた分身は既存メンコの動きがすべて終わってから、同じ1枚を場へ戻す。
 }
 function resolveStackFaces(){
   // cards配列の後ろほど上。候補面を上から確定する。
@@ -1229,6 +1227,9 @@ function updateCards(){
   }
   if(pendingLayerWave&&!pendingLayerWave.complete)advanceLayerWave();
   moving=cards.some(c=>!c.settled||c.flip);
+  if(!moving&&pendingLayerWave?.complete&&pendingLandedCard){
+    cards.push(pendingLandedCard);pendingLandedCard=null;updateStackDepths();
+  }
   return moving||(pendingLayerWave&&!pendingLayerWave.complete);
 }
 function update(){
@@ -1407,7 +1408,10 @@ function render(){
   const bar=document.getElementById("bar");bar.style.visibility=turn==="cpu"?"hidden":"visible";bar.style.opacity=state==="aim"&&turn==="player"?"1":".22";
   ctx.clearRect(0,0,W,H);ctx.save();if(shake>.2&&state!=="result"&&state!=="gameover"&&state!=="presentation")ctx.translate(rand(-shake,shake),rand(-shake,shake));drawTable();drawToss();
   // cards配列は下層から上層の順。位置で並べ直すと、移動中に前後が入れ替わって見える。
-  const ordered=[...cards];ordered.forEach(c=>drawCardShadow(c));ordered.forEach(c=>drawCard(c));drawImpact();
+  const ordered=[...cards];ordered.forEach(c=>drawCardShadow(c));ordered.forEach(c=>drawCard(c));
+  // 着弾した分身は見た目だけ最上面に置き、衝撃計算が終わるまでcards配列へ混ぜない。
+  if(pendingLandedCard)drawCard(pendingLandedCard);
+  drawImpact();
   if(selectedCard)drawCard({x:W/2,y:Math.max(44,H*.18),z:0,rot:0,r:selectedCard.r*.82,tilt:0,face:0,type:selectedCard.type,team:"common",isDifference:false},true);
   if(dropper&&!dropper.hide){const thrown={x:dropper.x,y:dropper.y,z:dropper.z,rot:dropper.rot,r:dropper.r,tilt:0,face:0,team:dropper.actor,type:"clone",isDifference:true};drawCardShadow(thrown);drawCard(thrown,true)}
   ctx.restore();hud();overlay();
