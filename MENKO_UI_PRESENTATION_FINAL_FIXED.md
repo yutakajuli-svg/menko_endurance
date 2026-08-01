@@ -116,6 +116,24 @@ Back to front:
   - Lower right: light gray
 - Diamond-shaped corner parts are not used.
 
+## Lighting and ground shadows
+
+- Use one fixed parallel light from the upper-left / rear of the screen.
+- Menko shadows fall toward the lower-right.
+- A shadow moves farther toward the lower-right as its menko rises.
+- Shadow size is approximately 100% while the menko is on the ground and
+  decreases to approximately 70% at maximum height.
+- Shadow corners remain slightly rounded while preserving the square menko
+  silhouette.
+- Shadow orientation and shape are projected from the fixed light, menko height,
+  tilt, and rotation; do not force the shadow to copy or reverse the menko
+  rotation.
+- Combine all menko shadow shapes into one mask and draw the mask once at low
+  opacity.
+- Overlapping shadows remain the same opacity instead of becoming darker.
+- Random menko overlap in the lighting test is not part of the final placement
+  rule and does not need to be reproduced.
+
 ## Center-layer order
 
 Back to front:
@@ -238,8 +256,12 @@ Back to front:
 - Clone effect presentation:
   - Clone maximum damage and healing use the same illustration-window sequence
     as techniques
-  - The placeholder test uses three frames for maximum damage and two frames
-    for healing; the final assets may use two or three frames
+  - Maximum damage has three technique types with four frames each:
+    throw, strike, and submission
+  - One of the three maximum-damage techniques is selected at random
+  - Healing uses one frame
+  - For maximum damage and healing, RED uses the original artwork and BLUE uses
+    a horizontal mirror
   - When the final frame appears, the feedback and message begin together
   - Maximum damage:
     - Two strong red flashes over approximately 0.52 seconds
@@ -253,7 +275,14 @@ Back to front:
     - Only the healing side's status group flashes
     - No shake
     - HP increases by one third of maximum HP during the two flashes
-  - The ring does not flash for either clone effect
+- The ring does not flash for either clone effect
+
+- Complete-defense artwork uses two frames:
+  - RED uses the original artwork
+  - BLUE uses a horizontal mirror
+- No-attack artwork uses three frames:
+  - RED initiative uses the original artwork
+  - BLUE initiative uses a horizontal mirror
 
 ### Commentary style
 
@@ -286,8 +315,4 @@ Back to front:
 
 - Character bust illustrations, expression variants, and final timing
   confirmation with the completed assets
-- Defense illustration assets
-- No-attack illustration assets
-- Clone maximum-damage and healing illustration assets
-- Final in-game light source and shadow integration
 - Integration into `index.html`
