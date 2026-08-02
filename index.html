@@ -229,7 +229,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v24 / DEFENSE ORIENTATION";
+const VERSION="MENKO ENDURANCE 01 / v25 / THROW LV1 ORIENTATION";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -280,7 +280,7 @@ let portraitState={player:{hair:"player",faceSet:portraitFaceSets[Math.floor(Mat
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
 const moveFrameCounts={"001_001":4,"001_002":3,"001_003":3,"002_001":2,"002_002":2,"002_003":3,"003_001":2,"003_002":2,"003_003":3};
-const redMoveMirrored={"001_001":false,"001_002":false,"001_003":true,"002_001":false,"002_002":true,"002_003":false,"003_001":false,"003_002":true,"003_003":false};
+const redMoveMirrored={"001_001":true,"001_002":false,"001_003":true,"002_001":false,"002_002":true,"002_003":false,"003_001":false,"003_002":true,"003_003":false};
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
 const readCfg=()=>{const v=Object.fromEntries(cfgIds.map(id=>[id,Math.max(0,Number(document.getElementById(id).value)||0)]));config={redMaxHP:Math.max(1,v.cfgRedHP),blueMaxHP:Math.max(1,v.cfgBlueHP),redAttack:v.cfgRedAtk,blueAttack:v.cfgBlueAtk,redAttackCards:v.cfgRedAttackCards,blueAttackCards:v.cfgBlueAttackCards,redDefenseCards:v.cfgRedDefenseCards,blueDefenseCards:v.cfgBlueDefenseCards};linkedCount=config.redAttackCards+config.redDefenseCards+Math.max(0,config.blueAttackCards-config.redAttackCards)+Math.max(0,config.blueDefenseCards-config.redDefenseCards);countSelect.value=[8,16,24,32,40,48].includes(linkedCount)?String(linkedCount):"16"};
