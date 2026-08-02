@@ -225,11 +225,11 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   <h3>通算戦績</h3><div id="careerRecords"></div>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃メンコ枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時、物理めくれ候補になった場合だけ発動抽選を行います。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは通常計算を無視して攻撃力分を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃メンコ枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃メンコ総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v21 / NO CARRY COMBAT";
+const VERSION="MENKO ENDURANCE 01 / v22 / CLONE SINGLE ROLL";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -248,8 +248,7 @@ let runState=null,selectedRewards=new Set();
 let differenceCardsCountForInitiative=true;
 const CLONE_RESCUE_HP_RATIO=1/4;
 const CLONE_RESCUE_COOLDOWN_ROUNDS=3;
-const CLONE_RESCUE_BASE_CHANCE=.30;
-const CLONE_RESCUE_CHANCE_STEP=.10;
+const CLONE_FLIP_RATE=.45;
 const MENKO_SIZE_SCALE=.90;
 // animation_lab_v5_final.html でFIXした「調整案」の値。
 // 再生速度は等倍のまま、高さ／滞空時間／移動距離／影／縦付近の間を本編へ移植する。
@@ -259,7 +258,6 @@ const MENKO_ANIMATION_TRAVEL_SCALE=1;
 const MENKO_ANIMATION_SHADOW_MIN_SCALE=.70;
 const MENKO_ANIMATION_EDGE_FRAMES=1.75;
 const CLONE_RESCUE_MAX_ACTIVATIONS=2;
-let cloneRescueState={player:{chance:CLONE_RESCUE_BASE_CHANCE},cpu:{chance:CLONE_RESCUE_BASE_CHANCE}};
 let cloneRescueCooldown=0;
 let cloneRescueActivations=0;
 
@@ -481,7 +479,6 @@ function newMatch(){
   linkedCount=Math.max(config.redAttackCards,config.blueAttackCards)+Math.max(config.redDefenseCards,config.blueDefenseCards);
   redHP=config.redMaxHP;blueHP=config.blueMaxHP;lastR=0;lastB=0;lastAttackLevel=0;lastDefenseLevel=0;lastDamage=0;turnCount=0;phase=0;condition=makeCondition();cards=[];dropper=null;impact=null;pendingLayerWave=null;pendingLandedCard=null;heldClone=null;
   roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;
-  cloneRescueState={player:{chance:CLONE_RESCUE_BASE_CHANCE},cpu:{chance:CLONE_RESCUE_BASE_CHANCE}};
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
   matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},rounds:[]};
@@ -754,27 +751,23 @@ function beginCardMotion(i,impulse,sourceLabel){
 
   // めくれは挙動と別抽選。上に乗っている枚数は成功率を下げ、直撃は上げる。
   let flipChance={EDGE_LIFT:.035,SHORT_HOP:.25,HIGH_HOP:.53,DIRECT_HIT:.67}[behavior];
-  // 分身は通常の物理めくれ率を完成させた後に専用補正を掛け、物理候補になった時だけ救済抽選する。
+  // 分身は通常の物理めくれ率を完成させた後、専用補正を掛けた1回の抽選だけを行う。
+  // この抽選でめくれた分身は、追加抽選なしで効果が確定発動する。
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
-  if(c.type==="clone")flipChance=cloneFlipAllowed?flipChance*.28:0;
+  if(c.type==="clone")flipChance=cloneFlipAllowed?flipChance*CLONE_FLIP_RATE:0;
   const animationPower=["tooWeak","weak","normal","just","strong","tooStrong"][wave.zone.index]||"normal";
   let willFlip=false;
   if(c.type==="clone"){
-    const physicalCandidate=animationPower!=="tooWeak"&&cloneFlipAllowed&&!c.cloneRescueRolled&&Math.random()<flipChance;
-    if(physicalCandidate){
+    const canRoll=animationPower!=="tooWeak"&&cloneFlipAllowed&&!c.cloneRescueRolled;
+    if(canRoll){
       c.cloneRescueRolled=true;
-      const st=cloneRescueState[c.team];
-      const attemptedChance=st.chance;
-      const success=Math.random()<attemptedChance;
-      willFlip=success;
-      if(success)st.chance=CLONE_RESCUE_BASE_CHANCE;
-      else st.chance=Math.min(1,st.chance+CLONE_RESCUE_CHANCE_STEP);
-      appendLog(`分身発動抽選 ${c.team==="player"?"RED":"BLUE"}: ${success?"成功":"失敗"} / 抽選率 ${(attemptedChance*100).toFixed(0)}%${success?" → 30%へリセット":` → 次回 ${(st.chance*100).toFixed(0)}%`}`);
+      willFlip=Math.random()<flipChance;
+      appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ${willFlip?"成功・効果確定":"失敗"} / 抽選率 ${(flipChance*100).toFixed(1)}%`);
     }
   }else{
     willFlip=animationPower!=="tooWeak"&&Math.random()<flipChance;
@@ -1006,11 +999,9 @@ function updateExpel(){
 }
 function applyCloneRescue(actor,owner){
   // 分身の効果を得るのは「分身の持ち主」ではなく、相手分身をめくった投擲側。
-  // 抽選率は分身の持ち主ごと、クールタイムはRED／BLUE共通で管理する。
+  // めくれた時点で効果は確定し、クールタイムはRED／BLUE共通で管理する。
   cloneRescueCooldown=CLONE_RESCUE_COOLDOWN_ROUNDS;
   cloneRescueActivations++;
-  cloneRescueState.player.chance=CLONE_RESCUE_BASE_CHANCE;
-  cloneRescueState.cpu.chance=CLONE_RESCUE_BASE_CHANCE;
   const actorIsPlayer=actor==="player";
   let choice;
   if(actorIsPlayer){
@@ -1075,8 +1066,6 @@ function resolveRoundEffects(){
     const selected=cloneEvents[Math.floor(Math.random()*cloneEvents.length)];
     appendLog(`同一ラウンド分身競合: ${selected.actor==="player"?"RED":"BLUE"}の効果を抽選採用`);
     cloneEvents=[selected];
-    cloneRescueState.player.chance=CLONE_RESCUE_BASE_CHANCE;
-    cloneRescueState.cpu.chance=CLONE_RESCUE_BASE_CHANCE;
   }
   const seen=new Set();
   for(const e of cloneEvents){
@@ -1104,10 +1093,10 @@ function resolveRoundEffects(){
   for(const r of rescued){
     if(r.choice!=="damage")continue;
     if(r.actor==="player"){
-      redCloneOverride=config.redAttack;
+      redCloneOverride=config.redAttack+config.redAttackCards;
       roundRedDamage=redCloneOverride;
     }else{
-      blueCloneOverride=config.blueAttack;
+      blueCloneOverride=config.blueAttack+config.blueAttackCards;
       roundBlueDamage=blueCloneOverride;
     }
   }
