@@ -133,7 +133,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
         <div class="hp-line">HP <span id="blueHpCurrent">0</span> / <span id="blueHpMax">0</span></div>
         <div class="hp-rail"><div class="hp-fill" id="blueHpFill"></div></div>
         <div class="stat-line">ATK <span id="blueAtk">0</span>　DEF <span id="blueDefTotal">0</span></div>
-        <div class="defense-line">NEW <span id="blueDefNew">?</span> + CARRY <span id="blueDefCarry">0</span></div>
+        <div class="defense-line">THIS ROUND ONLY</div>
       </div>
       <div class="portrait-window">
         <img class="portrait-layer" id="blueHair" alt="">
@@ -189,7 +189,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
         <div class="hp-line">HP <span id="redHpCurrent">0</span> / <span id="redHpMax">0</span></div>
         <div class="hp-rail"><div class="hp-fill" id="redHpFill"></div></div>
         <div class="stat-line">ATK <span id="redAtk">0</span>　DEF <span id="redDefTotal">0</span></div>
-        <div class="defense-line">NEW <span id="redDefNew">?</span> + CARRY <span id="redDefCarry">0</span></div>
+        <div class="defense-line">THIS ROUND ONLY</div>
       </div>
     </div>
   </section>
@@ -225,11 +225,11 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   <h3>通算戦績</h3><div id="careerRecords"></div>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">ダメージ：攻撃メンコが0枚なら0。1枚以上なら「攻撃力＋攻撃レベル－防御レベル」。0未満は0とし、最終ダメージは攻撃力を上限とします。 防御はcarry（前ラウンドからの持ち越し）とnew（今回獲得）を別管理します。攻撃時はcarryから先に消費し、次ラウンドへ持ち越せるのは消費後に残ったnewだけです。carryの残りはラウンド終了時に消滅します。攻撃Lvが0なら攻撃は発生せず、今回のnewだけが次ラウンドのcarryになります。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。分身は表が陣営色、めくれた裏は白地に太い陣営色の枠と「裏／めくれ」で表示します。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時、物理めくれ候補になった場合だけ発動抽選を行います。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。最大ダメージ時は被攻撃側の防御在庫を0にします。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃メンコ枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時、物理めくれ候補になった場合だけ発動抽選を行います。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは通常計算を無視して攻撃力分を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v20 / UI INTEGRATION FIXED";
+const VERSION="MENKO ENDURANCE 01 / v21 / NO CARRY COMBAT";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -266,8 +266,8 @@ let cloneRescueActivations=0;
 const PORTRAIT_ROOT="assets/character_portrait_lab";
 const MOVE_ROOT="assets/moves";
 const ui={
-  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),defTotal:document.getElementById("redDefTotal"),defNew:document.getElementById("redDefNew"),defCarry:document.getElementById("redDefCarry"),identity:document.getElementById("redIdentity")},
-  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),defTotal:document.getElementById("blueDefTotal"),defNew:document.getElementById("blueDefNew"),defCarry:document.getElementById("blueDefCarry"),identity:document.getElementById("blueIdentity")}
+  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),defTotal:document.getElementById("redDefTotal"),identity:document.getElementById("redIdentity")},
+  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),defTotal:document.getElementById("blueDefTotal"),identity:document.getElementById("blueIdentity")}
 };
 const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
 const portraitFaceSets=["01","02","03"],cpuPortraitHairs=["hair_01","hair_02","hair_03","hair_04","hair_05","hair_06","hair_07"];
@@ -332,7 +332,6 @@ let lastAttackLevel=0,lastDefenseLevel=0,lastDamage=0;
 let pendingLayerWave=null;
 let linkedCount=16,pendingLandedCard=null,selectedCard=null,heldClone=null,roundThrow=0,roundNo=1,roundStarter="player",flowT=0;
 let roundResults={player:null,cpu:null},roundRedDamage=0,roundBlueDamage=0;
-let defenseStock={player:0,cpu:0}; // 前ラウンドのnew残量のみをcarryとして1ラウンド持ち越す
 let matchStats=null;
 let aim={x:0,y:0};
 let turn="player",turnCount=0,cpuWait=0,zoneResult="";
@@ -371,12 +370,9 @@ function restartStatusFeedback(actor,className,duration){
   window.setTimeout(()=>group.classList.remove(className),duration+30);
 }
 function displayedDefense(actor){
-  if(presentationDefenseReset[actor])return {newValue:0,carry:0,total:0};
+  if(presentationDefenseReset[actor])return 0;
   const resultData=roundResults?.[actor]||null;
-  if(!resultData){const carry=defenseStock?.[actor]??0;return {newValue:0,carry,total:carry}}
-  const carry=resultData.defenseCarryBefore??defenseStock?.[actor]??0;
-  const newValue=resultData.defenseNewBefore??resultData.defenseLevel??0;
-  return {newValue,carry,total:newValue+carry};
+  return resultData?.defenseLevel??0;
 }
 function syncBattleUi(){
   const data={
@@ -387,8 +383,7 @@ function syncBattleUi(){
     const side=ui[uiKey(actor)],value=data[actor],def=displayedDefense(actor);
     side.hp.textContent=String(Math.round(value.hp));side.max.textContent=String(value.max);
     side.fill.style.width=`${clamp(value.hp/value.max,0,1)*100}%`;side.atk.textContent=String(value.atk);
-    side.defTotal.textContent=def.total==null?"?":String(def.total);
-    side.defNew.textContent=def.newValue==null?"?":String(def.newValue);side.defCarry.textContent=String(def.carry);
+    side.defTotal.textContent=String(def);
     syncPortrait(actor);
   }
   ui.red.identity.textContent="PLAYER";ui.blue.identity.textContent=config.name||"OPPONENT";
@@ -485,7 +480,7 @@ function newMatch(){
   hidePresentation();presentationRunning=false;presentationDefenseReset={player:false,cpu:false};resetPortraitExpressions();
   linkedCount=Math.max(config.redAttackCards,config.blueAttackCards)+Math.max(config.redDefenseCards,config.blueDefenseCards);
   redHP=config.redMaxHP;blueHP=config.blueMaxHP;lastR=0;lastB=0;lastAttackLevel=0;lastDefenseLevel=0;lastDamage=0;turnCount=0;phase=0;condition=makeCondition();cards=[];dropper=null;impact=null;pendingLayerWave=null;pendingLandedCard=null;heldClone=null;
-  roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;defenseStock={player:0,cpu:0};
+  roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;
   cloneRescueState={player:{chance:CLONE_RESCUE_BASE_CHANCE},cpu:{chance:CLONE_RESCUE_BASE_CHANCE}};
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
@@ -931,12 +926,16 @@ function clearPlayerLog(){
 function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
   const redFormula=red.attackLevel===0
     ? `攻撃Lv 0 → 0ダメージ`
-    : `攻撃値 ${config.redAttack+red.attackLevel} － 青の使用防御 ${blue.defenseUsed??0} ＝ ${redDamage}ダメージ`;
+    : red.effectiveAttackLevel<=0
+      ? `攻撃Lv ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ 完全防御・0ダメージ`
+      : `攻撃力 ${config.redAttack} ＋ 有効攻撃Lv ${red.effectiveAttackLevel} ＝ ${redDamage}ダメージ`;
   const blueFormula=blue.attackLevel===0
     ? `攻撃Lv 0 → 0ダメージ`
-    : `攻撃値 ${config.blueAttack+blue.attackLevel} － 赤の使用防御 ${red.defenseUsed??0} ＝ ${blueDamage}ダメージ`;
-  const redDefDetail=`赤防御：carry ${red.defenseCarryBefore??0} →使用${red.defenseCarryUsed??0} ／ new ${red.defenseNewBefore??red.defenseLevel} →使用${red.defenseNewUsed??0} ／ 次carry ${red.defenseCarryAfter??defenseStock.player}${red.disabledDefense?` ／ 相手所有カードで無効 ${red.disabledDefense}`:""}`;
-  const blueDefDetail=`青防御：carry ${blue.defenseCarryBefore??0} →使用${blue.defenseCarryUsed??0} ／ new ${blue.defenseNewBefore??blue.defenseLevel} →使用${blue.defenseNewUsed??0} ／ 次carry ${blue.defenseCarryAfter??defenseStock.cpu}${blue.disabledDefense?` ／ 相手所有カードで無効 ${blue.disabledDefense}`:""}`;
+    : blue.effectiveAttackLevel<=0
+      ? `攻撃Lv ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ 完全防御・0ダメージ`
+      : `攻撃力 ${config.blueAttack} ＋ 有効攻撃Lv ${blue.effectiveAttackLevel} ＝ ${blueDamage}ダメージ`;
+  const redDefDetail=`赤防御：取得 ${red.defenseLevel} ／ 使用 ${red.defenseUsed??0} ／ 未使用 ${red.defenseUnused??red.defenseLevel}（ラウンド終了で消滅）${red.disabledDefense?` ／ 相手所有カードで無効 ${red.disabledDefense}`:""}`;
+  const blueDefDetail=`青防御：取得 ${blue.defenseLevel} ／ 使用 ${blue.defenseUsed??0} ／ 未使用 ${blue.defenseUnused??blue.defenseLevel}（ラウンド終了で消滅）${blue.disabledDefense?` ／ 相手所有カードで無効 ${blue.disabledDefense}`:""}`;
   const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
   const blueFlipDetail=`青めくり：${blue.physicalFlippedCount??blue.flippedCount}枚 ／ 有効 ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} ／ 無効 ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)}`;
   playerLog.innerHTML=`<div class="detail">${redFlipDetail}<br>${blueFlipDetail}</div><div class="red">赤：${redFormula}</div><div class="blue">青：${blueFormula}</div><div class="detail">${redDefDetail}<br>${blueDefDetail}</div><div class="total">合計ダメージ　赤→青 ${redDamage} ／ 青→赤 ${blueDamage} ／ 両者合計 ${redDamage+blueDamage}</div><div class="actions"><button id="copyRoundLogBtn" type="button">このログをコピー</button>${isFinal?'<button id="showResultBtn" type="button">リザルトへ</button>':''}</div>`;
@@ -1057,9 +1056,9 @@ async function playRoundPresentations(data){
   for(const actor of order){const heal=rescued.find(r=>r.actor===actor&&r.choice==="heal");if(heal)await playCloneHealEvent(heal)}
   let attackShown=false;
   for(const actor of order){
-    const resultData=results[actor],damage=damages[actor];
+    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
     if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){attackShown=true;if(damage>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,resultData.attackLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
+    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
     if(attackShown)await wait(120);
   }
   if(!attackShown)await playNoAttackEvent(roundStarter);
@@ -1086,34 +1085,18 @@ function resolveRoundEffects(){
     seen.add(key);
     rescued.push(applyCloneRescue(e.actor,e.owner));
   }
-  // 防御持ち越し正式ルール：carry→newの順で消費し、次へ残せるのは未消費のnewだけ。
-  const redCarryBefore=defenseStock.player;
-  const blueCarryBefore=defenseStock.cpu;
-  const redNewBefore=red.defenseLevel;
-  const blueNewBefore=blue.defenseLevel;
-  const redAttackValue=red.attackLevel===0?0:config.redAttack+red.attackLevel;
-  const blueAttackValue=blue.attackLevel===0?0:config.blueAttack+blue.attackLevel;
+  // 防御はこのラウンドだけ有効。攻撃メンコと1対1で相殺し、残った攻撃Lvが技Lvと追加ダメージになる。
+  const redDefenseAvailable=red.defenseLevel;
+  const blueDefenseAvailable=blue.defenseLevel;
+  const blueDefenseUsed=Math.min(blueDefenseAvailable,red.attackLevel);
+  const redDefenseUsed=Math.min(redDefenseAvailable,blue.attackLevel);
+  const redEffectiveAttackLevel=Math.max(0,red.attackLevel-blueDefenseUsed);
+  const blueEffectiveAttackLevel=Math.max(0,blue.attackLevel-redDefenseUsed);
+  const redNormalDamage=redEffectiveAttackLevel>0?config.redAttack+redEffectiveAttackLevel:0;
+  const blueNormalDamage=blueEffectiveAttackLevel>0?config.blueAttack+blueEffectiveAttackLevel:0;
 
-  const blueCarryUsed=Math.min(blueCarryBefore,redAttackValue);
-  const redAttackAfterCarry=Math.max(0,redAttackValue-blueCarryUsed);
-  const blueNewUsed=Math.min(blueNewBefore,redAttackAfterCarry);
-  const blueDefenseUsed=blueCarryUsed+blueNewUsed;
-
-  const redCarryUsed=Math.min(redCarryBefore,blueAttackValue);
-  const blueAttackAfterCarry=Math.max(0,blueAttackValue-redCarryUsed);
-  const redNewUsed=Math.min(redNewBefore,blueAttackAfterCarry);
-  const redDefenseUsed=redCarryUsed+redNewUsed;
-
-  const redNormalRaw=redAttackValue-blueDefenseUsed;
-  const blueNormalRaw=blueAttackValue-redDefenseUsed;
-  const redNormalDamage=red.attackLevel===0?0:Math.max(0,Math.min(config.redAttack,redNormalRaw));
-  const blueNormalDamage=blue.attackLevel===0?0:Math.max(0,Math.min(config.blueAttack,blueNormalRaw));
-
-  defenseStock.player=Math.max(0,redNewBefore-redNewUsed);
-  defenseStock.cpu=Math.max(0,blueNewBefore-blueNewUsed);
-
-  red.defenseCarryBefore=redCarryBefore;red.defenseNewBefore=redNewBefore;red.defenseCarryUsed=redCarryUsed;red.defenseNewUsed=redNewUsed;red.defenseAvailable=redCarryBefore+redNewBefore;red.defenseUsed=redDefenseUsed;red.defenseCarryAfter=defenseStock.player;
-  blue.defenseCarryBefore=blueCarryBefore;blue.defenseNewBefore=blueNewBefore;blue.defenseCarryUsed=blueCarryUsed;blue.defenseNewUsed=blueNewUsed;blue.defenseAvailable=blueCarryBefore+blueNewBefore;blue.defenseUsed=blueDefenseUsed;blue.defenseCarryAfter=defenseStock.cpu;
+  red.effectiveAttackLevel=redEffectiveAttackLevel;red.defenseAvailable=redDefenseAvailable;red.defenseUsed=redDefenseUsed;red.defenseUnused=Math.max(0,redDefenseAvailable-redDefenseUsed);
+  blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
   roundRedDamage=redNormalDamage;
   roundBlueDamage=blueNormalDamage;
 
@@ -1127,32 +1110,25 @@ function resolveRoundEffects(){
       blueCloneOverride=config.blueAttack;
       roundBlueDamage=blueCloneOverride;
     }
-    defenseStock[r.owner]=0;
   }
-  red.defenseCarryAfter=defenseStock.player;
-  blue.defenseCarryAfter=defenseStock.cpu;
 
   appendLog([
     "===== DAMAGE DEBUG =====",
     `Round             : ${roundNo}`,
     `Config RED ATK    : ${config.redAttack}`,
     `Config BLUE ATK   : ${config.blueAttack}`,
-    `RED attack Lv     : ${red.attackLevel}`,
-    `BLUE carry/new    : ${blue.defenseCarryBefore} / ${blue.defenseNewBefore}`,
-    `BLUE used c/n     : ${blue.defenseCarryUsed} / ${blue.defenseNewUsed}`,
+    `RED attack raw Lv : ${red.attackLevel}`,
+    `BLUE defense got  : ${blueDefenseAvailable}`,
     `BLUE defense used : ${blueDefenseUsed}`,
-    `BLUE next carry   : ${blue.defenseCarryAfter}`,
-    `RED raw formula   : ${redAttackValue} - ${blueDefenseUsed} = ${redNormalRaw}`,
-    `RED normal damage : ${redNormalDamage}${red.attackLevel===0?" (Attack Lv 0 rule)":redNormalRaw<0?" (zero floor applied)":redNormalRaw>config.redAttack?" (attack cap applied)":""}`,
+    `RED effective Lv  : ${redEffectiveAttackLevel}`,
+    `RED damage formula: ${redEffectiveAttackLevel>0?`${config.redAttack} + ${redEffectiveAttackLevel} = ${redNormalDamage}`:"FULL DEFENSE = 0"}`,
     `RED clone override: ${redCloneOverride==null?"none":redCloneOverride}`,
     `RED final damage  : ${roundRedDamage}`,
-    `BLUE attack Lv    : ${blue.attackLevel}`,
-    `RED carry/new     : ${red.defenseCarryBefore} / ${red.defenseNewBefore}`,
-    `RED used c/n      : ${red.defenseCarryUsed} / ${red.defenseNewUsed}`,
+    `BLUE attack raw Lv: ${blue.attackLevel}`,
+    `RED defense got   : ${redDefenseAvailable}`,
     `RED defense used  : ${redDefenseUsed}`,
-    `RED next carry    : ${red.defenseCarryAfter}`,
-    `BLUE raw formula  : ${blueAttackValue} - ${redDefenseUsed} = ${blueNormalRaw}`,
-    `BLUE normal damage: ${blueNormalDamage}${blue.attackLevel===0?" (Attack Lv 0 rule)":blueNormalRaw<0?" (zero floor applied)":blueNormalRaw>config.blueAttack?" (attack cap applied)":""}`,
+    `BLUE effective Lv : ${blueEffectiveAttackLevel}`,
+    `BLUE damage formula: ${blueEffectiveAttackLevel>0?`${config.blueAttack} + ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"FULL DEFENSE = 0"}`,
     `BLUE clone override: ${blueCloneOverride==null?"none":blueCloneOverride}`,
     `BLUE final damage : ${roundBlueDamage}`,
     `Clone events      : ${cloneEvents.length}`,
@@ -1170,7 +1146,7 @@ function resolveRoundEffects(){
   if(roundBlueDamage===0)matchStats.zero.cpu++;
   const nextStarter=red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter;
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
-  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,`RED  ATK Lv ${red.attackLevel} - BLUE DEF使用 ${blueDefenseUsed} => ${roundRedDamage} damage`,`BLUE ATK Lv ${blue.attackLevel} - RED  DEF使用 ${redDefenseUsed} => ${roundBlueDamage} damage`,`DEF持越 RED ${red.defenseCarryAfter} / BLUE ${blue.defenseCarryAfter}`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
+  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
   playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,roundRedDamage,roundBlueDamage}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
