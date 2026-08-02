@@ -1,6 +1,6 @@
 # MENKO ENDURANCE UI / PRESENTATION FIXED
 
-Fixed: 2026-08-01
+Fixed: 2026-08-02
 
 This document records only the UI and presentation decisions approved so far.
 Items that still require visual testing are separated at the end.
@@ -17,6 +17,16 @@ Items that still require visual testing are separated at the end.
 - Technique illustration presentation: `move_effect_lab_final.html`
 
 The approved references are integrated into `index.html` as of v20.
+
+## v22 clone rescue tuning
+
+- A clone can be checked only while its owner is at one quarter HP or below.
+- Its flip probability is one roll at 45% of the completed normal-menko flip
+  probability.
+- A successful flip activates the clone effect without a second activation
+  lottery.
+- The two-activation match limit, three-round shared cooldown, and random
+  selection when both clones flip in one round remain unchanged.
 
 ## v20 integration checkpoint
 
@@ -271,6 +281,8 @@ Back to front:
     as techniques
   - Maximum damage has three technique types with four frames each:
     throw, strike, and submission
+  - Maximum damage ignores defense and equals attack power plus the attacker's
+    total number of attack menko
   - One of the three maximum-damage techniques is selected at random
   - Healing uses one frame
   - For maximum damage and healing, RED uses the original artwork and BLUE uses
