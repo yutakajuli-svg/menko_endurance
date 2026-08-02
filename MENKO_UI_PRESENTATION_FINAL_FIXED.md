@@ -18,7 +18,7 @@ Items that still require visual testing are separated at the end.
 
 The approved references are integrated into `index.html` as of v20.
 
-## v24 clone rescue, KO presentation, and defense orientation
+## v25 clone rescue, KO presentation, and illustration orientation
 
 - A clone can be checked only while its owner is at one quarter HP or below.
 - Its flip probability is one roll at 40% of the completed normal-menko flip
@@ -33,6 +33,8 @@ The approved references are integrated into `index.html` as of v20.
   unchanged.
 - Complete-defense illustration orientation: RED defense is horizontally
   mirrored; BLUE defense uses the original image orientation.
+- Throw-technique Lv1 orientation: RED attack is horizontally mirrored; BLUE
+  attack uses the original image orientation.
 
 ## v20 integration checkpoint
 
@@ -309,8 +311,8 @@ Back to front:
 - The ring does not flash for either clone effect
 
 - Complete-defense artwork uses two frames:
-  - RED uses the original artwork
-  - BLUE uses a horizontal mirror
+  - RED uses a horizontal mirror
+  - BLUE uses the original artwork
 - No-attack artwork uses three frames:
   - RED initiative uses the original artwork
   - BLUE initiative uses a horizontal mirror
