@@ -229,7 +229,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v26 / INITIATIVE KO GROWTH";
+const VERSION="MENKO ENDURANCE 01 / v27 / CLONE ACTOR SAVE";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -242,9 +242,11 @@ function setProgressScreen(visible){
 }
 const BOSSES={5:{hp:20,atk:3,atkMenko:4,defMenko:3},10:{hp:26,atk:6,atkMenko:7,defMenko:2},15:{hp:34,atk:6,atkMenko:7,defMenko:5}};
 const PROGRESS_STORAGE_KEY="menko_progress_records_integrated_v1";
+const RUN_SAVE_STORAGE_KEY="menko_endurance_run_save_v1";
+const RUN_SAVE_VERSION=1;
 const defaultRecords=()=>({runs:0,wins:0,boss1:0,boss2:0,boss3:0,clears:0});
 let records=loadProgressRecords();
-let runState=null,selectedRewards=new Set();
+let runState=null,selectedRewards=new Set(),runSaveMode="match",pendingRewardOptions=[],resumedFromSave=false;
 let differenceCardsCountForInitiative=true;
 const CLONE_RESCUE_HP_RATIO=1/4;
 const CLONE_RESCUE_COOLDOWN_ROUNDS=3;
@@ -679,8 +681,10 @@ function prepareThrowPhase(){
 function prepareCloneRescueChance(actor){
   for(const c of cards)if(c.type==="clone"){c.cloneCanFlip=false;c.cloneRescueRolled=false}
   const owner=actor==="player"?"cpu":"player";
-  const hp=owner==="player"?redHP:blueHP;
-  const maxHP=owner==="player"?config.redMaxHP:config.blueMaxHP;
+  // 分身は、相手分身をめくる投擲側が瀕死のときに使える救済。
+  // めくられる分身の持ち主ではなく、投擲側自身のHPを判定する。
+  const hp=actor==="player"?redHP:blueHP;
+  const maxHP=actor==="player"?config.redMaxHP:config.blueMaxHP;
   if(hp>0&&hp<=maxHP*CLONE_RESCUE_HP_RATIO&&cloneRescueCooldown<=0&&cloneRescueActivations<CLONE_RESCUE_MAX_ACTIVATIONS){
     const clone=cards.find(c=>c.type==="clone"&&c.team===owner);
     if(clone)clone.cloneCanFlip=true;
@@ -866,7 +870,7 @@ function hit(x,y,power,gauge,zone){
     efficiency:[.48,.66,.88,1.02,.96,.90][zone.index],
     processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),
     initialImpact:[],lines:[],complete:false,
-    actor:turn==="player"?"RED":"BLUE",zoneName:zoneNames[zone.index]
+    actorKey:turn,actor:turn==="player"?"RED":"BLUE",zoneName:zoneNames[zone.index]
   };
   pendingLayerWave.initialImpact=cards.map((_,i)=>exposedImpactNow(i,pendingLayerWave));
   advanceLayerWave();
@@ -944,6 +948,8 @@ function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
   if(resultBtn)resultBtn.onclick=()=>{const won=pendingIntegratedResult;pendingIntegratedResult=null;clearPlayerLog();handleIntegratedBattleResult(won)};
 }
 function result(){
+  // 投擲中にグローバルの手番が変化しても効果対象を取り違えないよう、衝撃開始時の投擲者を使う。
+  const resultActor=pendingLayerWave?.actorKey||turn;
   for(const c of cards){if(c.provisionalFace!=null)c.face=c.provisionalFace;c.provisionalFace=null;}
   let attackLevel=0,defenseLevel=0,rawAttackLevel=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
   for(const c of cards){
@@ -954,7 +960,7 @@ function result(){
     physicalFlippedCount++;
     const countsForInitiative=!c.isDifference||differenceCardsCountForInitiative;
     if(countsForInitiative)flippedCount++;
-    const effectEnabled=!c.isDifference||c.team===turn;
+    const effectEnabled=c.type==="clone"?c.team!==resultActor:(!c.isDifference||c.team===resultActor);
     const ownerLabel=c.isDifference?(c.team==="player"?"RED差分":"BLUE差分"):"共用";
     const typeLabel=c.type==="attack"?"攻撃":c.type==="defense"?"防御":"分身";
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"}分身`:`Card ${c.cardId||"?"}`;
@@ -974,16 +980,16 @@ function result(){
     else if(c.type==="clone"){
       cloneFlips++;
       cloneOwners.push(c.team);
-      cloneEvents.push({owner:c.team,actor:turn});
+      cloneEvents.push({owner:c.team,actor:resultActor,round:roundNo,throwIndex:roundThrow});
     }
   }
   updateStackDepths();
-  roundResults[turn]={attackLevel,defenseLevel,rawAttackLevel,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
-  matchStats.throws[turn]++;
+  roundResults[resultActor]={attackLevel,defenseLevel,rawAttackLevel,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
+  matchStats.throws[resultActor]++;
   lastAttackLevel=attackLevel;lastDefenseLevel=defenseLevel;lastDamage=0;
   resultT=1.05;state="result";
   msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃Lv ${attackLevel} / 防御Lv ${defenseLevel} を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
-  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${turn==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
+  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
 }
 function beginExpel(){
   // 通常メンコの裏向きだけ排出。分身は場に残る。
@@ -1001,7 +1007,7 @@ function updateExpel(){
   flowT-=1/60;
   if(flowT<=0){cards=cards.filter(c=>!c.exiting);updateStackDepths();flowT=.48;state="postHold";msg=""}
 }
-function applyCloneRescue(actor,owner){
+function applyCloneRescue(actor,owner,sameRoundContest=false){
   // 分身の効果を得るのは「分身の持ち主」ではなく、相手分身をめくった投擲側。
   // めくれた時点で効果は確定し、クールタイムはRED／BLUE共通で管理する。
   cloneRescueCooldown=CLONE_RESCUE_COOLDOWN_ROUNDS;
@@ -1009,7 +1015,8 @@ function applyCloneRescue(actor,owner){
   const actorIsPlayer=actor==="player";
   let choice;
   if(actorIsPlayer){
-    choice=confirm("相手の分身メンコをめくった！\nOK：自分を最大HPの1/3回復\nキャンセル：相手へ防御貫通の最大ダメージ")?"heal":"damage";
+    const contestNote=sameRoundContest?"同じラウンドで両方の分身がめくれ、抽選でREDの効果が選ばれた！\n":"";
+    choice=confirm(`${contestNote}REDがBLUEの分身メンコをめくった！\nOK：REDを最大HPの1/3回復\nキャンセル：BLUEへ防御貫通の最大ダメージ`)?"heal":"damage";
   }else{
     choice=blueHP<=config.blueMaxHP/2?"heal":"damage";
   }
@@ -1071,16 +1078,17 @@ function resolveRoundEffects(){
   const rescued=[];
   let cloneEvents=[...(red.cloneEvents||[]),...(blue.cloneEvents||[])];
   if(cloneEvents.length>1){
+    const candidates=cloneEvents.map(e=>`${e.actor==="player"?"RED":"BLUE"}→${e.owner==="player"?"RED":"BLUE"}分身`).join(" / ");
     const selected=cloneEvents[Math.floor(Math.random()*cloneEvents.length)];
-    appendLog(`同一ラウンド分身競合: ${selected.actor==="player"?"RED":"BLUE"}の効果を抽選採用`);
-    cloneEvents=[selected];
+    appendLog(`同一ラウンド分身競合: 候補 ${candidates} / ${selected.actor==="player"?"RED":"BLUE"}の効果を抽選採用`);
+    cloneEvents=[{...selected,sameRoundContest:true}];
   }
   const seen=new Set();
   for(const e of cloneEvents){
     const key=`${e.actor}:${e.owner}`;
     if(seen.has(key))continue;
     seen.add(key);
-    rescued.push(applyCloneRescue(e.actor,e.owner));
+    rescued.push(applyCloneRescue(e.actor,e.owner,!!e.sameRoundContest));
   }
   // 防御はこのラウンドだけ有効。攻撃メンコと1対1で相殺し、残った攻撃Lvが技Lvと追加ダメージになる。
   const redDefenseAvailable=red.defenseLevel;
@@ -1469,6 +1477,27 @@ function render(){
 }
 function loadProgressRecords(){try{return {...defaultRecords(),...(JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY))||{})}}catch{return defaultRecords()}}
 function saveProgressRecords(){localStorage.setItem(PROGRESS_STORAGE_KEY,JSON.stringify(records))}
+function validRunStats(x){return x&&["hp","atk","atkMenko","defMenko"].every(k=>Number.isFinite(x[k])&&x[k]>=0)}
+function loadRunProgress(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(RUN_SAVE_STORAGE_KEY)||"null"),r=saved?.runState;
+    if(saved?.version!==RUN_SAVE_VERSION||!r||!Number.isInteger(r.match)||r.match<1||r.match>15||!Number.isFinite(r.wins)||!validRunStats(r.player)||!validRunStats(r.enemy))throw new Error("invalid run save");
+    return saved;
+  }catch{
+    localStorage.removeItem(RUN_SAVE_STORAGE_KEY);
+    return null;
+  }
+}
+function saveRunProgress(mode=runSaveMode){
+  if(!runState)return;
+  runSaveMode=mode;
+  const portrait={
+    player:{hair:portraitState.player.hair,faceSet:portraitState.player.faceSet,expression:"normal"},
+    cpu:{hair:portraitState.cpu.hair,faceSet:portraitState.cpu.faceSet,expression:"normal"}
+  };
+  localStorage.setItem(RUN_SAVE_STORAGE_KEY,JSON.stringify({version:RUN_SAVE_VERSION,mode:runSaveMode,runState,portraitState:portrait,rewardOptions:pendingRewardOptions,differenceCardsCountForInitiative}));
+}
+function clearRunProgress(){localStorage.removeItem(RUN_SAVE_STORAGE_KEY)}
 function progressPoints(x){return x.atk*3+x.atkMenko*2+x.defMenko*2}
 function progressArea(match){return match<=5?1:match<=10?2:3}
 function randInt(min,max){return Math.floor(Math.random()*(Math.floor(max)-Math.ceil(min)+1))+Math.ceil(min)}
@@ -1486,23 +1515,29 @@ function generateProgressEnemy(area){
 }
 function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match))}
 function startIntegratedRun(){
+  clearRunProgress();resumedFromSave=false;runSaveMode="match";pendingRewardOptions=[];
   records.runs++;saveProgressRecords();
   resetPortraitRun();
   runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},enemy:null};
   prepareIntegratedMatch();
 }
+function syncIntegratedMatchFromRunState(){
+  const p=runState.player,e=runState.enemy;
+  config={...config,name:e.isBoss?`第${progressArea(runState.match)}ボス`:`第${runState.match}試合の相手`,redMaxHP:p.hp,redAttack:p.atk,redAttackCards:p.atkMenko,redDefenseCards:p.defMenko,blueMaxHP:e.hp,blueAttack:e.atk,blueAttackCards:e.atkMenko,blueDefenseCards:e.defMenko};
+  writeCfg(config);syncPortrait("player");syncPortrait("cpu");
+}
 function prepareIntegratedMatch(){
   if(runState.match>1)chooseCpuPortrait();
   runState.enemy=makeProgressEnemy(runState.match);
-  const p=runState.player,e=runState.enemy;
-  config={...config,name:e.isBoss?`第${progressArea(runState.match)}ボス`:`第${runState.match}試合の相手`,redMaxHP:p.hp,redAttack:p.atk,redAttackCards:p.atkMenko,redDefenseCards:p.defMenko,blueMaxHP:e.hp,blueAttack:e.atk,blueAttackCards:e.atkMenko,blueDefenseCards:e.defMenko};
-  writeCfg(config);syncPortrait("player");syncPortrait("cpu");renderProgressPanel("match");setProgressScreen(true);
+  runSaveMode="match";pendingRewardOptions=[];resumedFromSave=false;
+  syncIntegratedMatchFromRunState();saveRunProgress("match");renderProgressPanel("match");setProgressScreen(true);
 }
 function startCurrentIntegratedBattle(){
   const errorBox=document.getElementById("progressError");
   errorBox.style.display="none";errorBox.textContent="";
   if(!runState)startIntegratedRun();
   try{
+    resumedFromSave=false;
     setProgressScreen(false);resize();newMatch();
     lastFrameTime=null;frameAccumulator=0;
   }catch(err){
@@ -1511,25 +1546,35 @@ function startCurrentIntegratedBattle(){
 }
 function handleIntegratedBattleResult(playerWon){
   if(!runState)return;
-  if(!playerWon){renderProgressPanel("lose");setProgressScreen(true);return}
+  if(!playerWon){clearRunProgress();runSaveMode="lose";renderProgressPanel("lose");setProgressScreen(true);return}
   runState.wins++;records.wins++;
   if(runState.enemy.isBoss){if(runState.match===5)records.boss1++;if(runState.match===10)records.boss2++;if(runState.match===15)records.boss3++}
-  if(runState.match===15){records.clears++;saveProgressRecords();renderProgressPanel("clear");setProgressScreen(true);return}
-  saveProgressRecords();renderProgressPanel("reward");setProgressScreen(true);
+  if(runState.match===15){records.clears++;saveProgressRecords();clearRunProgress();runSaveMode="clear";renderProgressPanel("clear");setProgressScreen(true);return}
+  saveProgressRecords();pendingRewardOptions=createPendingRewardOptions();saveRunProgress("reward");renderProgressPanel("reward");setProgressScreen(true);
 }
 const rewardDefs=[{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
+function createPendingRewardOptions(){
+  return (runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
+}
+function normalizePendingRewardOptions(){
+  const validKeys=new Set(rewardDefs.map(x=>x.key));
+  pendingRewardOptions=[...new Set((Array.isArray(pendingRewardOptions)?pendingRewardOptions:[]).filter(k=>validKeys.has(k)))];
+  const expected=runState.enemy.isBoss?rewardDefs.length:2;
+  if(pendingRewardOptions.length!==expected)pendingRewardOptions=createPendingRewardOptions();
+}
 function renderProgressPanel(mode="match"){
   const title=document.getElementById("progressTitle"),sum=document.getElementById("progressSummary"),stats=document.getElementById("progressStats"),choices=document.getElementById("rewardChoices"),actions=document.getElementById("progressActions");
   choices.innerHTML="";actions.innerHTML="";
   const p=runState?.player||{hp:15,atk:2,atkMenko:2,defMenko:2},e=runState?.enemy;
   title.textContent=mode==="reward"?"WIN!":mode==="lose"?"GAME OVER":mode==="clear"?"CLEAR!":`第${runState?.match||1}試合`;
-  sum.textContent=mode==="match"?`エリア${progressArea(runState.match)}${e.isBoss?"・BOSS BATTLE":""}`:mode==="reward"?`現在 ${runState.wins}勝`:mode==="lose"?`到達：第${runState.match}試合 ／ 勝利数：${runState.wins}`:"15試合制覇";
+  sum.textContent=mode==="match"?`${resumedFromSave?"オートセーブから再開 ／ ":""}エリア${progressArea(runState.match)}${e.isBoss?"・BOSS BATTLE":""}`:mode==="reward"?`現在 ${runState.wins}勝`:mode==="lose"?`到達：第${runState.match}試合 ／ 勝利数：${runState.wins}`:"15試合制覇";
   stats.innerHTML=`<div>最大HP <b>${p.hp}</b></div><div>攻撃 <b>${p.atk}</b></div><div>攻撃メンコ <b>${p.atkMenko}</b></div><div>防御メンコ <b>${p.defMenko}</b></div>`+(e?`<div>相手HP <b>${e.hp}</b></div><div>相手攻撃 <b>${e.atk}</b></div><div>相手 攻/防 <b>${e.atkMenko}/${e.defMenko}</b></div><div>相手戦力 <b>${progressPoints(e)}</b></div>`:"");
   if(mode==="match")actions.innerHTML='';
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
-    selectedRewards=new Set();const need=1,opts=e.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2);
+    normalizePendingRewardOptions();
+    selectedRewards=new Set();const need=1,opts=pendingRewardOptions.map(k=>rewardDefs.find(x=>x.key===k)).filter(Boolean);
     choices.innerHTML=(e.isBoss?`<p><strong>ボス撃破ボーナス：攻撃 +1（確定）</strong><br>さらに次の3種から1つ選択してください</p>`:`<p>抽選された2種から1つ選択してください</p>`)+opts.map(x=>`<button data-reward="${x.key}">${x.label}</button>`).join("");
     actions.innerHTML='<button class="primary" id="confirmGrowthBtn" disabled>成長を決定</button>';
     choices.querySelectorAll("[data-reward]").forEach(b=>b.onclick=()=>{const k=b.dataset.reward;if(selectedRewards.has(k)){selectedRewards.delete(k);b.classList.remove("selected")}else if(selectedRewards.size<need){selectedRewards.add(k);b.classList.add("selected")}document.getElementById("confirmGrowthBtn").disabled=selectedRewards.size!==need});
@@ -1550,12 +1595,39 @@ function renderProgressPanel(mode="match"){
     el.addEventListener("touchend",run,{passive:false});
   };
 
-  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));runState.match++;prepareIntegratedMatch()});
+  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
   fixedStart.style.display=mode==="match"?"block":"none";
+  fixedStart.textContent=resumedFromSave?"つづきから":"試合開始";
   fixedRestart.textContent=(mode==="lose"||mode==="clear")?"もう一度挑戦":"最初から";
   fixedRestart.style.display=(mode==="reward")?"none":"block";
   renderCareerRecords();
+}
+function restorePortraitState(savedPortrait){
+  if(!savedPortrait?.player?.hair||!savedPortrait?.player?.faceSet||!savedPortrait?.cpu?.hair||!savedPortrait?.cpu?.faceSet)return false;
+  portraitState={
+    player:{hair:savedPortrait.player.hair,faceSet:savedPortrait.player.faceSet,expression:"normal"},
+    cpu:{hair:savedPortrait.cpu.hair,faceSet:savedPortrait.cpu.faceSet,expression:"normal"}
+  };
+  return true;
+}
+function initializeIntegratedRun(){
+  const saved=loadRunProgress();
+  if(!saved){startIntegratedRun();return}
+  runState=saved.runState;
+  runSaveMode=saved.mode==="reward"?"reward":"match";
+  pendingRewardOptions=Array.isArray(saved.rewardOptions)?saved.rewardOptions:[];
+  differenceCardsCountForInitiative=saved.differenceCardsCountForInitiative!==false;
+  document.getElementById("differenceInitiativeMode").value=differenceCardsCountForInitiative?"on":"off";
+  if(!restorePortraitState(saved.portraitState))resetPortraitRun();
+  syncIntegratedMatchFromRunState();
+  resumedFromSave=true;
+  if(runSaveMode==="reward"){normalizePendingRewardOptions();saveRunProgress("reward")}
+  renderProgressPanel(runSaveMode);setProgressScreen(true);
+}
+function restartIntegratedRun(){
+  if(localStorage.getItem(RUN_SAVE_STORAGE_KEY)&&!confirm("保存中の進行を消して最初から始めますか？"))return;
+  startIntegratedRun();
 }
 function renderCareerRecords(){document.getElementById("careerRecords").innerHTML=`通算プレイ ${records.runs} ／ 通算勝利 ${records.wins}<br>エリア1ボス ${records.boss1} ／ エリア2ボス ${records.boss2} ／ エリア3ボス ${records.boss3}<br>ゲームクリア ${records.clears}`}
 
@@ -1578,7 +1650,7 @@ function bindControlActivation(id,action){
   button.addEventListener("click",activate);
 }
 bindControlActivation("fixedStartBattleBtn",startCurrentIntegratedBattle);
-bindControlActivation("fixedRestartRunBtn",startIntegratedRun);
+bindControlActivation("fixedRestartRunBtn",restartIntegratedRun);
 document.getElementById("progressFab").onclick=()=>{renderProgressPanel("match");setProgressScreen(true)};
 const testTools=document.getElementById("testTools");
 const testToolsMenu=document.getElementById("testToolsMenu");
@@ -1589,7 +1661,7 @@ function setTestToolsOpen(open){
 }
 testToolsToggle.onclick=()=>setTestToolsOpen(!testTools.classList.contains("open"));
 testToolsMenu.addEventListener("click",e=>{if(e.target.closest("button"))setTestToolsOpen(false)});
-document.getElementById("differenceInitiativeMode").onchange=e=>differenceCardsCountForInitiative=e.target.value==="on";
+document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCardsCountForInitiative=e.target.value==="on";saveRunProgress(runSaveMode)};
 function loop(now){
   if(lastFrameTime==null)lastFrameTime=now;
   const elapsed=Math.min(MAX_FRAME_DELTA,Math.max(0,(now-lastFrameTime)/1000));
@@ -1604,7 +1676,7 @@ function loop(now){
 }
 countSelect.addEventListener("change",()=>{});
 window.addEventListener("resize",resize);canvas.addEventListener("click",()=>{});
-try{resize();startIntegratedRun();requestAnimationFrame(loop)}catch(err){showProgressError(err)}
+try{resize();initializeIntegratedRun();requestAnimationFrame(loop)}catch(err){showProgressError(err)}
 })();
 </script>
 </body>
