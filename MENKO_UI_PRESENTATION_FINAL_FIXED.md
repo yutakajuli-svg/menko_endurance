@@ -18,7 +18,7 @@ Items that still require visual testing are separated at the end.
 
 The approved references are integrated into `index.html` as of v20.
 
-## v23 clone rescue and KO presentation tuning
+## v24 clone rescue, KO presentation, and defense orientation
 
 - A clone can be checked only while its owner is at one quarter HP or below.
 - Its flip probability is one roll at 40% of the completed normal-menko flip
@@ -31,6 +31,8 @@ The approved references are integrated into `index.html` as of v20.
   the second attack presentation is omitted. Damage calculation remains the
   approved simultaneous round resolution so the RED-loss mutual-KO rule is
   unchanged.
+- Complete-defense illustration orientation: RED defense is horizontally
+  mirrored; BLUE defense uses the original image orientation.
 
 ## v20 integration checkpoint
 
