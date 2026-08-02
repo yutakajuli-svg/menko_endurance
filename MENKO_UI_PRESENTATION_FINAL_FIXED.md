@@ -18,6 +18,22 @@ Items that still require visual testing are separated at the end.
 
 The approved references are integrated into `index.html` as of v20.
 
+## v27 clone actor safety and run auto-save
+
+- The clone-effect actor is captured when the throw impact begins and is not
+  inferred from a later global turn value.
+- The one-quarter-HP eligibility check uses the throwing side's HP, because the
+  throwing side receives the rescue effect; it does not use the clone owner's
+  HP.
+- When BLUE flips RED's clone, BLUE resolves the effect automatically. Only a
+  RED flip of BLUE's clone opens the player's heal / maximum-damage choice.
+- If both clones flip in one round, one event is chosen at random and the
+  selected side is stated explicitly in the log and player-facing message.
+- Run progress auto-saves before each match and on the growth-result screen.
+- Reloading during a match returns to the beginning of that same match.
+- Reloading on a growth result preserves the same offered reward choices.
+- A loss, a 15-match clear, or choosing `最初から` ends the current run save.
+
 ## v26 clone rescue, initiative KO, growth, and illustration orientation
 
 - A clone can be checked only while its owner is at one quarter HP or below.
