@@ -5,7 +5,7 @@ Updated: 2026-08-02
 ## 現在のFIX基準
 
 - `index.html`
-- v24 / DEFENSE ORIENTATION
+- v25 / THROW LV1 ORIENTATION
 - UI、リング、メンコデザイン、アニメーション、キャラクター、技・特殊演出まで本編へ統合済み
 
 ## 次に行う作業
