@@ -93,18 +93,19 @@ Back to front:
 
 - Font: standard Misaki Gothic (`misaki_gothic.ttf`)
 - Main information size: 20 px
-- Secondary `NEW + CARRY` breakdown: 16 px in the approved reference
+- Secondary `THIS ROUND ONLY` notice: 16 px
 - Wrestler names are not required.
 - Constantly displayed information:
   - Current HP / maximum HP
   - Continuous HP bar
   - Attack power
-  - Current total defense
-  - `NEW + CARRY` defense breakdown
+  - Defense obtained in the current round
+  - `THIS ROUND ONLY` notice
 - HP bars have no divider or tick lines.
 - RED HP bar: exact RGB red (`255, 0, 0`)
 - BLUE HP bar: exact RGB blue (`0, 0, 255`)
-- Before a throw, NEW defense is displayed as `0`, not `?`.
+- Before a throw, current-round defense is displayed as `0`.
+- Defense never carries into the next round.
 
 ## Ring design
 
@@ -280,8 +281,8 @@ Back to front:
     - The fourth and strongest shake
     - Only the victim status group flashes and shakes
     - The victim HP number and HP bar decrease during the two flashes
-    - The victim's carry and new defense values reset to zero when the feedback
-      begins
+    - The victim's current-round defense display resets to zero when the
+      feedback begins
   - Healing:
     - Two soft white flashes over approximately 0.52 seconds
     - Only the healing side's status group flashes
