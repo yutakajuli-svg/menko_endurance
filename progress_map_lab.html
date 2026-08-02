@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>MENKO ENDURANCE - PROGRESS MAP LAB</title>
+<style>
+@font-face{font-family:MisakiGothic;src:url("fonts/misaki_ttf_2021-05-05/misaki_gothic.ttf") format("truetype");font-display:swap}
+:root{--black:#0b0b0b;--panel:#181818;--panel2:#242424;--white:#f5f5f5;--gray:#777;--dim:#3b3b3b;--red:#f00;--blue:#00f}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--black);color:var(--white);font-family:MisakiGothic,ui-monospace,monospace}
+body{padding:12px 10px 24px}
+button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lab{width:min(100%,520px);margin:0 auto}
+.lab-head{display:flex;justify-content:space-between;align-items:end;gap:10px;margin-bottom:9px}
+.lab-title{font-size:17px;line-height:1.25;letter-spacing:.04em}
+.lab-sub{margin-top:3px;color:#999;font-size:11px}
+.reset{border:1px solid #666;background:#171717;padding:7px 9px;border-radius:2px;font-size:11px}
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+.tab{border:2px solid #555;background:#171717;padding:9px 4px;color:#aaa}
+.tab[aria-selected="true"]{border-color:#fff;background:#303030;color:#fff}
+.concept-note{min-height:40px;padding:7px 9px;border:1px solid #444;background:#141414;color:#bbb;font-size:11px;line-height:1.45}
+.concept-note b{color:#fff;font-weight:400}
+.screen{position:relative;width:100%;margin-top:8px;min-height:700px;overflow:hidden;border:2px solid #555;background:#101010}
+.screen::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2px #191919}
+.map-head{position:relative;z-index:6;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;padding:11px 13px 8px;border-bottom:2px solid #444;background:#181818}
+.area-title{font-size:18px;line-height:1}.area-title small{display:block;margin-top:6px;color:#999;font-size:10px}
+.record{text-align:right;font-size:12px;line-height:1.5}.record strong{color:#f00;font-weight:400}
+.legend{position:relative;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border-bottom:1px solid #333;background:#111;color:#aaa;font-size:10px}
+.legend-items{display:flex;gap:8px;flex-wrap:wrap}.legend span{display:inline-flex;align-items:center;gap:3px}
+.legend i{display:inline-block;width:8px;height:8px;background:#777}.legend .lg-l{width:5px}.legend .lg-h{width:11px}
+.map-field{position:relative;width:100%;height:574px;background:#0d0d0d}
+.map-lines{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible}
+.route-base{fill:none;stroke:#444;stroke-width:2;vector-effect:non-scaling-stroke}
+.route-active{fill:none;stroke:#f00;stroke-width:4;vector-effect:non-scaling-stroke;stroke-linecap:square}
+.round-label{position:absolute;z-index:2;left:50%;transform:translateX(-50%);padding:2px 5px;background:#0d0d0d;color:#666;font-size:9px;white-space:nowrap}
+.round-label.current{color:#fff}
+.node{position:absolute;z-index:3;display:grid;align-items:center;justify-items:center;border:2px solid #555;background:#181818;color:#fff;transform:translate(-50%,-50%);cursor:default;transition:filter .12s,opacity .12s,border-color .12s,background .12s}
+button.node{cursor:pointer}
+button.node:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.node.current{border-color:#fff;background:#292929;animation:readyBlink 1.15s steps(2,end) infinite}
+.node.chosen{border-color:#f00;background:#260000}
+.node.rejected{border-color:#292929;background:#101010;color:#555;opacity:.62}
+.node.future{opacity:.68}
+.node.boss{border-color:#777;background:#202020}
+.node.boss.current{border-color:#fff}
+.node.boss.chosen{border-color:#f00;background:#260000}
+@keyframes readyBlink{50%{border-color:#888}}
+.node-stage{position:absolute;left:3px;top:2px;color:#777;font-size:8px}
+.node.current .node-stage,.node.chosen .node-stage{color:#fff}
+.mini{position:relative;width:26px;height:31px;image-rendering:pixelated}
+.mini::before{content:"";position:absolute;left:9px;top:0;width:8px;height:8px;background:currentColor}
+.mini::after{content:"";position:absolute;left:7px;top:9px;width:12px;height:14px;background:currentColor;box-shadow:-4px 3px 0 -1px currentColor,4px 3px 0 -1px currentColor,-3px 15px 0 -1px currentColor,3px 15px 0 -1px currentColor}
+.mini.light{transform:scale(.78,1);color:#f4f4f4}
+.mini.middle{color:#f4f4f4}
+.mini.heavy{transform:scale(1.18,1);color:#f4f4f4}
+.type-icon{display:grid;place-items:center;width:25px;height:25px;color:#fff}
+.type-icon svg{display:block;width:23px;height:23px;fill:currentColor;shape-rendering:crispEdges}
+.node-copy{text-align:center;white-space:nowrap}
+.weight{font-size:9px;line-height:1.05;color:#aaa}.type-name{margin-top:2px;font-size:10px;line-height:1}
+.boss-name{font-size:12px;line-height:1;color:#fff}.boss-sub{margin-top:3px;color:#999;font-size:9px}
+.start-node{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);display:grid;place-items:center;width:62px;height:38px;border:3px solid #f00;background:#180000;color:#fff;font-size:11px}
+.selection-flash{position:absolute;z-index:10;inset:0;display:none;place-items:center;background:#000c;pointer-events:none}
+.selection-flash.show{display:grid;animation:flashOut .42s steps(2,end) both}
+.selection-flash div{border:3px solid #fff;background:#111;padding:12px 20px;font-size:18px;box-shadow:5px 5px 0 #f00}
+@keyframes flashOut{0%,70%{opacity:1}100%{opacity:0}}
+
+/* A: classic tournament bracket */
+.theme-a .map-field{background:linear-gradient(#111 1px,transparent 1px),#0d0d0d;background-size:100% 28px}
+.theme-a .route-base{stroke:#777;stroke-width:2}
+.theme-a .route-active{stroke:#f00;stroke-width:3}
+.theme-a .node{width:112px;height:56px;grid-template-columns:34px 25px 1fr;gap:2px;padding:5px 5px 3px;border-radius:0;box-shadow:4px 4px 0 #000}
+.theme-a .node.boss{width:140px;height:58px;grid-template-columns:42px 1fr;border-width:3px}
+.theme-a .node.boss .type-icon{width:35px;height:35px}.theme-a .node.boss .type-icon svg{width:31px;height:31px}
+.theme-a .round-label{border-left:1px solid #555;border-right:1px solid #555}
+
+/* B: fight-bill cards */
+.theme-b .map-field{background:radial-gradient(circle at center,#242424 0 2px,transparent 3px) 0 0/16px 16px,#0b0b0b}
+.theme-b .route-base{stroke:#333;stroke-width:7}
+.theme-b .route-active{stroke:#f00;stroke-width:7}
+.theme-b .node{width:136px;height:64px;grid-template-columns:39px 26px 1fr;gap:4px;padding:6px;border:1px solid #777;background:#e9e9e9;color:#111;box-shadow:5px 5px 0 #444}
+.theme-b .node .mini{color:#111}.theme-b .node .type-icon{color:#111}.theme-b .node .weight{color:#555}.theme-b .node .node-stage{color:#555}
+.theme-b .node.current{border:4px solid #fff;background:#fff;box-shadow:6px 6px 0 #f00}
+.theme-b .node.chosen{border:3px solid #f00;background:#fff;color:#111;box-shadow:5px 5px 0 #700}
+.theme-b .node.rejected{background:#333;color:#777;box-shadow:none}.theme-b .node.rejected .mini,.theme-b .node.rejected .type-icon{color:#777}
+.theme-b .node.future{filter:grayscale(1);opacity:.72}
+.theme-b .node.boss{width:166px;height:66px;grid-template-columns:43px 1fr;background:#111;color:#fff;border:4px double #fff;box-shadow:6px 6px 0 #555}
+.theme-b .node.boss .type-icon,.theme-b .node.boss .mini{color:#fff}
+.theme-b .round-label{background:#f2f2f2;color:#111;padding:3px 7px;transform:translateX(-50%) rotate(-2deg)}
+
+/* C: ring / corner UI */
+.theme-c .map-field{background:linear-gradient(90deg,transparent 49.5%,#333 49.5% 50.5%,transparent 50.5%),linear-gradient(#171717,#0c0c0c)}
+.theme-c .route-base{stroke:#777;stroke-width:2}
+.theme-c .route-active{stroke:#f00;stroke-width:5}
+.theme-c .node{width:92px;height:72px;grid-template-columns:1fr 1fr;grid-template-rows:37px 1fr;gap:0;padding:5px;border:3px solid #aaa;background:#242424;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.theme-c .node::before,.theme-c .node::after{content:"";position:absolute;z-index:-1;left:5px;right:5px;height:2px;background:#777}
+.theme-c .node::before{top:7px}.theme-c .node::after{bottom:7px}
+.theme-c .node .mini{align-self:center;justify-self:center}.theme-c .node .type-icon{align-self:center;justify-self:center}
+.theme-c .node .node-copy{grid-column:1/-1}.theme-c .node.current{border-color:#fff;background:#303030}.theme-c .node.chosen{border-color:#f00;background:#250000}.theme-c .node.rejected{border-color:#333}
+.theme-c .node.boss{width:124px;height:76px;grid-template-columns:42px 1fr;grid-template-rows:1fr;border-color:#00f;background:#000035}
+.theme-c .node.boss.current{border-color:#fff}.theme-c .node.boss.chosen{border-color:#f00;background:#250000}
+.theme-c .node.boss .type-icon{width:36px;height:36px}.theme-c .node.boss .type-icon svg{width:32px;height:32px}
+.theme-c .round-label{background:#111;border:1px solid #555;padding:3px 6px;color:#aaa}
+.theme-c .start-node{clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+
+.footer-state{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:8px 10px;border-top:2px solid #444;background:#181818;color:#aaa;font-size:10px}
+.footer-state strong{color:#fff;font-weight:400}.footer-state .red{color:#f00}
+@media(max-width:390px){
+  body{padding:7px 5px 16px}.screen{min-height:660px}.map-field{height:534px}
+  .theme-a .node{width:102px}.theme-b .node{width:124px;height:61px}.theme-c .node{width:86px}
+  .map-head{padding-inline:10px}.area-title{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){.node.current{animation:none}.selection-flash.show{animation:none;opacity:1}}
+</style>
+</head>
+<body>
+<main class="lab">
+  <header class="lab-head">
+    <div>
+      <div class="lab-title">ROUTE DESIGN TEST</div>
+      <div class="lab-sub">同じ対戦構成を3つの見せ方で比較</div>
+    </div>
+    <button class="reset" id="resetRoute" type="button">進行を戻す</button>
+  </header>
+
+  <nav class="tabs" aria-label="デザイン案">
+    <button class="tab" type="button" data-theme="a" aria-selected="true">A 大会表</button>
+    <button class="tab" type="button" data-theme="b" aria-selected="false">B 興行札</button>
+    <button class="tab" type="button" data-theme="c" aria-selected="false">C リング</button>
+  </nav>
+
+  <div class="concept-note" id="conceptNote"><b>A　昔の大会トーナメント表</b><br>細い白線と四角い選手枠。進行と分岐を最も素直に読める案。</div>
+
+  <section class="screen theme-a" id="mapScreen" aria-label="エリア1対戦ルート">
+    <header class="map-head">
+      <div class="area-title">AREA 1<small>ROAD TO AREA BOSS</small></div>
+      <div class="record"><strong id="winCount">2 WIN</strong><br><span id="matchCount">NEXT MATCH 3</span></div>
+    </header>
+    <div class="legend">
+      <div class="legend-items"><span><i class="lg-l"></i>LIGHT</span><span><i></i>MIDDLE</span><span><i class="lg-h"></i>HEAVY</span></div>
+      <span>階級 ＋ 型</span>
+    </div>
+    <div class="map-field" id="mapField">
+      <svg class="map-lines" viewBox="0 0 430 574" preserveAspectRatio="none" aria-hidden="true" id="routeSvg"></svg>
+      <div id="roundLabels"></div>
+      <div id="nodes"></div>
+      <div class="start-node">RED</div>
+      <div class="selection-flash" id="selectionFlash"><div>NEXT MATCH!</div></div>
+    </div>
+    <footer class="footer-state"><span id="stateText"><strong>MATCH 3</strong> の相手を選択</span><span class="red">● 選択ルート</span></footer>
+  </section>
+</main>
+
+<script>
+(()=>{
+const themes={
+  a:{label:"A　昔の大会トーナメント表",note:"細い白線と四角い選手枠。進行と分岐を最も素直に読める案。"},
+  b:{label:"B　レトロな興行札・対戦カード",note:"紙の対戦札を貼ったような見せ方。相手の階級と型を大きく読みやすくする案。"},
+  c:{label:"C　リング／コーナーUI",note:"選手枠そのものを小さなリングに見立てる案。現在の試合画面との統一感を優先。"}
+};
+const rounds=[
+  [{weight:"light",type:"attack"},{weight:"middle",type:"defense"}],
+  [{weight:"heavy",type:"hp"},{weight:"light",type:"balance"}],
+  [{weight:"middle",type:"attack"},{weight:"heavy",type:"defense"}],
+  [{weight:"light",type:"defense"},{weight:"middle",type:"hp"}]
+];
+const boss={weight:"heavy",type:"balance",boss:true};
+const typeNames={attack:"攻撃型",defense:"防御型",hp:"体力型",balance:"万能型"};
+const weightNames={light:"LIGHT",middle:"MIDDLE",heavy:"HEAVY"};
+const selected=[0,1];
+let stage=2,theme="a",flashTimer=0;
+const screen=document.getElementById("mapScreen"),nodesHost=document.getElementById("nodes"),routeSvg=document.getElementById("routeSvg"),labelsHost=document.getElementById("roundLabels"),note=document.getElementById("conceptNote"),flash=document.getElementById("selectionFlash");
+
+function icon(type){
+  if(type==="attack")return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h3V6h4v2h3V6h4v3h3v8h-3v3H8v-3H5v-3H3zM8 9h2v4H8zm5 0h2v4h-2z"/></svg></span>';
+  if(type==="defense")return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v10h-2v4h-3v3h-6v-3H6v-4H4zm4 4v7h3v3h2v-3h3V7z"/></svg></span>';
+  if(type==="hp")return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h6v3h4V5h6v11h-3v3H7v-3H4zm6 5v3H7v2h10v-2h-3v-3z"/></svg></span>';
+  return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2h4v4h4v4h4v4h-4v4h-4v4h-4v-4H6v-4H2v-4h4V6h4zm0 7v6h4V9z"/></svg></span>';
+}
+function nodeMarkup(data,row,side,status){
+  const isBoss=data.boss;
+  const tag=status==="current"?"button":"div";
+  const sideName=side===0?"A":"B";
+  const aria=status==="current"?` aria-label="MATCH ${row+1} ${weightNames[data.weight]} ${typeNames[data.type]}を選択"`:"";
+  return `<${tag} ${tag==="button"?'type="button" ':''}class="node ${status}${isBoss?' boss':''}" data-row="${row}" data-side="${side}"${aria}>
+    <span class="node-stage">${isBoss?'BOSS':`M${row+1}-${sideName}`}</span>
+    ${isBoss?icon(data.type):`<span class="mini ${data.weight}" aria-hidden="true"></span>${icon(data.type)}`}
+    <span class="node-copy">${isBoss?'<span class="boss-name">AREA BOSS</span><span class="boss-sub">HEAVY / 万能型</span>':`<span class="weight">${weightNames[data.weight]}</span><span class="type-name">${typeNames[data.type]}</span>`}</span>
+  </${tag}>`;
+}
+function positions(){
+  const narrow=window.innerWidth<=390;
+  const height=narrow?534:574;
+  const top=56,bottom=height-92,step=(bottom-top)/4;
+  const cardX=theme==="b"?(narrow?[92,338]:[82,348]):theme==="c"?(narrow?[104,326]:[108,322]):(narrow?[105,325]:[108,322]);
+  const rows=[0,1,2,3].map(i=>({y:bottom-i*step,x:cardX}));
+  return {height,rows,boss:{x:215,y:25},start:{x:215,y:height-45}};
+}
+function linePath(x1,y1,x2,y2){
+  if(theme==="a"){
+    const mid=(y1+y2)/2;
+    return `M ${x1} ${y1} V ${mid} H ${x2} V ${y2}`;
+  }
+  if(theme==="b")return `M ${x1} ${y1} C ${x1} ${(y1+y2)/2},${x2} ${(y1+y2)/2},${x2} ${y2}`;
+  return `M ${x1} ${y1} L ${x2} ${y2}`;
+}
+function buildLines(p){
+  const base=[],active=[];
+  let from=p.start;
+  for(let r=0;r<4;r++){
+    const row=p.rows[r];
+    for(let s=0;s<2;s++)base.push(linePath(from.x,from.y,row.x[s],row.y+30));
+    const merge={x:215,y:row.y-43};
+    for(let s=0;s<2;s++)base.push(linePath(row.x[s],row.y-30,merge.x,merge.y));
+    if(r<selected.length){
+      const sx=row.x[selected[r]];
+      active.push(linePath(from.x,from.y,sx,row.y+30));
+      active.push(linePath(sx,row.y-30,merge.x,merge.y));
+    }
+    from=merge;
+  }
+  base.push(linePath(from.x,from.y,p.boss.x,p.boss.y+34));
+  if(stage>=4)active.push(linePath(from.x,from.y,p.boss.x,p.boss.y+34));
+  routeSvg.innerHTML=base.map(d=>`<path class="route-base" d="${d}"/>`).join("")+active.map(d=>`<path class="route-active" d="${d}"/>`).join("");
+}
+function render(){
+  const p=positions();
+  routeSvg.setAttribute("viewBox",`0 0 430 ${p.height}`);
+  let html="",labelHtml="";
+  for(let r=0;r<4;r++){
+    const y=p.rows[r].y;
+    labelHtml+=`<div class="round-label ${r===stage?'current':''}" style="top:${y-7}px">MATCH ${r+1}</div>`;
+    for(let s=0;s<2;s++){
+      let status="future";
+      if(r<stage)status=selected[r]===s?"chosen":"rejected";
+      else if(r===stage)status="current";
+      html+=`<div style="position:absolute;left:${(p.rows[r].x[s]/4.3).toFixed(3)}%;top:${y}px">${nodeMarkup(rounds[r][s],r,s,status)}</div>`;
+    }
+  }
+  const bossStatus=stage>4?"chosen":stage===4?"current":"future";
+  html+=`<div style="position:absolute;left:50%;top:${p.boss.y}px">${nodeMarkup(boss,4,0,bossStatus)}</div>`;
+  nodesHost.innerHTML=html;labelsHost.innerHTML=labelHtml;
+  buildLines(p);
+  nodesHost.querySelectorAll("button.node").forEach(button=>button.addEventListener("click",choose));
+  document.getElementById("winCount").textContent=`${Math.min(stage,5)} WIN`;
+  document.getElementById("matchCount").textContent=stage<4?`NEXT MATCH ${stage+1}`:stage===4?"NEXT AREA BOSS":"AREA COMPLETE";
+  document.getElementById("stateText").innerHTML=stage<4?`<strong>MATCH ${stage+1}</strong> の相手を選択`:stage===4?"<strong>AREA BOSS</strong> に挑戦":"<strong>AREA 1 CLEAR</strong>";
+}
+function choose(e){
+  const button=e.currentTarget,row=Number(button.dataset.row),side=Number(button.dataset.side);
+  if(row!==stage)return;
+  if(stage<4)selected[stage]=side;
+  stage++;
+  flash.classList.remove("show");void flash.offsetWidth;flash.classList.add("show");
+  clearTimeout(flashTimer);flashTimer=setTimeout(()=>flash.classList.remove("show"),430);
+  render();
+}
+function setTheme(next){
+  theme=next;screen.className=`screen theme-${theme}`;
+  document.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.theme===theme)));
+  note.innerHTML=`<b>${themes[theme].label}</b><br>${themes[theme].note}`;
+  render();
+}
+document.querySelectorAll(".tab").forEach(button=>button.addEventListener("click",()=>setTheme(button.dataset.theme)));
+document.getElementById("resetRoute").addEventListener("click",()=>{selected.splice(0,selected.length,0,1);stage=2;render()});
+window.addEventListener("resize",render);
+render();
+})();
+</script>
+</body>
+</html>
