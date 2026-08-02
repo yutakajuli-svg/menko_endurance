@@ -229,7 +229,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v23 / KO PRESENTATION";
+const VERSION="MENKO ENDURANCE 01 / v24 / DEFENSE ORIENTATION";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -1028,7 +1028,7 @@ async function playNormalAttackEvent(actor,damage,defenseUsed,level){
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
-  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:defender==="cpu",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:defender==="player",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
 }
 async function playNoAttackEvent(firstActor){
   await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="cpu",lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
