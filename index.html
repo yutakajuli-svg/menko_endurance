@@ -225,11 +225,11 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   <h3>通算戦績</h3><div id="careerRecords"></div>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃メンコ枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の40%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃メンコ総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
-<div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に同時解決</span></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃メンコ枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。両者に攻撃がある場合は先攻順で解決し、先攻の攻撃で後攻がHP0になった場合、後攻の攻撃とダメージは無効です。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃メンコ総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v25 / THROW LV1 ORIENTATION";
+const VERSION="MENKO ENDURANCE 01 / v26 / INITIATIVE KO GROWTH";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -248,7 +248,7 @@ let runState=null,selectedRewards=new Set();
 let differenceCardsCountForInitiative=true;
 const CLONE_RESCUE_HP_RATIO=1/4;
 const CLONE_RESCUE_COOLDOWN_ROUNDS=3;
-const CLONE_FLIP_RATE=.40;
+const CLONE_FLIP_RATE=.45;
 const MENKO_SIZE_SCALE=.90;
 // animation_lab_v5_final.html でFIXした「調整案」の値。
 // 再生速度は等倍のまま、高さ／滞空時間／移動距離／影／縦付近の間を本編へ移植する。
@@ -917,12 +917,16 @@ function clearPlayerLog(){
   playerLog.innerHTML="";
 }
 function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
-  const redFormula=red.attackLevel===0
+  const redFormula=red.attackCancelledByKO
+    ? `先攻側のKOにより攻撃中止 → 0ダメージ`
+    : red.attackLevel===0
     ? `攻撃Lv 0 → 0ダメージ`
     : red.effectiveAttackLevel<=0
       ? `攻撃Lv ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ 完全防御・0ダメージ`
       : `攻撃力 ${config.redAttack} ＋ 有効攻撃Lv ${red.effectiveAttackLevel} ＝ ${redDamage}ダメージ`;
-  const blueFormula=blue.attackLevel===0
+  const blueFormula=blue.attackCancelledByKO
+    ? `先攻側のKOにより攻撃中止 → 0ダメージ`
+    : blue.attackLevel===0
     ? `攻撃Lv 0 → 0ダメージ`
     : blue.effectiveAttackLevel<=0
       ? `攻撃Lv ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ 完全防御・0ダメージ`
@@ -1105,6 +1109,17 @@ function resolveRoundEffects(){
     }
   }
 
+  // 攻撃演出順＝先攻順。先攻の一撃が致命傷なら、後攻の攻撃とダメージは発生しない。
+  const secondActor=oppositeActor(roundStarter);
+  const firstDamage=roundStarter==="player"?roundRedDamage:roundBlueDamage;
+  const secondHP=secondActor==="player"?redHP:blueHP;
+  const secondAttackCancelled=firstDamage>0&&firstDamage>=secondHP;
+  red.attackCancelledByKO=secondAttackCancelled&&secondActor==="player";
+  blue.attackCancelledByKO=secondAttackCancelled&&secondActor==="cpu";
+  if(red.attackCancelledByKO)roundRedDamage=0;
+  if(blue.attackCancelledByKO)roundBlueDamage=0;
+  if(secondAttackCancelled)appendLog(`先攻KO: ${actorLabel(roundStarter)}の攻撃で${actorLabel(secondActor)}がHP0になるため、後攻の攻撃とダメージを無効化`);
+
   appendLog([
     "===== DAMAGE DEBUG =====",
     `Round             : ${roundNo}`,
@@ -1117,6 +1132,7 @@ function resolveRoundEffects(){
     `RED damage formula: ${redEffectiveAttackLevel>0?`${config.redAttack} + ${redEffectiveAttackLevel} = ${redNormalDamage}`:"FULL DEFENSE = 0"}`,
     `RED clone override: ${redCloneOverride==null?"none":redCloneOverride}`,
     `RED final damage  : ${roundRedDamage}`,
+    `RED KO cancelled  : ${red.attackCancelledByKO?"yes":"no"}`,
     `BLUE attack raw Lv: ${blue.attackLevel}`,
     `RED defense got   : ${redDefenseAvailable}`,
     `RED defense used  : ${redDefenseUsed}`,
@@ -1124,6 +1140,7 @@ function resolveRoundEffects(){
     `BLUE damage formula: ${blueEffectiveAttackLevel>0?`${config.blueAttack} + ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"FULL DEFENSE = 0"}`,
     `BLUE clone override: ${blueCloneOverride==null?"none":blueCloneOverride}`,
     `BLUE final damage : ${roundBlueDamage}`,
+    `BLUE KO cancelled : ${blue.attackCancelledByKO?"yes":"no"}`,
     `Clone events      : ${cloneEvents.length}`,
     `Clone resolutions : ${rescued.length}`,
     ...rescued.map((r,i)=>`  ${i+1}. ${r.actor==="player"?"RED":"BLUE"} flipped ${r.owner==="player"?"RED":"BLUE"} clone -> ${r.choice}`),
@@ -1139,7 +1156,7 @@ function resolveRoundEffects(){
   if(roundBlueDamage===0)matchStats.zero.cpu++;
   const nextStarter=red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter;
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
-  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
+  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
   playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,roundRedDamage,roundBlueDamage}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
@@ -1471,7 +1488,7 @@ function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:
 function startIntegratedRun(){
   records.runs++;saveProgressRecords();
   resetPortraitRun();
-  runState={match:1,wins:0,player:{hp:15,atk:1,atkMenko:2,defMenko:2},enemy:null};
+  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},enemy:null};
   prepareIntegratedMatch();
 }
 function prepareIntegratedMatch(){
@@ -1500,20 +1517,20 @@ function handleIntegratedBattleResult(playerWon){
   if(runState.match===15){records.clears++;saveProgressRecords();renderProgressPanel("clear");setProgressScreen(true);return}
   saveProgressRecords();renderProgressPanel("reward");setProgressScreen(true);
 }
-const rewardDefs=[{key:"atk",label:"攻撃 +1"},{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +2"}];
+const rewardDefs=[{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 function renderProgressPanel(mode="match"){
   const title=document.getElementById("progressTitle"),sum=document.getElementById("progressSummary"),stats=document.getElementById("progressStats"),choices=document.getElementById("rewardChoices"),actions=document.getElementById("progressActions");
   choices.innerHTML="";actions.innerHTML="";
-  const p=runState?.player||{hp:15,atk:1,atkMenko:2,defMenko:2},e=runState?.enemy;
+  const p=runState?.player||{hp:15,atk:2,atkMenko:2,defMenko:2},e=runState?.enemy;
   title.textContent=mode==="reward"?"WIN!":mode==="lose"?"GAME OVER":mode==="clear"?"CLEAR!":`第${runState?.match||1}試合`;
   sum.textContent=mode==="match"?`エリア${progressArea(runState.match)}${e.isBoss?"・BOSS BATTLE":""}`:mode==="reward"?`現在 ${runState.wins}勝`:mode==="lose"?`到達：第${runState.match}試合 ／ 勝利数：${runState.wins}`:"15試合制覇";
   stats.innerHTML=`<div>最大HP <b>${p.hp}</b></div><div>攻撃 <b>${p.atk}</b></div><div>攻撃メンコ <b>${p.atkMenko}</b></div><div>防御メンコ <b>${p.defMenko}</b></div>`+(e?`<div>相手HP <b>${e.hp}</b></div><div>相手攻撃 <b>${e.atk}</b></div><div>相手 攻/防 <b>${e.atkMenko}/${e.defMenko}</b></div><div>相手戦力 <b>${progressPoints(e)}</b></div>`:"");
   if(mode==="match")actions.innerHTML='';
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
-    selectedRewards=new Set();const need=e.isBoss?2:1,opts=e.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,3);
-    choices.innerHTML=`<p>${need===2?"異なる成長を2つ":"成長を1つ"}選択してください</p>`+opts.map(x=>`<button data-reward="${x.key}">${x.label}</button>`).join("");
+    selectedRewards=new Set();const need=1,opts=e.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2);
+    choices.innerHTML=(e.isBoss?`<p><strong>ボス撃破ボーナス：攻撃 +1（確定）</strong><br>さらに次の3種から1つ選択してください</p>`:`<p>抽選された2種から1つ選択してください</p>`)+opts.map(x=>`<button data-reward="${x.key}">${x.label}</button>`).join("");
     actions.innerHTML='<button class="primary" id="confirmGrowthBtn" disabled>成長を決定</button>';
     choices.querySelectorAll("[data-reward]").forEach(b=>b.onclick=()=>{const k=b.dataset.reward;if(selectedRewards.has(k)){selectedRewards.delete(k);b.classList.remove("selected")}else if(selectedRewards.size<need){selectedRewards.add(k);b.classList.add("selected")}document.getElementById("confirmGrowthBtn").disabled=selectedRewards.size!==need});
   }
@@ -1533,7 +1550,7 @@ function renderProgressPanel(mode="match"){
     el.addEventListener("touchend",run,{passive:false});
   };
 
-  bindTap("confirmGrowthBtn",()=>{selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));runState.match++;prepareIntegratedMatch()});
+  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));runState.match++;prepareIntegratedMatch()});
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
   fixedStart.style.display=mode==="match"?"block":"none";
   fixedRestart.textContent=(mode==="lose"||mode==="clear")?"もう一度挑戦":"最初から";
