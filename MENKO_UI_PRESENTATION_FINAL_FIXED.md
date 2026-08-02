@@ -18,19 +18,22 @@ Items that still require visual testing are separated at the end.
 
 The approved references are integrated into `index.html` as of v20.
 
-## v25 clone rescue, KO presentation, and illustration orientation
+## v26 clone rescue, initiative KO, growth, and illustration orientation
 
 - A clone can be checked only while its owner is at one quarter HP or below.
-- Its flip probability is one roll at 40% of the completed normal-menko flip
+- Its flip probability is one roll at 45% of the completed normal-menko flip
   probability.
 - A successful flip activates the clone effect without a second activation
   lottery.
 - The two-activation match limit, three-round shared cooldown, and random
   selection when both clones flip in one round remain unchanged.
-- When the first attack presentation reduces the second attacker to zero HP,
-  the second attack presentation is omitted. Damage calculation remains the
-  approved simultaneous round resolution so the RED-loss mutual-KO rule is
-  unchanged.
+- Attacks resolve in initiative order. When the first attack reduces the
+  second attacker to zero HP, the second attack presentation and damage are
+  both cancelled.
+- Player attack power starts at 2. Normal results randomly show two of attack
+  menko +1, defense menko +1, and maximum HP +2, then the player chooses one.
+- Boss results grant attack power +1 automatically, then the player chooses one
+  of those three other growth options. CPU progression remains unchanged.
 - Complete-defense illustration orientation: RED defense is horizontally
   mirrored; BLUE defense uses the original image orientation.
 - Throw-technique Lv1 orientation: RED attack is horizontally mirrored; BLUE
