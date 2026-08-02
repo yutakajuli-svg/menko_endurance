@@ -427,10 +427,37 @@ function resize(){
   W=r.width;H=r.height;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
   strengthWrap.style.width=`${Math.min(420,r.width)}px`;
   const nextR=ring();
-  if(oldR&&oldR.s>0&&cards.length){
-    const ratio=nextR.s/oldR.s,movePoint=o=>{if(!o)return;o.x=nextR.x+(o.x-oldR.x)*ratio;o.y=nextR.y+(o.y-oldR.y)*ratio;if(Number.isFinite(o.r))o.r*=ratio};
-    cards.forEach(movePoint);movePoint(dropper);movePoint(toss);movePoint(impact);
-    if(aim){aim.x=nextR.x+(aim.x-oldR.x)*ratio;aim.y=nextR.y+(aim.y-oldR.y)*ratio}
+  if(oldR&&oldR.s>0){
+    const ratio=nextR.s/oldR.s;
+    const moveX=x=>nextR.x+(x-oldR.x)*ratio;
+    const moveY=y=>nextR.y+(y-oldR.y)*ratio;
+    const scaleValue=(o,key)=>{if(Number.isFinite(o?.[key]))o[key]*=ratio};
+    const movePoint=o=>{
+      if(!o)return;
+      if(Number.isFinite(o.x))o.x=moveX(o.x);
+      if(Number.isFinite(o.y))o.y=moveY(o.y);
+      for(const key of ["r","z","vz","animLift","motionTravel"])scaleValue(o,key);
+    };
+    const moveCard=c=>{
+      if(!c)return;
+      movePoint(c);
+      for(const key of ["tx","animStartX","animEndX","throwStartX"])if(Number.isFinite(c[key]))c[key]=moveX(c[key]);
+      for(const key of ["ty","animStartY","animEndY","throwStartY","exitStartY"])if(Number.isFinite(c[key]))c[key]=moveY(c[key]);
+    };
+    cards.forEach(moveCard);
+    movePoint(dropper);movePoint(toss);movePoint(impact);moveCard(pendingLandedCard);
+    if(toss){
+      for(const key of ["sx","cx"])if(Number.isFinite(toss[key]))toss[key]=moveX(toss[key]);
+      for(const key of ["sy","cy"])if(Number.isFinite(toss[key]))toss[key]=moveY(toss[key]);
+    }
+    if(impact)scaleValue(impact,"max");
+    if(aim){aim.x=moveX(aim.x);aim.y=moveY(aim.y)}
+    if(pendingLayerWave){
+      pendingLayerWave.x=moveX(pendingLayerWave.x);
+      pendingLayerWave.y=moveY(pendingLayerWave.y);
+      scaleValue(pendingLayerWave,"maxRadius");
+      scaleValue(pendingLayerWave,"strikerRadius");
+    }
   }
 }
 function makeCondition(){
