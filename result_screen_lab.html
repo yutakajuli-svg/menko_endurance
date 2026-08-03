@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>MENKO ENDURANCE - RESULT SCREEN LAB</title>
+<style>
+@font-face{font-family:MisakiGothic;src:url("fonts/misaki_ttf_2021-05-05/misaki_gothic.ttf") format("truetype");font-display:swap}
+:root{--black:#0b0b0b;--panel:#181818;--panel2:#242424;--white:#f5f5f5;--gray:#777;--dim:#3b3b3b;--red:#f00;--blue:#00f}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--black);color:var(--white);font-family:MisakiGothic,ui-monospace,monospace}
+body{padding:12px 8px 24px}
+button{font:inherit;color:inherit;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lab{width:min(100%,520px);margin:0 auto}
+.lab-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:8px}
+.lab-title{font-size:17px;line-height:1.2;letter-spacing:.04em}
+.lab-sub{margin-top:4px;color:#999;font-size:10px}
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:172px}
+.mode-tab{border:2px solid #555;background:#171717;padding:7px 4px;color:#aaa;font-size:10px}
+.mode-tab[aria-selected="true"]{border-color:#fff;background:#303030;color:#fff}
+.result-screen{position:relative;overflow:hidden;border:2px solid #555;background:linear-gradient(90deg,transparent 49.5%,#292929 49.5% 50.5%,transparent 50.5%),linear-gradient(#171717,#0c0c0c)}
+.result-screen::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2px #191919}
+.screen-head{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 13px 9px;border-bottom:2px solid #444;background:#181818}
+.screen-head h1{margin:0;font-size:20px;font-weight:400;line-height:1}
+.screen-head small{display:block;margin-top:6px;color:#999;font-size:9px}
+.wins{text-align:right;color:#f00;font-size:12px;line-height:1.45}
+.result-banner{position:relative;margin:13px 12px 11px;padding:13px 12px 11px;border:3px solid #f00;background:#250000;text-align:center;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px)}
+.result-banner::before,.result-banner::after{content:"";position:absolute;left:8px;right:8px;height:2px;background:#777}
+.result-banner::before{top:7px}.result-banner::after{bottom:7px}
+.result-banner strong{display:block;font-size:27px;font-weight:400;line-height:1}
+.result-banner span{display:block;margin-top:6px;color:#bbb;font-size:10px}
+.status-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 12px 12px}
+.status-card{position:relative;min-width:0;padding:19px 10px 9px;border:3px solid #777;background:#202020;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.status-card.red{border-color:#f00}.status-card.blue{border-color:#00f}
+.status-label{position:absolute;left:7px;top:5px;font-size:8px;color:#aaa}.status-card.red .status-label{color:#fff}.status-card.blue .status-label{color:#fff}
+.stat{display:flex;justify-content:space-between;gap:5px;padding:5px 0 4px;border-bottom:1px solid #3f3f3f;color:#aaa;font-size:9px}
+.stat:last-child{border-bottom:0}.stat b{color:#fff;font-weight:400;font-size:11px}
+.growth{position:relative;margin:0 12px 12px;padding:11px 10px 10px;border-top:2px solid #555;border-bottom:2px solid #555;background:#111}
+.growth-head{display:flex;justify-content:space-between;align-items:end;gap:8px;margin-bottom:8px}
+.growth-title{font-size:14px}.growth-rule{color:#999;font-size:9px;text-align:right}
+.boss-bonus{display:none;margin-bottom:7px;padding:7px 8px;border-left:4px solid #f00;background:#251010;color:#fff;font-size:10px}
+.boss-mode .boss-bonus{display:block}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.boss-mode .choices{grid-template-columns:repeat(3,minmax(0,1fr))}
+.choice{position:relative;display:grid;grid-template-rows:35px auto auto;place-items:center;min-width:0;min-height:84px;padding:8px 4px 7px;border:3px solid #777;background:#242424;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+.choice::before,.choice::after{content:"";position:absolute;z-index:0;left:5px;right:5px;height:2px;background:#777}.choice::before{top:7px}.choice::after{bottom:7px}
+.choice>*{position:relative;z-index:1}
+.choice[aria-pressed="true"]{border-color:#f00;background:#250000}
+.choice img{display:block;width:31px;height:31px;object-fit:contain;image-rendering:pixelated}
+.choice-name{font-size:9px;line-height:1.15;text-align:center}.choice-value{margin-top:3px;color:#fff;font-size:13px}
+.confirm{display:block;width:calc(100% - 24px);margin:0 12px 12px;padding:12px 10px;border:3px solid #555;background:#181818;color:#777;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.confirm:not(:disabled){border-color:#fff;background:#303030;color:#fff;box-shadow:inset 0 -3px 0 #f00}
+.screen-foot{display:flex;justify-content:space-between;gap:8px;padding:7px 12px;border-top:2px solid #444;background:#181818;color:#888;font-size:8px}.screen-foot b{color:#f00;font-weight:400}
+@media(max-width:390px){body{padding-inline:5px}.lab-head{align-items:stretch;flex-direction:column}.mode-tabs{width:100%}.screen-head{padding-inline:10px}.result-banner,.status-grid,.growth{margin-left:8px;margin-right:8px}.confirm{width:calc(100% - 16px);margin-left:8px;margin-right:8px}.status-card{padding-inline:7px}.boss-mode .choices{gap:4px}.boss-mode .choice{padding-inline:2px}.choice-name{font-size:8px}}
+</style>
+</head>
+<body>
+<main class="lab">
+  <header class="lab-head">
+    <div>
+      <div class="lab-title">RESULT DESIGN TEST</div>
+      <div class="lab-sub">進行表C／リング・コーナーUI基準</div>
+    </div>
+    <nav class="mode-tabs" aria-label="リザルト種別">
+      <button class="mode-tab" type="button" data-mode="normal" aria-selected="true">通常勝利</button>
+      <button class="mode-tab" type="button" data-mode="boss" aria-selected="false">BOSS勝利</button>
+    </nav>
+  </header>
+
+  <section class="result-screen" id="resultScreen" aria-label="勝利リザルト画面">
+    <header class="screen-head">
+      <div><h1>RESULT</h1><small id="areaLabel">AREA 1 / MATCH 3</small></div>
+      <div class="wins"><span id="winLabel">3 WIN</span><br><span>NEXT MATCH 4</span></div>
+    </header>
+
+    <div class="result-banner">
+      <strong>RED WIN!</strong>
+      <span id="resultCopy">成長を1つ選択してください</span>
+    </div>
+
+    <div class="status-grid">
+      <section class="status-card red" aria-label="RED現在能力">
+        <span class="status-label">RED STATUS</span>
+        <div class="stat"><span>MAX HP</span><b>17</b></div>
+        <div class="stat"><span>ATK</span><b>2</b></div>
+        <div class="stat"><span>ATK MENKO</span><b>3</b></div>
+        <div class="stat"><span>DEF MENKO</span><b>2</b></div>
+      </section>
+      <section class="status-card blue" aria-label="今回の相手能力">
+        <span class="status-label">BLUE / DEFEATED</span>
+        <div class="stat"><span>MAX HP</span><b>18</b></div>
+        <div class="stat"><span>ATK</span><b>3</b></div>
+        <div class="stat"><span>ATK MENKO</span><b>3</b></div>
+        <div class="stat"><span>DEF MENKO</span><b>2</b></div>
+      </section>
+    </div>
+
+    <section class="growth">
+      <div class="growth-head"><span class="growth-title">GROWTH SELECT</span><span class="growth-rule" id="growthRule">抽選された2種から1つ</span></div>
+      <div class="boss-bonus">BOSS BONUS　ATK +1（確定）</div>
+      <div class="choices" id="choices"></div>
+    </section>
+
+    <button class="confirm" id="confirmGrowth" type="button" disabled>成長を決定</button>
+    <footer class="screen-foot"><span>AREA PROGRESS　<b>■■■□□</b></span><span>1 / 1 SELECT</span></footer>
+  </section>
+</main>
+
+<script>
+(()=>{
+function createAttackIconUrl(){
+  const source=document.createElement("canvas");source.width=96;source.height=96;
+  const sc=source.getContext("2d",{willReadFrequently:true});sc.font='72px "Segoe UI Emoji","Apple Color Emoji",sans-serif';sc.textAlign="center";sc.textBaseline="middle";sc.fillText("\u{1F91C}",48,51);
+  const sample=document.createElement("canvas");sample.width=24;sample.height=24;
+  const pc=sample.getContext("2d",{willReadFrequently:true});pc.imageSmoothingEnabled=true;pc.drawImage(source,0,0,24,24);
+  const pixels=pc.getImageData(0,0,24,24).data,icon=document.createElement("canvas");icon.width=24;icon.height=24;const ic=icon.getContext("2d");
+  for(let y=0;y<24;y++)for(let x=0;x<24;x++){const o=(y*24+x)*4,a=pixels[o+3]/255;if(a<.08)continue;const l=(pixels[o]*.2126+pixels[o+1]*.7152+pixels[o+2]*.0722)/255;ic.globalAlpha=a;ic.fillStyle=l>=.68?"#fff":l>=.3?"#969696":"#000";ic.fillRect(x,y,1,1)}
+  ic.globalAlpha=1;return icon.toDataURL();
+}
+function createDefenseIconUrl(){
+  const white=[[2,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]],gray=[null,null,[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8]];
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");
+  white.forEach((b,y)=>{ic.fillStyle="#fff";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});gray.forEach((b,y)=>{if(!b)return;ic.fillStyle="#969696";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});return icon.toDataURL();
+}
+function createHeartIconUrl(){
+  const rows=[null,[3,7,10,14],[2,8,9,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]];
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");rows.forEach((r,y)=>{if(!r)return;ic.fillStyle="#fff";if(r.length===4){ic.fillRect(r[0],y,r[1]-r[0]+1,1);ic.fillRect(r[2],y,r[3]-r[2]+1,1)}else ic.fillRect(r[0],y,r[1]-r[0]+1,1)});return icon.toDataURL();
+}
+const rewards={attack:{name:"攻撃MENKO",value:"+1",icon:createAttackIconUrl()},defense:{name:"防御MENKO",value:"+1",icon:createDefenseIconUrl()},hp:{name:"最大HP",value:"+2",icon:createHeartIconUrl()}};
+const screen=document.getElementById("resultScreen"),choices=document.getElementById("choices"),confirm=document.getElementById("confirmGrowth"),growthRule=document.getElementById("growthRule"),resultCopy=document.getElementById("resultCopy"),areaLabel=document.getElementById("areaLabel"),winLabel=document.getElementById("winLabel");
+let mode="normal",selected="";
+function renderChoices(){
+  const keys=mode==="boss"?["attack","defense","hp"]:["attack","hp"];
+  choices.innerHTML=keys.map(key=>{const reward=rewards[key];return `<button class="choice" type="button" data-reward="${key}" aria-pressed="${selected===key}"><img src="${reward.icon}" alt=""><span class="choice-name">${reward.name}</span><span class="choice-value">${reward.value}</span></button>`}).join("");
+  choices.querySelectorAll(".choice").forEach(button=>button.addEventListener("click",()=>{selected=button.dataset.reward;confirm.disabled=false;renderChoices()}));
+}
+function setMode(next){
+  mode=next;selected="";confirm.disabled=true;screen.classList.toggle("boss-mode",mode==="boss");
+  growthRule.textContent=mode==="boss"?"3種からさらに1つ":"抽選された2種から1つ";
+  resultCopy.textContent=mode==="boss"?"エリアボス撃破ボーナス":"成長を1つ選択してください";
+  areaLabel.textContent=mode==="boss"?"AREA 1 / BOSS MATCH":"AREA 1 / MATCH 3";winLabel.textContent=mode==="boss"?"5 WIN":"3 WIN";
+  document.querySelectorAll(".mode-tab").forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.mode===mode)));renderChoices();
+}
+document.querySelectorAll(".mode-tab").forEach(tab=>tab.addEventListener("click",()=>setMode(tab.dataset.mode)));
+confirm.addEventListener("click",()=>{if(!selected)return;confirm.textContent="選択済み";window.setTimeout(()=>{confirm.textContent="成長を決定"},500)});
+setMode("normal");
+})();
+</script>
+</body>
+</html>
