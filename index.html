@@ -77,7 +77,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 .hp-fill{height:100%;transition:width .04s linear}
 .status-group.red .hp-fill{background:#f00}.status-group.blue .hp-fill{background:#00f}
 .stat-line{font-size:18px;line-height:1;white-space:nowrap}
-.defense-line{margin-top:6px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
+.menko-line{margin-top:6px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
 #strengthWrap{position:relative;z-index:6;width:100%;display:grid;gap:4px}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
 #bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
@@ -120,7 +120,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #testToolsToggle{min-width:42px}
 #playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
 #playerLog .detail,#playerLog .total{color:#fff}#playerLog .red{color:#f00}#playerLog .blue{color:#00f}
-@media(max-width:370px){#battleUi{padding-inline:6px}.status-group{height:100px}.info-window{height:100px;padding-block:8px}.portrait-window{flex-basis:96px;width:96px;height:96px}.hp-line,.stat-line{font-size:16px}.hp-rail{height:18px;margin:6px 0}.defense-line{font-size:12px}#illustrationWindow{top:148px}#messageWindow{top:448px;font-size:15px}#testTools,#testToolsMenu{gap:3px}#testTools button{padding-inline:5px}}
+@media(max-width:370px){#battleUi{padding-inline:6px}.status-group{height:100px}.info-window{height:100px;padding-block:8px}.portrait-window{flex-basis:96px;width:96px;height:96px}.hp-line,.stat-line{font-size:16px}.hp-rail{height:18px;margin:6px 0}.menko-line{font-size:12px}#illustrationWindow{top:148px}#messageWindow{top:448px;font-size:15px}#testTools,#testToolsMenu{gap:3px}#testTools button{padding-inline:5px}}
 </style>
 </head>
 <body>
@@ -132,8 +132,8 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
       <div class="info-window">
         <div class="hp-line">HP <span id="blueHpCurrent">0</span> / <span id="blueHpMax">0</span></div>
         <div class="hp-rail"><div class="hp-fill" id="blueHpFill"></div></div>
-        <div class="stat-line">ATK <span id="blueAtk">0</span>　DEF <span id="blueDefTotal">0</span></div>
-        <div class="defense-line">THIS ROUND ONLY</div>
+        <div class="stat-line">BASE ATK <span id="blueAtk">0</span></div>
+        <div class="menko-line">MENKO　ATK <span id="blueAtkMenko">0</span> / DEF <span id="blueDefTotal">0</span></div>
       </div>
       <div class="portrait-window">
         <img class="portrait-layer" id="blueHair" alt="">
@@ -149,7 +149,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 
   <div id="ringArea">
     <svg id="ringVisual" viewBox="0 0 420 430" role="img" aria-labelledby="ringTitle ringDesc">
-      <title id="ringTitle">メンコを置くリング</title>
+      <title id="ringTitle">MENKOを置くリング</title>
       <desc id="ringDesc">真上から見た正方形のリング面。上辺三本、左右二本のロープと四本のポストがあります。</desc>
       <rect x="15" y="20" width="390" height="390" rx="3" fill="#2a2a2a" stroke="#555" stroke-width="2"/>
       <g fill="none" stroke="#fff" stroke-width="2" opacity=".82">
@@ -175,7 +175,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
         </g>
       </g>
     </svg>
-    <canvas id="c" aria-label="メンコを投げるリング"></canvas>
+    <canvas id="c" aria-label="MENKOを投げるリング"></canvas>
   </div>
 
   <section class="corner-block red" aria-label="REDステータス">
@@ -188,8 +188,8 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
       <div class="info-window">
         <div class="hp-line">HP <span id="redHpCurrent">0</span> / <span id="redHpMax">0</span></div>
         <div class="hp-rail"><div class="hp-fill" id="redHpFill"></div></div>
-        <div class="stat-line">ATK <span id="redAtk">0</span>　DEF <span id="redDefTotal">0</span></div>
-        <div class="defense-line">THIS ROUND ONLY</div>
+        <div class="stat-line">BASE ATK <span id="redAtk">0</span></div>
+        <div class="menko-line">MENKO　ATK <span id="redAtkMenko">0</span> / DEF <span id="redDefTotal">0</span></div>
       </div>
     </div>
   </section>
@@ -213,19 +213,19 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 </main>
 </div>
 <div id="progressPanel"><div id="progressBox">
-  <h2 id="progressTitle">メンコ用進行装置</h2>
+  <h2 id="progressTitle">MENKO用進行装置</h2>
   <div id="progressSummary"></div>
   <div id="progressStats"></div>
   <div id="rewardChoices"></div>
   <div id="progressActions"></div><div id="progressFixedActions"><button class="primary" id="fixedStartBattleBtn" type="button">試合開始</button><button id="fixedRestartRunBtn" type="button">最初から</button></div><div id="progressError" style="display:none;margin-top:10px;padding:10px;background:#5b1d1d;border-radius:8px"></div>
   <hr style="border:0;border-top:1px solid #555;margin:18px 0">
-  <h3>差分メンコ設定</h3>
-  <label class="ruleRow"><span>差分メンコを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label>
+  <h3>差分MENKO設定</h3>
+  <label class="ruleRow"><span>差分MENKOを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label>
   <p style="font-size:12px;color:#bbb">カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p>
   <h3>通算戦績</h3><div id="careerRecords"></div>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃メンコ<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃メンコ<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御メンコ<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御メンコ<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃メンコ枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。両者に攻撃がある場合は先攻順で解決し、先攻の攻撃で後攻がHP0になった場合、後攻の攻撃とダメージは無効です。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分メンコは所有者だけが効果を使用でき、相手所有の差分メンコをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃メンコ総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃MENKO枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。両者に攻撃がある場合は先攻順で解決し、先攻の攻撃で後攻がHP0になった場合、後攻の攻撃とダメージは無効です。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用でき、相手所有の差分MENKOをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃MENKO総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
@@ -266,8 +266,8 @@ let cloneRescueActivations=0;
 const PORTRAIT_ROOT="assets/character_portrait_lab";
 const MOVE_ROOT="assets/moves";
 const ui={
-  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),defTotal:document.getElementById("redDefTotal"),identity:document.getElementById("redIdentity")},
-  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),defTotal:document.getElementById("blueDefTotal"),identity:document.getElementById("blueIdentity")}
+  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),atkMenko:document.getElementById("redAtkMenko"),defTotal:document.getElementById("redDefTotal"),identity:document.getElementById("redIdentity")},
+  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),atkMenko:document.getElementById("blueAtkMenko"),defTotal:document.getElementById("blueDefTotal"),identity:document.getElementById("blueIdentity")}
 };
 const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
 const portraitFaceSets=["01","02","03"],cpuPortraitHairs=["hair_01","hair_02","hair_03","hair_04","hair_05","hair_06","hair_07"];
@@ -374,15 +374,20 @@ function displayedDefense(actor){
   const resultData=roundResults?.[actor]||null;
   return resultData?.defenseLevel??0;
 }
+function displayedAttackMenko(actor){
+  const resultData=roundResults?.[actor]||null;
+  return resultData?.attackLevel??0;
+}
 function syncBattleUi(){
   const data={
     player:{hp:displayedHP.player,max:config.redMaxHP,atk:config.redAttack},
     cpu:{hp:displayedHP.cpu,max:config.blueMaxHP,atk:config.blueAttack}
   };
   for(const actor of ["player","cpu"]){
-    const side=ui[uiKey(actor)],value=data[actor],def=displayedDefense(actor);
+    const side=ui[uiKey(actor)],value=data[actor],atkMenko=displayedAttackMenko(actor),def=displayedDefense(actor);
     side.hp.textContent=String(Math.round(value.hp));side.max.textContent=String(value.max);
     side.fill.style.width=`${clamp(value.hp/value.max,0,1)*100}%`;side.atk.textContent=String(value.atk);
+    side.atkMenko.textContent=String(atkMenko);
     side.defTotal.textContent=String(def);
     syncPortrait(actor);
   }
@@ -474,7 +479,7 @@ function startToss(){
     x:R.x-r*1.8,y:R.y+R.s*.72,z:18,rot:-Math.PI*.4,spin:0,r,redWins,done:false,bounces:0,hit:false,
     phase:"incoming",t:0,sx:R.x-r*1.8,sy:R.y+R.s*.72,cx,cy
   };
-  state="toss";tossWait=0;msg="試合開始――コイントスメンコ！";
+  state="toss";tossWait=0;msg="試合開始――コイントスMENKO！";
 }
 function newMatch(){
   hidePresentation();presentationRunning=false;presentationDefenseReset={player:false,cpu:false};resetPortraitExpressions();
@@ -628,7 +633,7 @@ function deal(){
   for(let i=0;i<ds.length;i++)cards.push(makeCommonCard(ts[i],ds[i],i,rad));
   // 分身は通常メンコより上の層として残す。
   cards.push(...uniqueClones);
-  aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常メンコ ${linkedCount}枚を再配置中……（青色は相手専用）`;
+  aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……（青色は相手専用）`;
 }
 function pos(e){const r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}}
 function nearestSelectableCard(p){
@@ -996,7 +1001,7 @@ function beginExpel(){
   const targets=cards.filter(c=>c.face===1&&c.type!=="clone");
   if(!targets.length){flowT=.42;state="postHold";return}
   for(const c of targets){c.exiting=true;c.exitT=0;c.exitStartY=c.y;c.exitDir=(c.x<ring().x+ring().s/2?-1:1)}
-  flowT=.42;state="expel";msg="裏向きの通常メンコを排出";
+  flowT=.42;state="expel";msg="裏向きの通常MENKOを排出";
 }
 function updateExpel(){
   for(const c of cards)if(c.exiting){
@@ -1016,7 +1021,7 @@ function applyCloneRescue(actor,owner,sameRoundContest=false){
   let choice;
   if(actorIsPlayer){
     const contestNote=sameRoundContest?"同じラウンドで両方の分身がめくれ、抽選でREDの効果が選ばれた！\n":"";
-    choice=confirm(`${contestNote}REDがBLUEの分身メンコをめくった！\nOK：REDを最大HPの1/3回復\nキャンセル：BLUEへ防御貫通の最大ダメージ`)?"heal":"damage";
+    choice=confirm(`${contestNote}REDがBLUEの分身MENKOをめくった！\nOK：REDを最大HPの1/3回復\nキャンセル：BLUEへ防御貫通の最大ダメージ`)?"heal":"damage";
   }else{
     choice=blueHP<=config.blueMaxHP/2?"heal":"damage";
   }
@@ -1552,7 +1557,7 @@ function handleIntegratedBattleResult(playerWon){
   if(runState.match===15){records.clears++;saveProgressRecords();clearRunProgress();runSaveMode="clear";renderProgressPanel("clear");setProgressScreen(true);return}
   saveProgressRecords();pendingRewardOptions=createPendingRewardOptions();saveRunProgress("reward");renderProgressPanel("reward");setProgressScreen(true);
 }
-const rewardDefs=[{key:"atkMenko",label:"攻撃メンコ +1"},{key:"defMenko",label:"防御メンコ +1"},{key:"hp",label:"最大HP +2"}];
+const rewardDefs=[{key:"atkMenko",label:"攻撃MENKO +1"},{key:"defMenko",label:"防御MENKO +1"},{key:"hp",label:"最大HP +2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 function createPendingRewardOptions(){
   return (runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
@@ -1569,7 +1574,7 @@ function renderProgressPanel(mode="match"){
   const p=runState?.player||{hp:15,atk:2,atkMenko:2,defMenko:2},e=runState?.enemy;
   title.textContent=mode==="reward"?"WIN!":mode==="lose"?"GAME OVER":mode==="clear"?"CLEAR!":`第${runState?.match||1}試合`;
   sum.textContent=mode==="match"?`${resumedFromSave?"オートセーブから再開 ／ ":""}エリア${progressArea(runState.match)}${e.isBoss?"・BOSS BATTLE":""}`:mode==="reward"?`現在 ${runState.wins}勝`:mode==="lose"?`到達：第${runState.match}試合 ／ 勝利数：${runState.wins}`:"15試合制覇";
-  stats.innerHTML=`<div>最大HP <b>${p.hp}</b></div><div>攻撃 <b>${p.atk}</b></div><div>攻撃メンコ <b>${p.atkMenko}</b></div><div>防御メンコ <b>${p.defMenko}</b></div>`+(e?`<div>相手HP <b>${e.hp}</b></div><div>相手攻撃 <b>${e.atk}</b></div><div>相手 攻/防 <b>${e.atkMenko}/${e.defMenko}</b></div><div>相手戦力 <b>${progressPoints(e)}</b></div>`:"");
+  stats.innerHTML=`<div>最大HP <b>${p.hp}</b></div><div>攻撃 <b>${p.atk}</b></div><div>攻撃MENKO <b>${p.atkMenko}</b></div><div>防御MENKO <b>${p.defMenko}</b></div>`+(e?`<div>相手HP <b>${e.hp}</b></div><div>相手攻撃 <b>${e.atk}</b></div><div>相手 攻/防 <b>${e.atkMenko}/${e.defMenko}</b></div><div>相手戦力 <b>${progressPoints(e)}</b></div>`:"");
   if(mode==="match")actions.innerHTML='';
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
