@@ -48,17 +48,30 @@ button.node:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @keyframes readyBlink{50%{border-color:#888}}
 .node-stage{position:absolute;left:3px;top:2px;color:#777;font-size:8px}
 .node.current .node-stage,.node.chosen .node-stage{color:#fff}
-.mini{position:relative;width:26px;height:31px;image-rendering:pixelated}
-.mini::before{content:"";position:absolute;left:9px;top:0;width:8px;height:8px;background:currentColor}
-.mini::after{content:"";position:absolute;left:7px;top:9px;width:12px;height:14px;background:currentColor;box-shadow:-4px 3px 0 -1px currentColor,4px 3px 0 -1px currentColor,-3px 15px 0 -1px currentColor,3px 15px 0 -1px currentColor}
-.mini.light{transform:scale(.78,1);color:#f4f4f4}
-.mini.middle{color:#f4f4f4}
-.mini.heavy{transform:scale(1.18,1);color:#f4f4f4}
-.type-icon{display:grid;place-items:center;width:25px;height:25px;color:#fff}
-.type-icon svg{display:block;width:23px;height:23px;fill:currentColor;shape-rendering:crispEdges}
+.mini{position:relative;width:32px;height:34px;color:#f4f4f4;image-rendering:pixelated}
+.mini i{position:absolute;display:block;background:currentColor}
+.mini .head{top:0}
+.mini .body{top:10px}
+.mini .leg{top:24px}
+.mini.light .head{left:12px;width:8px;height:8px}
+.mini.light .body{left:12px;width:8px;height:13px;clip-path:polygon(1px 0,7px 0,8px 2px,7px 13px,1px 13px,0 2px)}
+.mini.light .leg.left{left:12px;width:3px;height:9px}.mini.light .leg.right{right:12px;width:3px;height:9px}
+.mini.middle .head{left:11px;width:10px;height:8px}
+.mini.middle .body{left:8px;width:16px;height:14px;clip-path:polygon(2px 0,14px 0,16px 4px,14px 14px,2px 14px,0 4px)}
+.mini.middle .leg.left{left:9px;width:5px;height:9px}.mini.middle .leg.right{right:9px;width:5px;height:9px}
+.mini.heavy .head{left:10px;width:12px;height:9px}
+.mini.heavy .body{left:2px;width:28px;height:15px;clip-path:polygon(3px 0,25px 0,28px 3px,25px 15px,3px 15px,0 3px)}
+.mini.heavy .leg.left{left:6px;width:8px;height:9px}.mini.heavy .leg.right{right:6px;width:8px;height:9px}
+.node.rejected .mini{color:#555}
+.type-icon{display:grid;place-items:center;width:27px;height:27px}
+.type-icon img{display:block;width:25px;height:25px;object-fit:contain;image-rendering:pixelated}
+.node.rejected .type-icon{opacity:.42}
 .node-copy{text-align:center;white-space:nowrap}
+.weight,.type-name{display:block}
 .weight{font-size:9px;line-height:1.05;color:#aaa}.type-name{margin-top:2px;font-size:10px;line-height:1}
-.boss-name{font-size:12px;line-height:1;color:#fff}.boss-sub{margin-top:3px;color:#999;font-size:9px}
+.node.boss .node-copy{white-space:normal}
+.boss-name,.boss-sub,.boss-name span,.boss-sub span{display:block}
+.boss-name{font-size:10px;line-height:1;color:#fff}.boss-sub{margin-top:3px;color:#999;font-size:8px;line-height:1.05}
 .start-node{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);display:grid;place-items:center;width:62px;height:38px;border:3px solid #f00;background:#180000;color:#fff;font-size:11px}
 .selection-flash{position:absolute;z-index:10;inset:0;display:none;place-items:center;background:#000c;pointer-events:none}
 .selection-flash.show{display:grid;animation:flashOut .42s steps(2,end) both}
@@ -71,7 +84,7 @@ button.node:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .theme-a .route-active{stroke:#f00;stroke-width:3}
 .theme-a .node{width:112px;height:56px;grid-template-columns:34px 25px 1fr;gap:2px;padding:5px 5px 3px;border-radius:0;box-shadow:4px 4px 0 #000}
 .theme-a .node.boss{width:140px;height:58px;grid-template-columns:42px 1fr;border-width:3px}
-.theme-a .node.boss .type-icon{width:35px;height:35px}.theme-a .node.boss .type-icon svg{width:31px;height:31px}
+.theme-a .node.boss .type-icon{width:35px;height:35px}.theme-a .node.boss .type-icon img{width:31px;height:31px}
 .theme-a .round-label{border-left:1px solid #555;border-right:1px solid #555}
 
 /* B: fight-bill cards */
@@ -79,13 +92,13 @@ button.node:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .theme-b .route-base{stroke:#333;stroke-width:7}
 .theme-b .route-active{stroke:#f00;stroke-width:7}
 .theme-b .node{width:136px;height:64px;grid-template-columns:39px 26px 1fr;gap:4px;padding:6px;border:1px solid #777;background:#e9e9e9;color:#111;box-shadow:5px 5px 0 #444}
-.theme-b .node .mini{color:#111}.theme-b .node .type-icon{color:#111}.theme-b .node .weight{color:#555}.theme-b .node .node-stage{color:#555}
+.theme-b .node .mini{color:#111}.theme-b .node .type-icon{background:#222}.theme-b .node .weight{color:#555}.theme-b .node .node-stage{color:#555}
 .theme-b .node.current{border:4px solid #fff;background:#fff;box-shadow:6px 6px 0 #f00}
 .theme-b .node.chosen{border:3px solid #f00;background:#fff;color:#111;box-shadow:5px 5px 0 #700}
-.theme-b .node.rejected{background:#333;color:#777;box-shadow:none}.theme-b .node.rejected .mini,.theme-b .node.rejected .type-icon{color:#777}
+.theme-b .node.rejected{background:#333;color:#777;box-shadow:none}.theme-b .node.rejected .mini{color:#777}
 .theme-b .node.future{filter:grayscale(1);opacity:.72}
 .theme-b .node.boss{width:166px;height:66px;grid-template-columns:43px 1fr;background:#111;color:#fff;border:4px double #fff;box-shadow:6px 6px 0 #555}
-.theme-b .node.boss .type-icon,.theme-b .node.boss .mini{color:#fff}
+.theme-b .node.boss .mini{color:#fff}
 .theme-b .round-label{background:#f2f2f2;color:#111;padding:3px 7px;transform:translateX(-50%) rotate(-2deg)}
 
 /* C: ring / corner UI */
@@ -99,7 +112,8 @@ button.node:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .theme-c .node .node-copy{grid-column:1/-1}.theme-c .node.current{border-color:#fff;background:#303030}.theme-c .node.chosen{border-color:#f00;background:#250000}.theme-c .node.rejected{border-color:#333}
 .theme-c .node.boss{width:124px;height:76px;grid-template-columns:42px 1fr;grid-template-rows:1fr;border-color:#00f;background:#000035}
 .theme-c .node.boss.current{border-color:#fff}.theme-c .node.boss.chosen{border-color:#f00;background:#250000}
-.theme-c .node.boss .type-icon{width:36px;height:36px}.theme-c .node.boss .type-icon svg{width:32px;height:32px}
+.theme-c .node.boss .type-icon{width:36px;height:36px}.theme-c .node.boss .type-icon img{width:32px;height:32px}
+.theme-c .node.boss .node-copy{grid-column:2;grid-row:1;align-self:center}
 .theme-c .round-label{background:#111;border:1px solid #555;padding:3px 6px;color:#aaa}
 .theme-c .start-node{clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
 
@@ -171,11 +185,40 @@ const selected=[0,1];
 let stage=2,theme="a",flashTimer=0;
 const screen=document.getElementById("mapScreen"),nodesHost=document.getElementById("nodes"),routeSvg=document.getElementById("routeSvg"),labelsHost=document.getElementById("roundLabels"),note=document.getElementById("conceptNote"),flash=document.getElementById("selectionFlash");
 
+function createAttackIconUrl(){
+  // 本編の攻撃メンコと同じ生成方法：拳の絵文字を24pxへ縮小し、白・灰・黒のドットへ変換。
+  const source=document.createElement("canvas");source.width=96;source.height=96;
+  const sc=source.getContext("2d",{willReadFrequently:true});sc.font='72px "Segoe UI Emoji","Apple Color Emoji",sans-serif';sc.textAlign="center";sc.textBaseline="middle";sc.fillText("\u{1F91C}",48,51);
+  const sample=document.createElement("canvas");sample.width=24;sample.height=24;
+  const pc=sample.getContext("2d",{willReadFrequently:true});pc.imageSmoothingEnabled=true;pc.drawImage(source,0,0,24,24);
+  const pixels=pc.getImageData(0,0,24,24).data,icon=document.createElement("canvas");icon.width=24;icon.height=24;const ic=icon.getContext("2d");
+  for(let y=0;y<24;y++)for(let x=0;x<24;x++){const o=(y*24+x)*4,a=pixels[o+3]/255;if(a<.08)continue;const l=(pixels[o]*.2126+pixels[o+1]*.7152+pixels[o+2]*.0722)/255;ic.globalAlpha=a;ic.fillStyle=l>=.68?"#fff":l>=.3?"#969696":"#000";ic.fillRect(x,y,1,1)}
+  ic.globalAlpha=1;return icon.toDataURL();
+}
+function createDefenseIconUrl(){
+  // 本編の防御メンコと同じFIX済み盾アイコン。
+  const white=[[2,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]],gray=[null,null,[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8]];
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");
+  white.forEach((b,y)=>{ic.fillStyle="#fff";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});
+  gray.forEach((b,y)=>{if(!b)return;ic.fillStyle="#969696";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});
+  return icon.toDataURL();
+}
+function createHeartIconUrl(){
+  const rows=[null,[3,7,10,14],[2,8,9,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]];
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");
+  rows.forEach((r,y)=>{if(!r)return;ic.fillStyle="#fff";if(r.length===4){ic.fillRect(r[0],y,r[1]-r[0]+1,1);ic.fillRect(r[2],y,r[3]-r[2]+1,1)}else ic.fillRect(r[0],y,r[1]-r[0]+1,1)});
+  return icon.toDataURL();
+}
+function createBalanceIconUrl(){
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");
+  ic.fillStyle="#fff";
+  [[8,0,2,4],[6,4,6,2],[4,6,10,2],[0,8,18,2],[4,10,10,2],[6,12,6,2],[8,14,2,4]].forEach(r=>ic.fillRect(...r));
+  ic.fillStyle="#969696";ic.fillRect(4,8,5,2);ic.fillRect(6,10,3,2);ic.fillRect(8,12,1,2);
+  return icon.toDataURL();
+}
+const iconUrls={attack:createAttackIconUrl(),defense:createDefenseIconUrl(),hp:createHeartIconUrl(),balance:createBalanceIconUrl()};
 function icon(type){
-  if(type==="attack")return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h3V6h4v2h3V6h4v3h3v8h-3v3H8v-3H5v-3H3zM8 9h2v4H8zm5 0h2v4h-2z"/></svg></span>';
-  if(type==="defense")return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 3h16v10h-2v4h-3v3h-6v-3H6v-4H4zm4 4v7h3v3h2v-3h3V7z"/></svg></span>';
-  if(type==="hp")return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h6v3h4V5h6v11h-3v3H7v-3H4zm6 5v3H7v2h10v-2h-3v-3z"/></svg></span>';
-  return '<span class="type-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2h4v4h4v4h4v4h-4v4h-4v4h-4v-4H6v-4H2v-4h4V6h4zm0 7v6h4V9z"/></svg></span>';
+  return `<span class="type-icon"><img src="${iconUrls[type]||iconUrls.balance}" alt=""></span>`;
 }
 function nodeMarkup(data,row,side,status){
   const isBoss=data.boss;
@@ -184,8 +227,8 @@ function nodeMarkup(data,row,side,status){
   const aria=status==="current"?` aria-label="MATCH ${row+1} ${weightNames[data.weight]} ${typeNames[data.type]}を選択"`:"";
   return `<${tag} ${tag==="button"?'type="button" ':''}class="node ${status}${isBoss?' boss':''}" data-row="${row}" data-side="${side}"${aria}>
     <span class="node-stage">${isBoss?'BOSS':`M${row+1}-${sideName}`}</span>
-    ${isBoss?icon(data.type):`<span class="mini ${data.weight}" aria-hidden="true"></span>${icon(data.type)}`}
-    <span class="node-copy">${isBoss?'<span class="boss-name">AREA BOSS</span><span class="boss-sub">HEAVY / 万能型</span>':`<span class="weight">${weightNames[data.weight]}</span><span class="type-name">${typeNames[data.type]}</span>`}</span>
+    ${isBoss?icon(data.type):`<span class="mini ${data.weight}" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="leg left"></i><i class="leg right"></i></span>${icon(data.type)}`}
+    <span class="node-copy">${isBoss?`<span class="boss-name"><span>AREA</span><span>BOSS</span></span><span class="boss-sub"><span>${weightNames[data.weight]}</span><span>${typeNames[data.type]}</span></span>`:`<span class="weight">${weightNames[data.weight]}</span><span class="type-name">${typeNames[data.type]}</span>`}</span>
   </${tag}>`;
 }
 function positions(){
