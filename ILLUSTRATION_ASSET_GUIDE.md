@@ -126,7 +126,7 @@ ex_move_no_attack_01.jpg
 ex_move_no_attack_02.jpg
 ex_move_no_attack_03.jpg
 
-ex_move_heal.jpg
+ex_move_heal_01.jpg ～ ex_move_heal_04.jpg
 
 sp_move01_001_01.jpg ～ sp_move01_001_04.jpg
 sp_move02_001_01.jpg ～ sp_move02_001_04.jpg
@@ -137,7 +137,7 @@ sp_move03_001_01.jpg ～ sp_move03_001_04.jpg
 
 - `ex_move_defense`: 完全防御・ダメージ0、2コマ
 - `ex_move_no_attack`: 両者攻撃なし、3コマ
-- `ex_move_heal`: 分身回復、1コマ
+- `ex_move_heal`: 分身回復、4コマ
 - `sp_move01`: 投げ技の最大ダメージ、4コマ
 - `sp_move02`: 打撃技の最大ダメージ、4コマ
 - `sp_move03`: 関節技の最大ダメージ、4コマ
