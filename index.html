@@ -35,24 +35,56 @@ button{appearance:none;border:1.5px solid var(--ink);background:var(--paper);col
 #balanceActions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
 @media(max-width:520px){#balanceGrid{grid-template-columns:1fr}}
 
-#progressPanel{position:relative;width:100%;min-height:100vh;min-height:100dvh;background:#111;color:#f3f3f3;display:none;overflow:visible;touch-action:auto;padding:18px;pointer-events:auto}
-#progressBox{position:relative;max-width:760px;margin:0 auto;background:#1c1c1c;border:1px solid #555;border-radius:16px;padding:18px;pointer-events:auto}
+#progressPanel{position:relative;width:100%;min-height:100vh;min-height:100dvh;background:#0b0b0b;color:#f3f3f3;display:none;overflow:visible;touch-action:auto;padding:12px 8px 24px;pointer-events:auto}
+#progressBox{position:relative;width:min(100%,520px);margin:0 auto;background:linear-gradient(90deg,transparent 49.5%,#292929 49.5% 50.5%,transparent 50.5%),linear-gradient(#171717,#0c0c0c);border:2px solid #555;pointer-events:auto;overflow:hidden}
+#progressBox::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 2px #191919}
 body.progress-screen{overflow:auto}
 body.progress-screen #wrap{display:none}
 body.progress-screen #progressPanel{display:block}
 body.progress-screen #testTools{display:none}
-#progressBox button{background:#262626;color:#f3f3f3;border-color:#666}
-#progressBox .primary{background:#f3f3f3;color:#111}
-#progressStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
-#progressStats>div{background:#262626;padding:10px;border-radius:10px}
-#rewardChoices{display:grid;gap:9px;margin:14px 0}
-#rewardChoices button.selected{outline:2px solid #fff;background:#444}
-#progressActions{display:flex;gap:8px;flex-wrap:wrap}
-#progressActions button{flex:1 1 140px}
-#progressFixedActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-#progressFixedActions button{flex:1 1 140px}
+#progressBox button{background:#262626;color:#f3f3f3;border-color:#666;border-radius:0}
+#progressHeader{position:relative;z-index:2;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:11px 13px 9px;border-bottom:2px solid #444;background:#181818}
+#progressTitle{margin:0;font-size:20px;font-weight:400;line-height:1}
+#progressSubhead{display:block;margin-top:6px;color:#999;font-size:9px}
+#progressRecord{text-align:right;color:#f00;font-size:12px;line-height:1.45}
+#progressSummary{position:relative;z-index:1;margin:13px 12px 11px;padding:13px 12px 11px;border:3px solid #777;background:#202020;text-align:center;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px)}
+#progressSummary::before,#progressSummary::after{content:"";position:absolute;left:8px;right:8px;height:2px;background:#777}#progressSummary::before{top:7px}#progressSummary::after{bottom:7px}
+#progressSummary strong{display:block;font-size:27px;font-weight:400;line-height:1}#progressSummary span{display:block;margin-top:6px;color:#bbb;font-size:10px}
+#progressBox.result-mode #progressSummary{border-color:#f00;background:#250000}
+#progressStats{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 12px 12px}
+.progress-status-card{position:relative;min-width:0;padding:19px 10px 9px;border:3px solid #777;background:#202020;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.progress-status-card.red{border-color:#f00}.progress-status-card.blue{border-color:#00f}.progress-status-label{position:absolute;left:7px;top:5px;font-size:8px;color:#fff}
+.progress-stat{display:flex;justify-content:space-between;gap:5px;padding:5px 0 4px;border-bottom:1px solid #3f3f3f;color:#aaa;font-size:9px}.progress-stat:last-child{border-bottom:0}.progress-stat b{color:#fff;font-weight:400;font-size:11px}
+#progressRoute{display:none;position:relative;z-index:1}
+#progressBox.map-mode #progressSummary,#progressBox.map-mode #progressStats{display:none}
+.progress-map-legend{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;border-bottom:1px solid #333;background:#111;color:#aaa;font-size:10px}.progress-map-legend-items{display:flex;gap:8px;flex-wrap:wrap}.progress-map-legend span{display:inline-flex;align-items:center;gap:3px}.progress-map-legend i{display:inline-block;width:8px;height:8px;background:#777}.progress-map-legend .light{width:5px}.progress-map-legend .heavy{width:11px}
+.progress-map-field{position:relative;width:100%;height:574px;background:linear-gradient(90deg,transparent 49.5%,#333 49.5% 50.5%,transparent 50.5%),linear-gradient(#171717,#0c0c0c)}
+.progress-map-lines{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible}.progress-route-base,.progress-route-active{fill:none;vector-effect:non-scaling-stroke}.progress-route-base{stroke:#777;stroke-width:2}.progress-route-active{stroke:#f00;stroke-width:5}
+.progress-round-label{position:absolute;z-index:2;left:50%;transform:translateX(-50%);border:1px solid #555;background:#111;padding:3px 6px;color:#aaa;font-size:9px;white-space:nowrap}.progress-round-label.current{color:#fff}
+.progress-route-node{position:absolute;z-index:3;display:grid;width:92px;height:72px;grid-template-columns:1fr 1fr;grid-template-rows:37px 1fr;gap:0;align-items:center;justify-items:center;padding:5px;border:3px solid #aaa!important;background:#242424!important;color:#fff;transform:translate(-50%,-50%);clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);cursor:default}.progress-route-node.current{border-color:#fff!important;background:#303030!important;cursor:pointer;animation:routeReady 1.15s steps(2,end) infinite}.progress-route-node.chosen{border-color:#f00!important;background:#250000!important}.progress-route-node.rejected{border-color:#333!important;color:#555;opacity:.62}.progress-route-node.future{opacity:.68}
+@keyframes routeReady{50%{border-color:#888}}
+.progress-node-stage{position:absolute;left:3px;top:2px;color:#777;font-size:8px}.progress-route-node.current .progress-node-stage,.progress-route-node.chosen .progress-node-stage{color:#fff}
+.progress-mini{position:relative;width:32px;height:34px;color:#f4f4f4;image-rendering:pixelated}.progress-mini i{position:absolute;display:block;background:currentColor}.progress-mini .head{top:0}.progress-mini .body{top:10px}.progress-mini .leg{top:24px}.progress-mini.light .head{left:12px;width:8px;height:8px}.progress-mini.light .body{left:12px;width:8px;height:13px;clip-path:polygon(1px 0,7px 0,8px 2px,7px 13px,1px 13px,0 2px)}.progress-mini.light .leg.left{left:12px;width:3px;height:9px}.progress-mini.light .leg.right{right:12px;width:3px;height:9px}.progress-mini.middle .head{left:11px;width:10px;height:8px}.progress-mini.middle .body{left:8px;width:16px;height:14px;clip-path:polygon(2px 0,14px 0,16px 4px,14px 14px,2px 14px,0 4px)}.progress-mini.middle .leg.left{left:9px;width:5px;height:9px}.progress-mini.middle .leg.right{right:9px;width:5px;height:9px}.progress-mini.heavy .head{left:10px;width:12px;height:9px}.progress-mini.heavy .body{left:2px;width:28px;height:15px;clip-path:polygon(3px 0,25px 0,28px 3px,25px 15px,3px 15px,0 3px)}.progress-mini.heavy .leg.left{left:6px;width:8px;height:9px}.progress-mini.heavy .leg.right{right:6px;width:8px;height:9px}.progress-route-node.rejected .progress-mini{color:#555}
+.progress-type-icon{display:grid;place-items:center;width:27px;height:27px}.progress-type-icon img{display:block;width:25px;height:25px;object-fit:contain;image-rendering:pixelated}.progress-route-node.rejected .progress-type-icon{opacity:.42}.progress-node-copy{grid-column:1/-1;text-align:center;white-space:nowrap}.progress-weight,.progress-type-name{display:block}.progress-weight{font-size:9px;line-height:1.05;color:#aaa}.progress-type-name{margin-top:2px;font-size:10px;line-height:1}
+.progress-route-node.boss{width:124px;height:76px;grid-template-columns:42px 1fr;grid-template-rows:1fr;border-color:#00f!important;background:#000035!important}.progress-route-node.boss.current{border-color:#fff!important}.progress-route-node.boss .progress-type-icon{width:36px;height:36px}.progress-route-node.boss .progress-type-icon img{width:32px;height:32px}.progress-route-node.boss .progress-node-copy{grid-column:2;grid-row:1;align-self:center;white-space:normal}.progress-boss-name,.progress-boss-sub,.progress-boss-name span,.progress-boss-sub span{display:block}.progress-boss-name{font-size:10px;line-height:1}.progress-boss-sub{margin-top:3px;color:#999;font-size:8px;line-height:1.05}
+.progress-start-node{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);display:grid;place-items:center;width:62px;height:38px;border:3px solid #f00;background:#180000;color:#fff;font-size:11px;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+.progress-selection-flash{position:absolute;z-index:10;inset:0;display:none;place-items:center;background:#000c;pointer-events:none}.progress-selection-flash.show{display:grid;animation:routeFlash .42s steps(2,end) both}.progress-selection-flash div{border:3px solid #fff;background:#111;padding:12px 20px;font-size:18px;box-shadow:5px 5px 0 #f00}@keyframes routeFlash{0%,70%{opacity:1}100%{opacity:0}}
+#growthSection{position:relative;z-index:1;margin:0 12px 12px;padding:11px 10px 10px;border-top:2px solid #555;border-bottom:2px solid #555;background:#111}
+#growthHeader{display:flex;justify-content:space-between;align-items:end;gap:8px;margin-bottom:8px}.growth-title{font-size:14px}#growthRule{color:#999;font-size:9px;text-align:right}
+#bossBonus{display:none;margin-bottom:7px;padding:7px 8px;border-left:4px solid #f00;background:#251010;color:#fff;font-size:10px}#progressBox.boss-mode #bossBonus{display:block}
+#rewardChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:0}#progressBox.boss-mode #rewardChoices{grid-template-columns:repeat(3,minmax(0,1fr))}
+.reward-choice{position:relative;display:grid;grid-template-rows:35px auto auto;place-items:center;min-width:0;min-height:84px;padding:8px 4px 7px;border:3px solid #777!important;background:#242424!important;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
+.reward-choice::before,.reward-choice::after{content:"";position:absolute;z-index:0;left:5px;right:5px;height:2px;background:#777}.reward-choice::before{top:7px}.reward-choice::after{bottom:7px}.reward-choice>*{position:relative;z-index:1}
+.reward-choice.selected,.reward-choice[aria-pressed="true"]{border-color:#f00!important;background:#250000!important}.reward-choice img{display:block;width:31px;height:31px;object-fit:contain;image-rendering:pixelated}.reward-choice-name{font-size:9px;line-height:1.15;text-align:center}.reward-choice-value{margin-top:3px;color:#fff;font-size:13px}
+#progressActions{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap;margin:0 12px 12px}#progressActions button{flex:1 1 140px}
+#progressActions .progress-confirm{width:100%;padding:12px 10px;border:3px solid #555;background:#181818;color:#777;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+#progressActions .progress-confirm:not(:disabled){border-color:#fff;background:#303030;color:#fff;box-shadow:inset 0 -3px 0 #f00}
+#progressFixedActions{position:relative;z-index:1;display:flex;gap:8px;flex-wrap:wrap;margin:0 12px 12px}#progressFixedActions button{flex:1 1 140px;padding:11px 8px}#progressFixedActions .primary{border-color:#fff;background:#303030;color:#fff;box-shadow:inset 0 -3px 0 #f00}
+#progressFooter{position:relative;z-index:1;display:flex;justify-content:space-between;gap:8px;padding:7px 12px;border-top:2px solid #444;background:#181818;color:#888;font-size:8px}#progressFooter b{color:#f00;font-weight:400}
+#progressUtility{position:relative;z-index:1;margin:12px;border:1px solid #444;background:#141414;padding:9px;color:#bbb;font-size:11px}#progressUtility summary{cursor:pointer;color:#fff}#progressUtility h3{margin:14px 0 6px;color:#fff}
 .ruleRow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;margin:10px 0}
-@media(max-width:520px){#progressStats{grid-template-columns:1fr}}
+@media(max-width:390px){#progressPanel{padding-inline:5px}#progressHeader{padding-inline:10px}#progressSummary,#progressStats,#growthSection,#progressActions,#progressFixedActions{margin-left:8px;margin-right:8px}.progress-status-card{padding-inline:7px}#progressBox.boss-mode #rewardChoices{gap:4px}#progressBox.boss-mode .reward-choice{padding-inline:2px}.reward-choice-name{font-size:8px}.progress-map-field{height:534px}.progress-route-node{width:86px}}
+@media(prefers-reduced-motion:reduce){.progress-route-node.current,.progress-selection-flash.show{animation:none}}
 
 @font-face{font-family:MisakiGothic;src:url("fonts/misaki_ttf_2021-05-05/misaki_gothic.ttf") format("truetype");font-display:swap}
 :root{--ink:#fff;--paper:#111;--red:#f00;--blue:#00f;--panel:#202020;--muted:#999}
@@ -213,23 +245,21 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 </main>
 </div>
 <div id="progressPanel"><div id="progressBox">
-  <h2 id="progressTitle">MENKO用進行装置</h2>
+  <header id="progressHeader"><div><h2 id="progressTitle">MENKO ENDURANCE</h2><small id="progressSubhead"></small></div><div id="progressRecord"></div></header>
   <div id="progressSummary"></div>
   <div id="progressStats"></div>
-  <div id="rewardChoices"></div>
+  <div id="progressRoute"></div>
+  <section id="growthSection"><div id="growthHeader"><span class="growth-title">GROWTH SELECT</span><span id="growthRule"></span></div><div id="bossBonus">BOSS BONUS　ATK +1（確定）</div><div id="rewardChoices"></div></section>
   <div id="progressActions"></div><div id="progressFixedActions"><button class="primary" id="fixedStartBattleBtn" type="button">試合開始</button><button id="fixedRestartRunBtn" type="button">最初から</button></div><div id="progressError" style="display:none;margin-top:10px;padding:10px;background:#5b1d1d;border-radius:8px"></div>
-  <hr style="border:0;border-top:1px solid #555;margin:18px 0">
-  <h3>差分MENKO設定</h3>
-  <label class="ruleRow"><span>差分MENKOを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label>
-  <p style="font-size:12px;color:#bbb">カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p>
-  <h3>通算戦績</h3><div id="careerRecords"></div>
+  <footer id="progressFooter"></footer>
+  <details id="progressUtility"><summary>設定・通算戦績</summary><h3>差分MENKO設定</h3><label class="ruleRow"><span>差分MENKOを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label><p>カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p><h3>通算戦績</h3><div id="careerRecords"></div></details>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
 <div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃MENKO枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。両者に攻撃がある場合は先攻順で解決し、先攻の攻撃で後攻がHP0になった場合、後攻の攻撃とダメージは無効です。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用でき、相手所有の差分MENKOをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃MENKO総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
-const VERSION="MENKO ENDURANCE 01 / v27 / CLONE ACTOR SAVE";
+const VERSION="MENKO ENDURANCE 01 / v28 / ROUTE RESULT INTEGRATION";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -281,7 +311,7 @@ let cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
 let portraitState={player:{hair:"player",faceSet:portraitFaceSets[Math.floor(Math.random()*portraitFaceSets.length)],expression:"normal"},cpu:{...cpuPortraitBag.next(),expression:"normal"}};
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
-const moveFrameCounts={"001_001":4,"001_002":3,"001_003":3,"002_001":2,"002_002":2,"002_003":3,"003_001":2,"003_002":2,"003_003":3};
+const moveFrameCounts={"001_001":4,"001_002":4,"001_003":4,"002_001":2,"002_002":2,"002_003":3,"003_001":2,"003_002":2,"003_003":3};
 const redMoveMirrored={"001_001":true,"001_002":false,"001_003":true,"002_001":false,"002_002":true,"002_003":false,"003_001":false,"003_002":true,"003_003":false};
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
@@ -1055,7 +1085,7 @@ async function playCloneDamageEvent(actor,damage){
 }
 async function playCloneHealEvent(rescue){
   const actor=rescue.actor,label=actorLabel(actor);
-  await playIllustration({files:[`${MOVE_ROOT}/ex_move_heal.jpg`],mirrored:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
+  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
 async function playRoundPresentations(data){
   const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
@@ -1418,7 +1448,14 @@ function createDefenseIcon(){
   const white=[[2,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]],gray=[null,null,[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[2,8],[3,8],[4,8],[5,8],[6,8],[7,8]];
   const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");white.forEach((b,y)=>{ic.fillStyle="#fff";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});gray.forEach((b,y)=>{if(!b)return;ic.fillStyle="#969696";ic.fillRect(b[0],y,b[1]-b[0]+1,1)});return icon;
 }
-const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon();
+function createHeartIcon(){
+  const rows=[null,[3,7,10,14],[2,8,9,15],[1,16],[1,16],[1,16],[1,16],[1,16],[1,16],[2,15],[3,14],[4,13],[5,12],[6,11],[7,10],[8,9]];
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");rows.forEach((r,y)=>{if(!r)return;ic.fillStyle="#fff";if(r.length===4){ic.fillRect(r[0],y,r[1]-r[0]+1,1);ic.fillRect(r[2],y,r[3]-r[2]+1,1)}else ic.fillRect(r[0],y,r[1]-r[0]+1,1)});return icon;
+}
+function createBalanceIcon(){
+  const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");ic.fillStyle="#fff";[[8,0,2,4],[6,4,6,2],[4,6,10,2],[0,8,18,2],[4,10,10,2],[6,12,6,2],[8,14,2,4]].forEach(r=>ic.fillRect(...r));ic.fillStyle="#969696";ic.fillRect(4,8,5,2);ic.fillRect(6,10,3,2);ic.fillRect(8,12,1,2);return icon;
+}
+const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon(),heartIcon=createHeartIcon(),balanceIcon=createBalanceIcon();
 function menkoSpec(c){return {kind:c.type,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
 function drawCloneFace(r){
   const scale=r/62;ctx.save();ctx.scale(scale,scale);ctx.translate(-90,-90);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();ctx.fillStyle="#000";ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));ctx.restore();ctx.restore();
@@ -1496,7 +1533,7 @@ function validRunStats(x){return x&&["hp","atk","atkMenko","defMenko"].every(k=>
 function loadRunProgress(){
   try{
     const saved=JSON.parse(localStorage.getItem(RUN_SAVE_STORAGE_KEY)||"null"),r=saved?.runState;
-    if(saved?.version!==RUN_SAVE_VERSION||!r||!Number.isInteger(r.match)||r.match<1||r.match>15||!Number.isFinite(r.wins)||!validRunStats(r.player)||!validRunStats(r.enemy))throw new Error("invalid run save");
+    if(saved?.version!==RUN_SAVE_VERSION||!r||!Number.isInteger(r.match)||r.match<1||r.match>15||!Number.isFinite(r.wins)||!validRunStats(r.player)||(r.enemy!=null&&!validRunStats(r.enemy)))throw new Error("invalid run save");
     return saved;
   }catch{
     localStorage.removeItem(RUN_SAVE_STORAGE_KEY);
@@ -1529,28 +1566,63 @@ function generateProgressEnemy(area){
   return {hp:randInt(Math.floor(boss.hp*.5),Math.floor(boss.hp*.8)),...chosen,isBoss:false};
 }
 function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match))}
+const progressTypeNames={attack:"攻撃型",defense:"防御型",hp:"体力型",balance:"万能型"},progressWeightNames={light:"LIGHT",middle:"MIDDLE",heavy:"HEAVY"};
+function describeProgressEnemy(enemy,area){
+  if(enemy.isBoss)return {...enemy,weight:"heavy",type:"balance"};
+  const boss=BOSSES[area*5],hpRatio=enemy.hp/boss.hp,weight=hpRatio<.60?"light":hpRatio<.70?"middle":"heavy";
+  const scores=[{key:"attack",score:enemy.atk*2+enemy.atkMenko*1.4},{key:"defense",score:enemy.defMenko*2},{key:"hp",score:hpRatio*8}].sort((a,b)=>b.score-a.score);
+  const type=scores[0].score-scores[1].score<1.5?"balance":scores[0].key;
+  return {...enemy,weight,type};
+}
+function createAreaRoute(area){
+  return {rounds:Array.from({length:4},()=>[describeProgressEnemy(generateProgressEnemy(area),area),describeProgressEnemy(generateProgressEnemy(area),area)]),selections:[null,null,null,null],boss:describeProgressEnemy({...BOSSES[area*5],isBoss:true},area)};
+}
+function ensureAreaRoute(area){
+  if(!runState.routes||typeof runState.routes!=="object")runState.routes={};
+  if(!runState.routes[area])runState.routes[area]=createAreaRoute(area);
+  return runState.routes[area];
+}
+function normalizeRunRouteState(){
+  const area=progressArea(runState.match),localMatch=(runState.match-1)%5+1,areaRoute=ensureAreaRoute(area);
+  if(localMatch===5){runState.enemy=areaRoute.boss;return}
+  const row=localMatch-1,selected=areaRoute.selections[row];
+  if(Number.isInteger(selected)&&selected>=0&&selected<2){runState.enemy=areaRoute.rounds[row][selected];return}
+  if(validRunStats(runState.enemy)){
+    areaRoute.rounds[row][0]=describeProgressEnemy(runState.enemy,area);areaRoute.selections[row]=0;runState.enemy=areaRoute.rounds[row][0];
+  }else runState.enemy=null;
+}
 function startIntegratedRun(){
   clearRunProgress();resumedFromSave=false;runSaveMode="match";pendingRewardOptions=[];
   records.runs++;saveProgressRecords();
   resetPortraitRun();
-  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},enemy:null};
+  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},enemy:null,routes:{}};
   prepareIntegratedMatch();
 }
 function syncIntegratedMatchFromRunState(){
   const p=runState.player,e=runState.enemy;
+  if(!e)return;
   config={...config,name:e.isBoss?`第${progressArea(runState.match)}ボス`:`第${runState.match}試合の相手`,redMaxHP:p.hp,redAttack:p.atk,redAttackCards:p.atkMenko,redDefenseCards:p.defMenko,blueMaxHP:e.hp,blueAttack:e.atk,blueAttackCards:e.atkMenko,blueDefenseCards:e.defMenko};
   writeCfg(config);syncPortrait("player");syncPortrait("cpu");
 }
 function prepareIntegratedMatch(){
-  if(runState.match>1)chooseCpuPortrait();
-  runState.enemy=makeProgressEnemy(runState.match);
+  const area=progressArea(runState.match),localMatch=(runState.match-1)%5+1,areaRoute=ensureAreaRoute(area);
+  if(localMatch===5){runState.enemy=areaRoute.boss;if(runState.match>1)chooseCpuPortrait()}
+  else{const selected=areaRoute.selections[localMatch-1];runState.enemy=Number.isInteger(selected)?areaRoute.rounds[localMatch-1][selected]:null}
   runSaveMode="match";pendingRewardOptions=[];resumedFromSave=false;
-  syncIntegratedMatchFromRunState();saveRunProgress("match");renderProgressPanel("match");setProgressScreen(true);
+  if(runState.enemy)syncIntegratedMatchFromRunState();saveRunProgress("match");renderProgressPanel("match");setProgressScreen(true);
+}
+function selectProgressOpponent(row,side){
+  const area=progressArea(runState.match),localMatch=(runState.match-1)%5+1;
+  if(localMatch===5||row!==localMatch-1||![0,1].includes(side))return;
+  const areaRoute=ensureAreaRoute(area);areaRoute.selections[row]=side;runState.enemy=areaRoute.rounds[row][side];
+  chooseCpuPortrait();syncIntegratedMatchFromRunState();saveRunProgress("match");renderProgressPanel("match");
+  const flash=document.getElementById("progressSelectionFlash");if(flash){flash.classList.add("show");setTimeout(()=>flash.classList.remove("show"),430)}
 }
 function startCurrentIntegratedBattle(){
   const errorBox=document.getElementById("progressError");
   errorBox.style.display="none";errorBox.textContent="";
   if(!runState)startIntegratedRun();
+  if(!runState.enemy){showProgressError(new Error("対戦相手を選択してください"));return}
   try{
     resumedFromSave=false;
     setProgressScreen(false);resize();newMatch();
@@ -1567,7 +1639,7 @@ function handleIntegratedBattleResult(playerWon){
   if(runState.match===15){records.clears++;saveProgressRecords();clearRunProgress();runSaveMode="clear";renderProgressPanel("clear");setProgressScreen(true);return}
   saveProgressRecords();pendingRewardOptions=createPendingRewardOptions();saveRunProgress("reward");renderProgressPanel("reward");setProgressScreen(true);
 }
-const rewardDefs=[{key:"atkMenko",label:"攻撃MENKO +1"},{key:"defMenko",label:"防御MENKO +1"},{key:"hp",label:"最大HP +2"}];
+const rewardDefs=[{key:"atkMenko",label:"攻撃MENKO",value:"+1"},{key:"defMenko",label:"防御MENKO",value:"+1"},{key:"hp",label:"最大HP",value:"+2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 function createPendingRewardOptions(){
   return (runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
@@ -1578,21 +1650,68 @@ function normalizePendingRewardOptions(){
   const expected=runState.enemy.isBoss?rewardDefs.length:2;
   if(pendingRewardOptions.length!==expected)pendingRewardOptions=createPendingRewardOptions();
 }
+function progressRouteIconUrl(type){return type==="attack"?attackIcon.toDataURL():type==="defense"?defenseIcon.toDataURL():type==="hp"?heartIcon.toDataURL():balanceIcon.toDataURL()}
+function progressRouteNodeMarkup(data,row,side,status){
+  const boss=!!data.isBoss,tag=!boss&&status==="current"?"button":"div",stage=boss?"BOSS":`M${row+1}-${side===0?"A":"B"}`;
+  const mini=boss?"":`<span class="progress-mini ${data.weight}" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="leg left"></i><i class="leg right"></i></span>`;
+  const icon=`<span class="progress-type-icon"><img src="${progressRouteIconUrl(data.type)}" alt=""></span>`;
+  const copy=boss?`<span class="progress-boss-name"><span>AREA</span><span>BOSS</span></span><span class="progress-boss-sub"><span>${progressWeightNames[data.weight]}</span><span>${progressTypeNames[data.type]}</span></span>`:`<span class="progress-weight">${progressWeightNames[data.weight]}</span><span class="progress-type-name">${progressTypeNames[data.type]}</span>`;
+  const aria=tag==="button"?` aria-label="MATCH ${row+1} ${progressWeightNames[data.weight]} ${progressTypeNames[data.type]}を選択"`:"";
+  return `<${tag}${tag==="button"?' type="button"':''} class="progress-route-node ${status}${boss?" boss":""}" data-row="${row}" data-side="${side}"${aria}><span class="progress-node-stage">${stage}</span>${mini}${icon}<span class="progress-node-copy">${copy}</span></${tag}>`;
+}
+function renderProgressRouteMap(host){
+  const area=progressArea(runState.match),localMatch=(runState.match-1)%5+1,stage=localMatch-1,areaRoute=ensureAreaRoute(area),narrow=window.innerWidth<=390,height=narrow?534:574;
+  const top=56,bottom=height-92,step=(bottom-top)/4,x=[narrow?104:108,narrow?326:322],rows=[0,1,2,3].map(i=>({y:bottom-i*step,x})),start={x:215,y:height-45},boss={x:215,y:25};
+  const line=(a,b)=>`M ${a.x} ${a.y} L ${b.x} ${b.y}`,base=[],active=[];let from=start;
+  for(let r=0;r<4;r++){
+    const row=rows[r],merge={x:215,y:row.y-43};
+    for(let s=0;s<2;s++){base.push(line(from,{x:row.x[s],y:row.y+30}));base.push(line({x:row.x[s],y:row.y-30},merge))}
+    const selected=areaRoute.selections[r];if(Number.isInteger(selected)){active.push(line(from,{x:row.x[selected],y:row.y+30}));active.push(line({x:row.x[selected],y:row.y-30},merge))}from=merge;
+  }
+  base.push(line(from,{x:boss.x,y:boss.y+34}));if(stage===4)active.push(line(from,{x:boss.x,y:boss.y+34}));
+  let nodes="",labels="";
+  for(let r=0;r<4;r++){
+    const selected=areaRoute.selections[r];labels+=`<div class="progress-round-label ${r===stage?"current":""}" style="top:${rows[r].y-7}px">MATCH ${r+1}</div>`;
+    for(let s=0;s<2;s++){
+      let status="future";if(r<stage||r===stage&&Number.isInteger(selected))status=selected===s?"chosen":"rejected";else if(r===stage)status="current";
+      nodes+=`<div style="position:absolute;left:${(rows[r].x[s]/4.3).toFixed(3)}%;top:${rows[r].y}px">${progressRouteNodeMarkup(areaRoute.rounds[r][s],r,s,status)}</div>`;
+    }
+  }
+  const bossStatus=stage===4?"current":"future";nodes+=`<div style="position:absolute;left:50%;top:${boss.y}px">${progressRouteNodeMarkup(areaRoute.boss,4,0,bossStatus)}</div>`;
+  host.innerHTML=`<div class="progress-map-legend"><div class="progress-map-legend-items"><span><i class="light"></i>LIGHT</span><span><i></i>MIDDLE</span><span><i class="heavy"></i>HEAVY</span></div><span>階級 / 型</span></div><div class="progress-map-field"><svg class="progress-map-lines" viewBox="0 0 430 ${height}" preserveAspectRatio="none" aria-hidden="true">${base.map(d=>`<path class="progress-route-base" d="${d}"/>`).join("")}${active.map(d=>`<path class="progress-route-active" d="${d}"/>`).join("")}</svg>${labels}${nodes}<div class="progress-start-node">RED</div><div class="progress-selection-flash" id="progressSelectionFlash"><div>NEXT MATCH!</div></div></div>`;
+  host.querySelectorAll("button.progress-route-node").forEach(button=>button.onclick=()=>selectProgressOpponent(Number(button.dataset.row),Number(button.dataset.side)));
+}
 function renderProgressPanel(mode="match"){
-  const title=document.getElementById("progressTitle"),sum=document.getElementById("progressSummary"),stats=document.getElementById("progressStats"),choices=document.getElementById("rewardChoices"),actions=document.getElementById("progressActions");
-  choices.innerHTML="";actions.innerHTML="";
+  const box=document.getElementById("progressBox"),title=document.getElementById("progressTitle"),subhead=document.getElementById("progressSubhead"),record=document.getElementById("progressRecord"),sum=document.getElementById("progressSummary"),stats=document.getElementById("progressStats"),route=document.getElementById("progressRoute"),growth=document.getElementById("growthSection"),growthRule=document.getElementById("growthRule"),choices=document.getElementById("rewardChoices"),actions=document.getElementById("progressActions"),footer=document.getElementById("progressFooter");
+  const isBoss=!!runState?.enemy?.isBoss;
+  box.className=mode==="reward"?`result-mode${isBoss?" boss-mode":""}`:mode==="match"?"map-mode":"outcome-mode";
+  choices.innerHTML="";actions.innerHTML="";route.innerHTML="";route.style.display="none";growth.style.display=mode==="reward"?"block":"none";sum.style.display=mode==="match"?"none":"block";stats.style.display=mode==="match"?"none":"grid";
   const p=runState?.player||{hp:15,atk:2,atkMenko:2,defMenko:2},e=runState?.enemy;
-  title.textContent=mode==="reward"?"WIN!":mode==="lose"?"GAME OVER":mode==="clear"?"CLEAR!":`第${runState?.match||1}試合`;
-  sum.textContent=mode==="match"?`${resumedFromSave?"オートセーブから再開 ／ ":""}エリア${progressArea(runState.match)}${e.isBoss?"・BOSS BATTLE":""}`:mode==="reward"?`現在 ${runState.wins}勝`:mode==="lose"?`到達：第${runState.match}試合 ／ 勝利数：${runState.wins}`:"15試合制覇";
-  stats.innerHTML=`<div>最大HP <b>${p.hp}</b></div><div>攻撃 <b>${p.atk}</b></div><div>攻撃MENKO <b>${p.atkMenko}</b></div><div>防御MENKO <b>${p.defMenko}</b></div>`+(e?`<div>相手HP <b>${e.hp}</b></div><div>相手攻撃 <b>${e.atk}</b></div><div>相手 攻/防 <b>${e.atkMenko}/${e.defMenko}</b></div><div>相手戦力 <b>${progressPoints(e)}</b></div>`:"");
+  const statCard=(side,label,x)=>`<section class="progress-status-card ${side}"><span class="progress-status-label">${label}</span><div class="progress-stat"><span>MAX HP</span><b>${x.hp}</b></div><div class="progress-stat"><span>ATK</span><b>${x.atk}</b></div><div class="progress-stat"><span>ATK MENKO</span><b>${x.atkMenko}</b></div><div class="progress-stat"><span>DEF MENKO</span><b>${x.defMenko}</b></div></section>`;
+  const match=runState?.match||1,area=progressArea(match),areaMatch=(match-1)%5+1,marked=mode==="reward"||mode==="clear"?areaMatch:Math.max(0,areaMatch-1),progressMarks=`${"■".repeat(marked)}${"□".repeat(5-marked)}`;
+  if(mode==="reward"){
+    title.textContent="RESULT";subhead.textContent=`AREA ${area} / ${isBoss?"BOSS MATCH":`MATCH ${areaMatch}`}`;record.innerHTML=`${runState.wins} WIN<br><span>NEXT MATCH ${match+1}</span>`;
+    sum.innerHTML=`<strong>RED WIN!</strong><span>${isBoss?"エリアボス撃破ボーナス":"成長を1つ選択してください"}</span>`;
+    stats.innerHTML=statCard("red","RED STATUS",p)+statCard("blue","BLUE / DEFEATED",e);
+    growthRule.textContent=isBoss?"3種からさらに1つ":"抽選された2種から1つ";
+  }else if(mode==="match"){
+    title.textContent=`AREA ${area}`;subhead.textContent=isBoss?"AREA BOSS BATTLE":"ROAD TO AREA BOSS";record.innerHTML=`${runState?.wins||0} WIN<br><span>${isBoss?"NEXT AREA BOSS":`NEXT MATCH ${match}`}</span>`;
+    route.style.display="block";renderProgressRouteMap(route);
+  }else{
+    const cleared=mode==="clear";title.textContent=cleared?"CLEAR!":"GAME OVER";subhead.textContent=cleared?"ALL 15 MATCHES COMPLETE":`AREA ${area} / MATCH ${areaMatch}`;record.innerHTML=`${runState?.wins||0} WIN`;
+    sum.innerHTML=`<strong>${cleared?"RED COMPLETE!":"BLUE WIN"}</strong><span>${cleared?"15試合制覇":`到達：第${match}試合`}</span>`;
+    stats.innerHTML=statCard("red","RED FINAL STATUS",p)+(e?statCard("blue",cleared?"LAST OPPONENT":"BLUE / WINNER",e):"");
+  }
+  footer.innerHTML=mode==="match"?`<span>${e?`<strong>MATCH ${areaMatch}</strong> 対戦相手決定`:`<strong>MATCH ${areaMatch}</strong> の相手を選択`}</span><span style="color:#f00">● 選択ルート</span>`:`<span>AREA PROGRESS　<b>${progressMarks}</b></span><span>${mode==="reward"?"1 / 1 SELECT":mode==="clear"?"ALL CLEAR":`MATCH ${areaMatch} / 5`}</span>`;
   if(mode==="match")actions.innerHTML='';
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
     normalizePendingRewardOptions();
     selectedRewards=new Set();const need=1,opts=pendingRewardOptions.map(k=>rewardDefs.find(x=>x.key===k)).filter(Boolean);
-    choices.innerHTML=(e.isBoss?`<p><strong>ボス撃破ボーナス：攻撃 +1（確定）</strong><br>さらに次の3種から1つ選択してください</p>`:`<p>抽選された2種から1つ選択してください</p>`)+opts.map(x=>`<button data-reward="${x.key}">${x.label}</button>`).join("");
-    actions.innerHTML='<button class="primary" id="confirmGrowthBtn" disabled>成長を決定</button>';
-    choices.querySelectorAll("[data-reward]").forEach(b=>b.onclick=()=>{const k=b.dataset.reward;if(selectedRewards.has(k)){selectedRewards.delete(k);b.classList.remove("selected")}else if(selectedRewards.size<need){selectedRewards.add(k);b.classList.add("selected")}document.getElementById("confirmGrowthBtn").disabled=selectedRewards.size!==need});
+    const iconUrl=k=>k==="atkMenko"?attackIcon.toDataURL():k==="defMenko"?defenseIcon.toDataURL():heartIcon.toDataURL();
+    choices.innerHTML=opts.map(x=>`<button class="reward-choice" type="button" data-reward="${x.key}" aria-pressed="false"><img src="${iconUrl(x.key)}" alt=""><span class="reward-choice-name">${x.label}</span><span class="reward-choice-value">${x.value}</span></button>`).join("");
+    actions.innerHTML='<button class="progress-confirm" id="confirmGrowthBtn" disabled>成長を決定</button>';
+    choices.querySelectorAll("[data-reward]").forEach(b=>b.onclick=()=>{const k=b.dataset.reward;if(selectedRewards.has(k))selectedRewards.delete(k);else{selectedRewards.clear();selectedRewards.add(k)}choices.querySelectorAll("[data-reward]").forEach(x=>{const selected=selectedRewards.has(x.dataset.reward);x.classList.toggle("selected",selected);x.setAttribute("aria-pressed",String(selected))});document.getElementById("confirmGrowthBtn").disabled=selectedRewards.size!==need});
   }
   const bindTap=(id,fn)=>{
     const el=document.getElementById(id);
@@ -1612,7 +1731,7 @@ function renderProgressPanel(mode="match"){
 
   bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
-  fixedStart.style.display=mode==="match"?"block":"none";
+  fixedStart.style.display=mode==="match"&&!!runState?.enemy?"block":"none";
   fixedStart.textContent=resumedFromSave?"つづきから":"試合開始";
   fixedRestart.textContent=(mode==="lose"||mode==="clear")?"もう一度挑戦":"最初から";
   fixedRestart.style.display=(mode==="reward")?"none":"block";
@@ -1635,7 +1754,7 @@ function initializeIntegratedRun(){
   differenceCardsCountForInitiative=saved.differenceCardsCountForInitiative!==false;
   document.getElementById("differenceInitiativeMode").value=differenceCardsCountForInitiative?"on":"off";
   if(!restorePortraitState(saved.portraitState))resetPortraitRun();
-  syncIntegratedMatchFromRunState();
+  normalizeRunRouteState();if(runState.enemy)syncIntegratedMatchFromRunState();
   resumedFromSave=true;
   if(runSaveMode==="reward"){normalizePendingRewardOptions();saveRunProgress("reward")}
   renderProgressPanel(runSaveMode);setProgressScreen(true);
