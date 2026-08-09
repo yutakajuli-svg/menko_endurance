@@ -759,6 +759,29 @@ function cpuThrow(){
   const a={x:rand(R.x+R.s*.23,R.x+R.s*.77),y:rand(R.y+R.s*.23,R.y+R.s*.77)};
   throwMenko(gauge,a);
 }
+function chooseCpuThrow(){
+  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"),candidates=[{x:R.x+R.s*.5,y:R.y+R.s*.5}];
+  for(const c of normalCards)candidates.push({x:c.x,y:c.y});
+  const scored=candidates.map(p=>{
+    const density=normalCards.reduce((sum,c)=>sum+Math.exp(-Math.hypot(c.x-p.x,c.y-p.y)/(R.s*.20)),0);
+    return {...p,density};
+  }).sort((a,b)=>b.density-a.density);
+  // Prefer a cluster but sometimes accept the next best visible pocket.
+  const pick=scored[Math.min(scored.length-1,Math.floor(Math.pow(Math.random(),1.7)*Math.min(4,scored.length)))];
+  const density=clamp(pick.density/Math.max(1,normalCards.length*.45),0,1);
+  const jitter=R.s*(.035+Math.random()*.055),angle=Math.random()*Math.PI*2;
+  const aim={x:clamp(pick.x+Math.cos(angle)*jitter,R.x+R.s*.16,R.x+R.s*.84),y:clamp(pick.y+Math.sin(angle)*jitter,R.y+R.s*.16,R.y+R.s*.84)};
+  // Dense stacks invite a controlled normal/just throw. Sparse layouts ask for more reach.
+  const targetGauge=.57+(1-density)*.10;
+  const gauge=clamp(targetGauge+rand(-.115,.115),0,1);
+  return {aim,gauge};
+}
+function cpuThrow(){
+  if(state!=="aim"||turn!=="cpu"||dropper)return;
+  cpuWait=999;
+  const choice=chooseCpuThrow();
+  throwMenko(choice.gauge,choice.aim);
+}
 function currentUpperCards(index){
   const list=[];
   for(let u=index+1;u<cards.length;u++)if(stackCardsOverlap(cards[index],cards[u]))list.push(u);
