@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MENKO ENDURANCE 戦闘診断ラボ</title>
+<style>
+  :root{color-scheme:dark;--bg:#0d0d0d;--panel:#181818;--line:#555;--text:#f5f5f5;--muted:#aaa;--red:#ff2828;--blue:#2d5bff;--good:#7bd88f;--warn:#ffd166}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:ui-monospace,SFMono-Regular,Consolas,"Noto Sans JP",monospace}
+  main{width:min(1180px,calc(100% - 24px));margin:20px auto 48px}h1{font-size:clamp(20px,4vw,32px);margin:0 0 6px}h2{font-size:18px;margin:0 0 12px}.sub{color:var(--muted);margin:0 0 18px;line-height:1.7}
+  .panel{border:1px solid var(--line);background:var(--panel);padding:16px;margin:12px 0}.controls{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:12px}.controls label{display:grid;gap:6px;color:var(--muted);font-size:12px}.controls select,.controls input,.controls button{width:100%;background:#0f0f0f;color:var(--text);border:1px solid #777;padding:9px;font:inherit}.controls button{cursor:pointer;color:#fff;border-color:#fff}.controls button.primary{background:#f1f1f1;color:#111}.controls button:disabled{opacity:.45;cursor:wait}
+  .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px}.facts ul{margin:0;padding-left:20px;line-height:1.65}.facts strong{color:var(--good)}.facts .estimate strong{color:var(--warn)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{border-top:2px solid #ddd;padding:10px 4px}.stat .label{color:var(--muted);font-size:12px}.stat .value{font-size:24px;margin-top:4px}.red{color:var(--red)}.blue{color:#6f8cff}
+  .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:right;padding:8px 10px;border-bottom:1px solid #333;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{color:var(--muted);font-weight:400}.note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:10px}.warning{color:var(--warn)}
+  progress{width:100%;height:10px;accent-color:#eee}.hidden{display:none!important}
+  @media(max-width:820px){.controls{grid-template-columns:1fr 1fr}.facts{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.controls{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.panel{padding:12px}}
+</style>
+</head>
+<body>
+<main>
+  <h1>MENKO ENDURANCE / 戦闘診断ラボ</h1>
+  <p class="sub">本編のルールを変更せず、同じ乱数シードで現行CPUと「投擲前だけ考えるCPU」を比較します。</p>
+
+  <section class="panel">
+    <h2>検証条件</h2>
+    <div class="controls">
+      <label>RED成長例<select id="build"></select></label>
+      <label>対戦相手<select id="enemy"></select></label>
+      <label>BLUE思考<select id="cpuMode"><option value="current">現行：中央付近へランダム</option><option value="candidate">候補評価：狙いだけ少し改善</option></select></label>
+      <label>試合数<select id="trials"><option>100</option><option selected>300</option><option>1000</option></select></label>
+      <label>乱数シード<input id="seed" value="20260808" inputmode="numeric"></label>
+      <button class="primary" id="runOne">この条件を計測</button>
+      <button id="compare">A〜Fを同条件で比較</button>
+    </div>
+    <p class="note" id="buildDetail"></p>
+    <progress id="progress" class="hidden" value="0" max="1"></progress>
+  </section>
+
+  <section class="panel facts">
+    <div><h2>現行コードと同じ部分</h2><ul><li><strong>盤面構成・重なり・露出判定</strong></li><li><strong>6段階の投擲パワーとめくれ式</strong></li><li><strong>攻撃／防御計算、先攻KO、相打ちRED敗北</strong></li><li><strong>毎ラウンド通常MENKOを再配置する現行仕様</strong></li><li><strong>分身HP条件・45%補正・3ラウンド・2回上限</strong></li></ul></div>
+    <div class="estimate"><h2>検証用の仮定</h2><ul><li><strong>REDはジャストで有効MENKOを狙う</strong></li><li><strong>REDの分身選択はHP半分以下なら回復</strong></li><li><strong>候補評価CPUは結果を操作せず、狙いとパワーだけ選ぶ</strong></li><li>演出時間は省略し、論理上のラウンド数で比較</li></ul></div>
+  </section>
+
+  <section class="panel" id="summaryPanel">
+    <h2>単条件の結果</h2>
+    <div class="stats" id="stats"><div class="stat"><div class="label">未計測</div><div class="value">—</div></div></div>
+    <div class="table-wrap"><table><thead><tr><th>指標</th><th>RED</th><th>BLUE</th></tr></thead><tbody id="detailRows"></tbody></table></div>
+    <p class="note" id="diagnosis"></p>
+  </section>
+
+  <section class="panel hidden" id="comparePanel">
+    <h2>A〜F比較</h2>
+    <div class="table-wrap"><table><thead><tr><th>成長例</th><th>勝率</th><th>平均R</th><th>BLUE投擲</th><th>無傷勝利</th><th>完全防御</th><th>分身発動</th><th>排出/試合</th></tr></thead><tbody id="compareRows"></tbody></table></div>
+    <p class="note">成長例の数値は比較用の仮置きです。ゲーム本編のリザルト仕様は変更していません。</p>
+  </section>
+</main>
+<script>
+(()=>{
+"use strict";
+const S=600,RADIUS=32.4,MAX_RADIUS=S*.40,STRIKER=30,CLONE_RATE=.45;
+const ZONES=[
+ {name:"弱すぎる",power:.54,eff:.48,p:.12},{name:"弱い",power:.66,eff:.66,p:.16},
+ {name:"普通",power:.88,eff:.88,p:.27},{name:"ジャスト",power:.98,eff:1.02,p:.20},
+ {name:"強い",power:1.12,eff:.96,p:.16},{name:"強すぎる",power:1.28,eff:.90,p:.09}
+];
+const BUILDS={
+ A:{name:"A 初期",hp:15,atk:2,a:2,d:2,note:"強化なし"},
+ B:{name:"B バランス",hp:17,atk:2,a:3,d:3,note:"HP+2、攻撃+1、防御+1"},
+ C:{name:"C 攻撃優先",hp:17,atk:2,a:5,d:3,note:"Bから攻撃MENKOを2回優先した比較例"},
+ D:{name:"D HP優先",hp:23,atk:2,a:2,d:2,note:"最大HPを4回強化した比較例"},
+ E:{name:"E 防御優先",hp:17,atk:2,a:3,d:5,note:"Bから防御MENKOを2回優先した比較例"},
+ F:{name:"F 攻防均等",hp:19,atk:2,a:4,d:4,note:"HPを2回、攻撃・防御を各2回強化した比較例"}
+};
+const ENEMIES={
+ boss1:{name:"第1ボス",hp:20,atk:3,a:4,d:3},
+ boss2:{name:"第2ボス",hp:26,atk:6,a:7,d:2},
+ area3:{name:"エリア3通常・代表値",hp:22,atk:6,a:6,d:5},
+ boss3:{name:"第3ボス",hp:34,atk:6,a:7,d:5}
+};
+const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++)h=Math.imul(h^str.charCodeAt(i),3432918353),h=h<<13|h>>>19;return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^h>>>16)>>>0}}
+function mulberry32(a){return()=>{let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function makeRng(seed){const h=xmur3(String(seed));return mulberry32(h())}
+const rnd=(r,a,b)=>a+(b-a)*r();
+function shuffle(a,r){for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function footprint(c){const q=c.r*.1,cs=Math.cos(c.rot),sn=Math.sin(c.rot),p=[[-c.r+q,-c.r],[c.r-q,-c.r],[c.r,-c.r+q],[c.r,c.r-q],[c.r-q,c.r],[-c.r+q,c.r],[-c.r,c.r-q],[-c.r,-c.r+q]];return p.map(([x,y])=>({x:c.x+x*cs-y*sn,y:c.y+x*sn+y*cs}))}
+function polyOverlap(a,b){for(const p of [a,b])for(let i=0;i<p.length;i++){const q=p[i],n=p[(i+1)%p.length],ax=-(n.y-q.y),ay=n.x-q.x;let amin=Infinity,amax=-Infinity,bmin=Infinity,bmax=-Infinity;for(const v of a){const z=v.x*ax+v.y*ay;amin=Math.min(amin,z);amax=Math.max(amax,z)}for(const v of b){const z=v.x*ax+v.y*ay;bmin=Math.min(bmin,z);bmax=Math.max(bmax,z)}if(amax<=bmin||bmax<=amin)return false}return true}
+function cardsOverlap(a,b){return polyOverlap(footprint(a),footprint(b))}
+function overlapAmount(a,b){const d=Math.hypot(a.x-b.x,a.y-b.y);if(!cardsOverlap(a,b))return 0;if(d<.001)return 1;const ux=(b.x-a.x)/d,uy=(b.y-a.y)/d,support=(c,x,y)=>{const cs=Math.cos(-c.rot),sn=Math.sin(-c.rot),xx=Math.abs(x*cs-y*sn),yy=Math.abs(x*sn+y*cs);return c.r*(xx+yy)-c.r*.1*Math.min(xx,yy)};return clamp(1-d/(support(a,ux,uy)+support(b,-ux,-uy)),0,1)}
+function stackOverlap(a,b){return cardsOverlap(a,b)&&overlapAmount(a,b)>=.08}
+function points(c){const p=[{x:c.x,y:c.y}];for(let ring=1;ring<=2;ring++){const rr=c.r*(ring===1?.46:.82),n=ring===1?8:24;for(let k=0;k<n;k++){const a=k/n*Math.PI*2+c.rot;p.push({x:c.x+Math.cos(a)*rr,y:c.y+Math.sin(a)*rr})}}return p}
+function covered(p,c){const cs=Math.cos(-c.rot),sn=Math.sin(-c.rot),dx=p.x-c.x,dy=p.y-c.y,x=Math.abs(dx*cs-dy*sn),y=Math.abs(dx*sn+dy*cs),q=c.r*.1;return x<=c.r&&y<=c.r&&x+y<=2*c.r-q}
+function impactInfo(cards,i,x,y){const upp=[];for(let u=i+1;u<cards.length;u++)if(stackOverlap(cards[i],cards[u]))upp.push(u);const ps=points(cards[i]);let inside=0,exposedInside=0,exposedTotal=0;for(const p of ps){const inRange=Math.hypot(p.x-x,p.y-y)<MAX_RADIUS,cv=upp.some(u=>covered(p,cards[u]));if(!cv)exposedTotal++;if(inRange){inside++;if(!cv)exposedInside++}}return{upp,coverage:1-exposedTotal/ps.length,exposed:exposedInside/ps.length,fully:exposedTotal===0}}
+function positions(n,r){const out=[],min=RADIUS*1.55,pad=RADIUS*.95;for(let t=0;out.length<n&&t<800;t++){const p={x:rnd(r,pad,S-pad),y:rnd(r,pad,S-pad)};if(out.every(q=>Math.hypot(p.x-q.x,p.y-q.y)>=min))out.push(p)}while(out.length<n)out.push({x:rnd(r,pad,S-pad),y:rnd(r,pad,S-pad)});return out}
+function deck(red,blue,r){const out=[],sa=Math.min(red.a,blue.a),sd=Math.min(red.d,blue.d);for(let i=0;i<sa;i++)out.push({team:"common",type:"attack",diff:false});for(let i=0;i<sd;i++)out.push({team:"common",type:"defense",diff:false});for(let i=sa;i<red.a;i++)out.push({team:"player",type:"attack",diff:true});for(let i=sa;i<blue.a;i++)out.push({team:"cpu",type:"attack",diff:true});for(let i=sd;i<red.d;i++)out.push({team:"player",type:"defense",diff:true});for(let i=sd;i<blue.d;i++)out.push({team:"cpu",type:"defense",diff:true});return shuffle(out,r)}
+function clone(team,pos,r,old){return{team,type:"clone",diff:false,x:pos.x,y:pos.y,r:RADIUS,rot:team==="player"?-.18:.18,face:0,weight:old?.weight||rnd(r,1.45,1.75)}}
+function deal(red,blue,state,r){const ds=deck(red,blue,r),ps=positions(ds.length,r),cards=ds.map((d,i)=>({...d,x:ps[i].x,y:ps[i].y,r:RADIUS,rot:rnd(r,-.6,.6),face:0,weight:rnd(r,.85,1.25)}));cards.push(clone("player",state.clonePos.player,r,state.clone.player),clone("cpu",state.clonePos.cpu,r,state.clone.cpu));return cards}
+function validFor(c,actor){return c.type==="clone"?c.team!==actor:(!c.diff||c.team===actor)}
+function heuristic(cards,actor,x,y,purpose){let score=0;for(let i=0;i<cards.length;i++){const c=cards[i],inf=impactInfo(cards,i,x,y),d=Math.hypot(c.x-x,c.y-y),fall=clamp(1-d/MAX_RADIUS,0,1),reach=inf.exposed*.88+fall*inf.exposed*.12;if(reach<=0)continue;let w=.2;if(c.team===actor||c.team==="common"){w=c.type==="attack"?2.6:c.type==="defense"?1.5:.1}else{w=c.type==="attack"?1.1:c.type==="defense"?1.3:c.type==="clone"?2.2:.2}if(purpose==="disrupt"&&c.team!==actor&&c.team!=="common")w*=1.6;score+=reach*w/(1+inf.upp.length*.3)}return score}
+function chooseTarget(cards,actor,mode,r,player=false){
+  // 比較CPUも毎回は考えない。55%は現行どおり中央付近へランダム投擲する。
+  // 考える投擲でも候補数・選択精度を抑え、パワー分布には手を入れない。
+  if(!player&&(mode==="current"||r()<.55))return{x:rnd(r,S*.23,S*.77),y:rnd(r,S*.23,S*.77),zone:pickZone(r)};
+  const purpose=!player&&r()<.35?"disrupt":"score",c=[];
+  for(let i=0;i<(player?18:7);i++){
+    let x,y;
+    if(i<cards.length){x=cards[i].x+rnd(r,-RADIUS*.5,RADIUS*.5);y=cards[i].y+rnd(r,-RADIUS*.5,RADIUS*.5)}
+    else{x=rnd(r,S*.12,S*.88);y=rnd(r,S*.12,S*.88)}
+    c.push({x:clamp(x,0,S),y:clamp(y,0,S),s:heuristic(cards,actor,x,y,purpose)})
+  }
+  c.sort((a,b)=>b.s-a.s);let pick;
+  if(player)pick=c[0];
+  else{const weights=[.34,.28,.22,.16],q=r(),top=c.slice(0,4);let acc=0;pick=top[top.length-1];for(let i=0;i<top.length;i++){acc+=weights[i];if(q<=acc){pick=top[i];break}}}
+  const err=player?8:32;
+  return{x:clamp(pick.x+rnd(r,-err,err),0,S),y:clamp(pick.y+rnd(r,-err,err),0,S),zone:player?3:pickZone(r)}
+}
+function pickZone(r){let q=r(),a=0;for(let i=0;i<ZONES.length;i++){a+=ZONES[i].p;if(q<=a)return i}return 5}
+function throwOnce(cards,actor,red,blue,hp,state,cpuMode,r,playerPolicy){const own=cards.findIndex(c=>c.type==="clone"&&c.team===actor),held=own>=0?cards.splice(own,1)[0]:clone(actor,state.clonePos[actor],r);const cfg=actor==="player"?red:blue,enemy=actor==="player"?blue:red,maxHP=cfg.hp,canClone=hp>0&&hp<=maxHP*.25&&state.cooldown<=0&&state.activations<2;for(const c of cards)c.faceBefore=c.face;const aim=chooseTarget(cards,actor,cpuMode,r,playerPolicy),z=ZONES[aim.zone],infos=cards.map((_,i)=>impactInfo(cards,i,aim.x,aim.y));let moved=0,coveredStops=0;
+  for(let i=cards.length-1;i>=0;i--){const c=cards[i],inf=infos[i],d=Math.hypot(c.x-aim.x,c.y-aim.y),fall=clamp(1-d/MAX_RADIUS,0,1),spatial=inf.exposed*.88+fall*inf.exposed*.12;if(inf.upp.length&&inf.exposed<.34){coveredStops++;continue}const impulse=z.power*z.eff*spatial;if(impulse<=.02)continue;const impact=clamp(impulse/c.weight,0,1.35),direct=clamp(1-d/(c.r+STRIKER),0,1),upper=inf.upp.length;let behavior="STOP";if(direct>.08)behavior="DIRECT";else if(impact>=.70)behavior="HIGH";else if(impact>=.40)behavior="SHORT";else if(impact>=.22)behavior="EDGE";if(behavior==="STOP")continue;moved++;let chance={EDGE:.035,SHORT:.25,HIGH:.53,DIRECT:.67}[behavior];chance+=clamp((impact-.45)*.22,-.04,.15)+direct*.18;chance*=1/(1+upper*.30);if(c.face===1)chance*=.72;chance=clamp(chance,.01,.88);if(c.type==="clone")chance=(canClone&&c.team!==actor&&aim.zone!==0)?chance*CLONE_RATE:0;const flip=aim.zone!==0&&r()<chance;if(flip)c.face=1-c.face;const ux=(c.x-aim.x)/Math.max(1,d),uy=(c.y-aim.y)/Math.max(1,d),side=actor==="player"?1:-1,tx=-uy*side,ty=ux*side,lateral=behavior==="EDGE"?.18:rnd(r,.16,.36),mx=ux*(1-lateral)+tx*lateral,my=uy*(1-lateral)+ty*lateral,ml=Math.max(.001,Math.hypot(mx,my)),travel=[1.1,0,15,30,43,62][aim.zone]*(c.r/54)*rnd(r,.96,1.04);c.x=clamp(c.x+mx/ml*travel,-80,S+80);c.y=clamp(c.y+my/ml*travel,-80,S+80)}
+  const result={attack:0,defense:0,physical:0,effective:0,invalid:0,initiative:0,cloneEvents:[],moved,coveredStops,ejectedAttack:0,ejectedDefense:0};for(const c of cards){if(c.face===1&&c.faceBefore!==1){result.physical++;result.initiative++;if(validFor(c,actor)){result.effective++;if(c.type==="attack")result.attack++;else if(c.type==="defense")result.defense++;else result.cloneEvents.push({actor,owner:c.team})}else result.invalid++}}
+  const remain=[];for(const c of cards){if(c.face===1&&c.type!=="clone"){if(c.type==="attack")result.ejectedAttack++;else result.ejectedDefense++}else remain.push(c)}held.x=clamp(aim.x+rnd(r,-4,4),0,S);held.y=clamp(aim.y+rnd(r,-4,4),0,S);held.face=0;held.rot=rnd(r,-.3,.3);remain.push(held);return{cards:remain,result,aim}}
+function emptyTotals(){return{wins:0,losses:0,rounds:0,throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},fullDefense:{player:0,cpu:0},attackChance:{player:0,cpu:0},flip:{player:0,cpu:0},physical:{player:0,cpu:0},invalid:{player:0,cpu:0},ejectA:{player:0,cpu:0},ejectD:{player:0,cpu:0},clone:{player:0,cpu:0},cloneWins:0,cleanWins:0,counter1:{player:0,cpu:0},counter2:{player:0,cpu:0},firstEject:{player:0,cpu:0,none:0},firstEjectWins:0,actionless:{player:0,cpu:0}}}
+function match(red,blue,cpuMode,r,t){let hp={player:red.hp,cpu:blue.hp},state={cooldown:0,activations:0,clonePos:{player:{x:S*.18,y:S*.82},cpu:{x:S*.82,y:S*.18}},clone:{}},starter=r()<.5?"player":"cpu",firstEject=null,cloneActors=new Set();for(let round=1;round<=80;round++){let cards=deal(red,blue,state,r),res={};for(const actor of [starter,starter==="player"?"cpu":"player"]){const q=throwOnce(cards,actor,red,blue,hp[actor],state,cpuMode,r,actor==="player");cards=q.cards;res[actor]=q.result;t.throws[actor]++;t.flip[actor]+=q.result.effective;t.physical[actor]+=q.result.physical;t.invalid[actor]+=q.result.invalid;t.ejectA[actor]+=q.result.ejectedAttack;t.ejectD[actor]+=q.result.ejectedDefense;if(q.result.attack>0)t.attackChance[actor]++;if(q.result.attack===0&&q.result.defense===0)t.actionless[actor]++;if(!firstEject&&q.result.ejectedAttack+q.result.ejectedDefense>0)firstEject=actor;for(const c of cards.filter(c=>c.type==="clone")){state.clonePos[c.team]={x:clamp(c.x,0,S),y:clamp(c.y,0,S)};state.clone[c.team]=c}}
+    if(state.cooldown>0)state.cooldown--;let events=[...res.player.cloneEvents,...res.cpu.cloneEvents];if(events.length>1)events=[events[Math.floor(r()*events.length)]];let exclusive=events.length>0;if(exclusive){const e=events[0];state.cooldown=3;state.activations++;cloneActors.add(e.actor);t.clone[e.actor]++;const cfg=e.actor==="player"?red:blue,other=e.actor==="player"?"cpu":"player";if(hp[e.actor]<=cfg.hp*.5)hp[e.actor]=Math.min(cfg.hp,hp[e.actor]+Math.ceil(cfg.hp/3));else hp[other]-=cfg.atk+cfg.a}else{const pr=res.player,cr=res.cpu,pDef=Math.min(pr.defense,cr.attack),cDef=Math.min(cr.defense,pr.attack),pEff=Math.max(0,pr.attack-cDef),cEff=Math.max(0,cr.attack-pDef),dmg={player:pEff>0?red.atk+pEff:0,cpu:cEff>0?blue.atk+cEff:0};if(pr.attack>0&&pEff===0)t.fullDefense.cpu++;if(cr.attack>0&&cEff===0)t.fullDefense.player++;if(pr.attack===0||pEff===0)t.zero.player++;if(cr.attack===0||cEff===0)t.zero.cpu++;const surplusToPlayer=Math.max(0,pr.defense-cr.attack),surplusToCpu=Math.max(0,cr.defense-pr.attack);if(surplusToPlayer>=1)t.counter1.player++;if(surplusToPlayer>=2)t.counter2.player++;if(surplusToCpu>=1)t.counter1.cpu++;if(surplusToCpu>=2)t.counter2.cpu++;const second=starter==="player"?"cpu":"player",firstD=dmg[starter],secondHp=hp[second];if(firstD>=secondHp&&firstD>0)dmg[second]=0;hp.cpu-=dmg.player;hp.player-=dmg.cpu;t.damage.player+=dmg.player;t.damage.cpu+=dmg.cpu}
+    t.rounds++;if(hp.player<=0||hp.cpu<=0){const win=hp.cpu<=0&&hp.player>0;if(win){t.wins++;if(hp.player===red.hp)t.cleanWins++;if(cloneActors.size)t.cloneWins++;if(firstEject==="player")t.firstEjectWins++}else t.losses++;if(firstEject)t.firstEject[firstEject]++;else t.firstEject.none++;return}starter=res.player.initiative>res.cpu.initiative?"player":res.cpu.initiative>res.player.initiative?"cpu":starter}t.losses++;t.firstEject.none++}
+function simulate(red,blue,mode,trials,seed){const r=makeRng(seed),t=emptyTotals();for(let i=0;i<trials;i++)match(red,blue,mode,r,t);return t}
+function pct(n,d){return d?`${(n/d*100).toFixed(1)}%`:"0.0%"}function avg(n,d){return d?(n/d).toFixed(2):"0.00"}
+function render(t,n){const throws=t.throws.player+t.throws.cpu,cloneTotal=t.clone.player+t.clone.cpu,eject=t.ejectA.player+t.ejectA.cpu+t.ejectD.player+t.ejectD.cpu;$("stats").innerHTML=`<div class="stat"><div class="label">RED勝率</div><div class="value red">${pct(t.wins,n)}</div></div><div class="stat"><div class="label">平均ラウンド</div><div class="value">${avg(t.rounds,n)}</div></div><div class="stat"><div class="label">BLUE平均投擲</div><div class="value blue">${avg(t.throws.cpu,n)}</div></div><div class="stat"><div class="label">無傷勝利率</div><div class="value">${pct(t.cleanWins,n)}</div></div>`;const rows=[
+ ["1投あたり有効めくり",avg(t.flip.player,t.throws.player),avg(t.flip.cpu,t.throws.cpu)],
+ ["1投あたり物理めくり",avg(t.physical.player,t.throws.player),avg(t.physical.cpu,t.throws.cpu)],
+ ["攻撃MENKO 1枚以上",pct(t.attackChance.player,t.throws.player),pct(t.attackChance.cpu,t.throws.cpu)],
+ ["行動なし（攻撃0・防御0）",pct(t.actionless.player,t.throws.player),pct(t.actionless.cpu,t.throws.cpu)],
+ ["完全防御",pct(t.fullDefense.player,t.rounds),pct(t.fullDefense.cpu,t.rounds)],
+ ["平均与ダメージ／ラウンド",avg(t.damage.player,t.rounds),avg(t.damage.cpu,t.rounds)],
+ ["攻撃MENKO排出／試合",avg(t.ejectA.player,n),avg(t.ejectA.cpu,n)],
+ ["防御MENKO排出／試合",avg(t.ejectD.player,n),avg(t.ejectD.cpu,n)],
+ ["分身発動／試合",avg(t.clone.player,n),avg(t.clone.cpu,n)],
+ ["防御超過1以上（参考）",pct(t.counter1.player,t.rounds),pct(t.counter1.cpu,t.rounds)],
+ ["防御超過2以上（参考）",pct(t.counter2.player,t.rounds),pct(t.counter2.cpu,t.rounds)]
+ ];$("detailRows").innerHTML=rows.map(x=>`<tr><td>${x[0]}</td><td>${x[1]}</td><td>${x[2]}</td></tr>`).join("");const first=t.firstEject.player+t.firstEject.cpu;$("diagnosis").innerHTML=`総投擲 ${throws.toLocaleString()}回。通常MENKOは現行どおり次ラウンドで復元されるため、排出の効果は<strong class="warning">同じラウンドの後攻まで</strong>です。先に排出した側の勝率は ${pct(t.firstEjectWins,t.firstEject.player)}（REDが先に排出した試合内）。分身は ${cloneTotal}回発動しました。`}
+async function runOne(){const b=BUILDS[$("build").value],e=ENEMIES[$("enemy").value],n=+$('trials').value,mode=$('cpuMode').value,seed=$('seed').value;busy(true);await new Promise(q=>setTimeout(q,20));const t=simulate(b,e,mode,n,`${seed}:${$('build').value}:${$('enemy').value}:${mode}`);render(t,n);busy(false)}
+async function compare(){const e=ENEMIES[$("enemy").value],n=Math.min(+$('trials').value,300),mode=$('cpuMode').value,seed=$('seed').value;busy(true);$("comparePanel").classList.remove("hidden");const rows=[];for(const [k,b] of Object.entries(BUILDS)){await new Promise(q=>setTimeout(q,0));const t=simulate(b,e,mode,n,`${seed}:${k}:${$('enemy').value}:${mode}`),ej=t.ejectA.player+t.ejectA.cpu+t.ejectD.player+t.ejectD.cpu,cl=t.clone.player+t.clone.cpu;rows.push(`<tr><td>${b.name}</td><td>${pct(t.wins,n)}</td><td>${avg(t.rounds,n)}</td><td>${avg(t.throws.cpu,n)}</td><td>${pct(t.cleanWins,n)}</td><td>${pct(t.fullDefense.player+t.fullDefense.cpu,t.rounds*2)}</td><td>${avg(cl,n)}</td><td>${avg(ej,n)}</td></tr>`)}$("compareRows").innerHTML=rows.join("");busy(false)}
+function busy(v){$("runOne").disabled=v;$("compare").disabled=v;$("progress").classList.toggle("hidden",!v)}
+function updateBuild(){const b=BUILDS[$("build").value];$("buildDetail").textContent=`RED: HP ${b.hp} / BASE ATK ${b.atk} / 攻撃MENKO ${b.a} / 防御MENKO ${b.d} — ${b.note}`}
+for(const [k,v] of Object.entries(BUILDS))$("build").add(new Option(v.name,k));for(const [k,v] of Object.entries(ENEMIES))$("enemy").add(new Option(`${v.name}（HP${v.hp} ATK${v.atk} A${v.a} D${v.d}）`,k));$("build").value="B";$("enemy").value="boss2";$("build").onchange=updateBuild;$("runOne").onclick=runOne;$("compare").onclick=compare;updateBuild();runOne();
+})();
+</script>
+</body>
+</html>
