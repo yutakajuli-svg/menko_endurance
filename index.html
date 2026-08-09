@@ -1611,9 +1611,10 @@ function clearRunProgress(){localStorage.removeItem(RUN_SAVE_STORAGE_KEY)}
 function progressPoints(x){return x.atk*3+x.atkMenko*2+x.defMenko*2}
 function progressArea(match){return match<=5?1:match<=10?2:3}
 function randInt(min,max){return Math.floor(Math.random()*(Math.floor(max)-Math.ceil(min)+1))+Math.ceil(min)}
-function generateProgressEnemy(area){
+function generateProgressEnemy(area,stage=4){
   const boss=BOSSES[area*5],prev=area===1?null:BOSSES[(area-1)*5];
-  const maxP=progressPoints(boss),minP=area===1?Math.floor(maxP*.4):progressPoints(prev)+1;
+  const area1Ranges=[[9,12],[10,14],[12,17],[14,20]],area1Range=area1Ranges[clamp(stage,1,4)-1];
+  const maxP=area===1?area1Range[1]:progressPoints(boss),minP=area===1?area1Range[0]:progressPoints(prev)+1;
   const candidates=[];
   for(let atk=0;atk<=boss.atk+3;atk++)for(let atkMenko=0;atkMenko<=boss.atkMenko+4;atkMenko++)for(let defMenko=0;defMenko<=boss.defMenko+4;defMenko++){
     const x={atk,atkMenko,defMenko},p=progressPoints(x);
@@ -1623,7 +1624,7 @@ function generateProgressEnemy(area){
   const chosen=candidates[randInt(0,candidates.length-1)]||{atk:Math.max(1,boss.atk),atkMenko:Math.max(1,boss.atkMenko),defMenko:Math.max(0,boss.defMenko-1)};
   return {hp:randInt(Math.floor(boss.hp*.5),Math.floor(boss.hp*.8)),...chosen,isBoss:false};
 }
-function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match))}
+function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match),(match-1)%5+1)}
 const progressTypeNames={attack:"攻撃型",defense:"防御型",hp:"体力型",balance:"万能型"},progressWeightNames={light:"LIGHT",middle:"MIDDLE",heavy:"HEAVY"};
 function describeProgressEnemy(enemy,area){
   if(enemy.isBoss)return {...enemy,weight:"heavy",type:"balance"};
@@ -1633,7 +1634,7 @@ function describeProgressEnemy(enemy,area){
   return {...enemy,weight,type};
 }
 function createAreaRoute(area){
-  return {rounds:Array.from({length:4},()=>[describeProgressEnemy(generateProgressEnemy(area),area),describeProgressEnemy(generateProgressEnemy(area),area)]),selections:[null,null,null,null],boss:describeProgressEnemy({...BOSSES[area*5],isBoss:true},area)};
+  return {rounds:Array.from({length:4},(_,stage)=>[describeProgressEnemy(generateProgressEnemy(area,stage+1),area),describeProgressEnemy(generateProgressEnemy(area,stage+1),area)]),selections:[null,null,null,null],boss:describeProgressEnemy({...BOSSES[area*5],isBoss:true},area)};
 }
 function ensureAreaRoute(area){
   if(!runState.routes||typeof runState.routes!=="object")runState.routes={};
