@@ -12,8 +12,14 @@
   .gauge-box{border:1px solid #666;background:#151515;padding:8px;margin-bottom:8px}.gauge-label{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px;margin-bottom:5px}.gauge{height:23px;border:2px solid #eee;background:#080808;position:relative;overflow:hidden}.zones{position:absolute;inset:0;display:flex;opacity:.24}.zones i:nth-child(1){width:12.5%;background:#666}.zones i:nth-child(2){width:17.5%;background:#999}.zones i:nth-child(3){width:22.5%;background:#ddd}.zones i:nth-child(4){width:10%;background:#fff}.zones i:nth-child(5){width:22.5%;background:#bbb}.zones i:nth-child(6){width:15%;background:#777}.needle{position:absolute;top:-3px;bottom:-3px;width:4px;background:#fff;box-shadow:0 0 0 1px #111;transform:translateX(-2px)}
   .stage{border:1px solid #666;background:#111;position:relative;touch-action:manipulation}.stage canvas{display:block;width:100%;aspect-ratio:1/1}.stage button{position:absolute;inset:0;border:0;background:transparent;color:transparent;cursor:pointer}.stage button:disabled{cursor:default}.status{min-height:54px;border:1px solid #555;border-top:0;background:#171717;padding:9px 11px;line-height:1.55}.status strong{font-size:16px}.status span{display:block;color:var(--muted);font-size:12px}.legend{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin-top:8px;color:var(--muted);font-size:10px;text-align:center}.legend b{font-weight:400;padding-top:4px;border-top:3px solid #777}.legend b:nth-child(4){color:#fff;border-color:#fff}
   @media(max-width:520px){.toolbar{grid-template-columns:1fr}.toolbar button{width:100%}.legend{font-size:8px}}
+  /* Current strength-band proportions: 18 / 17 / 25 / 8 / 17 / 15 */
+  .zones i:nth-child(1){width:18%}.zones i:nth-child(2){width:17%}.zones i:nth-child(3){width:25%}.zones i:nth-child(4){width:8%}.zones i:nth-child(5){width:17%}.zones i:nth-child(6){width:15%}
 </style>
 </head>
+<style>
+  /* 0-18 / 18-40 / 40-60 / 60-68 / 68-85 / 85-100 */
+  .zones i:nth-child(1){width:18%}.zones i:nth-child(2){width:22%}.zones i:nth-child(3){width:20%}.zones i:nth-child(4){width:8%}.zones i:nth-child(5){width:17%}.zones i:nth-child(6){width:15%}
+</style>
 <body>
 <main>
   <h1>投擲感ラボ</h1>
@@ -131,6 +137,25 @@ function startThrow(){if(running)return;cards=template.map(c=>({...c,anim:null,f
     const impulse=directImpulse+relayed;if(impulse<=.02){if(inf.upp.length)results.blocked++;continue}const impact=clamp(impulse/c.weight,0,1.35);let behavior="stop";if(direct>.08&&directImpulse>.06)behavior="direct";else if(impact>=.70)behavior="high";else if(impact>=.40)behavior="short";else if(impact>=.22)behavior="edge";if(behavior==="stop"){if(inf.upp.length)results.blocked++;continue}
     let chance={edge:.035,short:.24,high:.48,direct:.60}[behavior];chance+=clamp((impact-.42)*.20,-.04,.13)+direct*.14;chance*=quality*texture.stability*.82;chance*=1/(1+inf.upp.length*.15);if(relayed>directImpulse)chance*=.82;chance=clamp(chance,0,.78);const flip=chance>0&&rng()<chance,ux=(c.x-TARGET.x)/Math.max(1,d),uy=(c.y-TARGET.y)/Math.max(1,d),tx=-uy,ty=ux,lateral=behavior==="edge"?.18:rnd(rng,.16,.36),mx=ux*(1-lateral)+tx*lateral,my=uy*(1-lateral)+ty*lateral,ml=Math.max(.001,Math.hypot(mx,my)),variation=rnd(rng,.96,1.04),travel=zone.travel*(c.r/54)*variation,lift=zone.lift*(c.r/54)*variation*1.25;c.anim={sx:c.x,sy:c.y,ex:c.x+mx/ml*travel,ey:c.y+my/ml*travel,lift,duration:zone.duration*1.05,delay:relayDelay,impulse,flip,chance,turns:zone.turns};results.moved++;if(flip)results.flipped++}
   running=true;animStart=performance.now();throwButton.disabled=true;status.innerHTML=`<strong>${zone.name} / ${Math.round(g*100)}%</strong><span>着弾・衝撃・最終抽選を判定中……</span>`}
+// Gauge redesign: 0-18 too weak, 18-35 weak, 35-60 normal, 60-68 just,
+// 68-85 strong, 85-100 too strong. Normal is the broad reference band.
+function classify(g){return g<=.18?zones[0]:g<=.35?zones[1]:g<=.60?zones[2]:g<=.68?zones[3]:g<=.85?zones[4]:zones[5]}
+function gauge(){return (Math.sin(phase*Math.PI*2-Math.PI/2)+1)/2}
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(!running)phase=(phase+dt*.55)%1;const g=gauge();needle.style.left=`${g*100}%`;live.textContent=`${Math.round(g*100)}%`;update(now);draw();requestAnimationFrame(frame)}
+document.querySelector(".gauge-label span:first-child").textContent="0% / 弱い";
+function stabilityAt(g){const p=[[0,.55],[.18,.76],[.35,1.32],[.60,1.62],[.68,1.10],[.85,.62],[1,.52]];for(let i=1;i<p.length;i++){if(g<=p[i][0]){const a=p[i-1],b=p[i],t=(g-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t}}return .52}
+function startThrow(){if(running)return;cards=template.map(c=>({...c,anim:null,face:0,z:0}));const g=gauge(),zone=classify(g),seed=fixedRandom.checked?445566:(Date.now()^((++throwSerial)*7919)),rng=rngFactory(seed),impactRadius=MAX_RADIUS*zone.reach,infos=cards.map((_,i)=>impactInfo(cards,i,impactRadius)),quality=stabilityAt(g),texture={spread:rnd(rng,.86,1.14),direction:rnd(rng,0,Math.PI*2),bias:rnd(rng,.08,.20),stability:rnd(rng,.94,1.06)};currentZone=zone;results={moved:0,flipped:0,blocked:0,gauge:g,impactRadius};
+  for(let i=cards.length-1;i>=0;i--){const c=cards[i],inf=infos[i],d=Math.hypot(c.x-TARGET.x,c.y-TARGET.y),fall=clamp(1-d/impactRadius,0,1),direct=clamp(1-d/(c.r+STRIKER),0,1),angle=Math.atan2(c.y-TARGET.y,c.x-TARGET.x),catchBias=1+Math.cos(angle-texture.direction)*texture.bias,directImpulse=zone.power*inf.exposed*(.72+fall*.28)*texture.spread*catchBias;let relayed=0,relayDelay=0;
+    for(const u of inf.upp){const upper=cards[u];if(!upper.anim)continue;const sent=upper.anim.impulse*overlapAmount(c,upper)*.46;relayed+=sent;relayDelay=Math.max(relayDelay,upper.anim.delay+.09)}
+    const impulse=directImpulse+relayed;if(impulse<=.02){if(inf.upp.length)results.blocked++;continue}const impact=clamp(impulse/c.weight,0,1.35);let behavior="stop";if(direct>.08&&directImpulse>.06)behavior="direct";else if(impact>=.70)behavior="high";else if(impact>=.40)behavior="short";else if(impact>=.22)behavior="edge";if(behavior==="stop"){if(inf.upp.length)results.blocked++;continue}
+    let chance={edge:.035,short:.24,high:.48,direct:.60}[behavior];chance+=clamp((impact-.42)*.20,-.04,.13)+direct*.20;chance*=quality*texture.stability*.82;chance*=1/(1+inf.upp.length*.15);if(relayed>directImpulse)chance*=.82;chance=clamp(chance,0,.78);const flip=chance>0&&rng()<chance,ux=(c.x-TARGET.x)/Math.max(1,d),uy=(c.y-TARGET.y)/Math.max(1,d),tx=-uy,ty=ux,lateral=behavior==="edge"?.18:rnd(rng,.16,.36),mx=ux*(1-lateral)+tx*lateral,my=uy*(1-lateral)+ty*lateral,ml=Math.max(.001,Math.hypot(mx,my)),variation=rnd(rng,.96,1.04),travel=zone.travel*(c.r/54)*variation,lift=zone.lift*(c.r/54)*variation*1.25;c.anim={sx:c.x,sy:c.y,ex:c.x+mx/ml*travel,ey:c.y+my/ml*travel,lift,duration:zone.duration*1.05,delay:relayDelay,impulse,flip,chance,turns:zone.turns};results.moved++;if(flip)results.flipped++}
+  running=true;animStart=performance.now();throwButton.disabled=true;status.innerHTML=`<strong>${zone.name} / ${Math.round(g*100)}%</strong><span>着弾・衝撃・最終抽選を判定中……</span>`}
+// The smallest throw reaches only the closest card.  Keep it weak, but make its
+// small stumble visible instead of looking like no animation happened.
+Object.assign(zones[0],{power:.52,reach:.30,lift:9,travel:7});
+// Weak is wider (18-40). Reach is continuous: the same gauge position always
+// produces the same radius, rather than jumping at a zone boundary.
+function classify(g){const z=g<=.18?zones[0]:g<=.40?zones[1]:g<=.60?zones[2]:g<=.68?zones[3]:g<=.85?zones[4]:zones[5];z.reach=.18+.78*g;return z}
 throwButton.onclick=startThrow;document.getElementById("reset").onclick=resetBoard;density.onchange=buildBoard;buildBoard();requestAnimationFrame(frame);
 })();
 </script>
