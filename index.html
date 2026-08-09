@@ -371,6 +371,8 @@ let roundResults={player:null,cpu:null},roundRedDamage=0,roundBlueDamage=0;
 // Hidden concentration: intentionally not shown in the regular UI during trial.
 let concentration={player:100,cpu:100};
 let matchStats=null;
+// A wrestler gets one pinfall escape per match.  Submissions and specials never use this.
+let kickoutUsed={player:false,cpu:false};
 let aim={x:0,y:0};
 let turn="player",turnCount=0,cpuWait=0,zoneResult="";
 let playerAimReadyAt=0; // 新しいプレイヤーターン直後の持ち越しタップを無効化
@@ -544,6 +546,7 @@ function newMatch(){
   redHP=config.redMaxHP;blueHP=config.blueMaxHP;lastR=0;lastB=0;lastAttackLevel=0;lastDefenseLevel=0;lastDamage=0;turnCount=0;phase=0;condition=makeCondition();cards=[];dropper=null;impact=null;pendingLayerWave=null;pendingLandedCard=null;heldClone=null;
   roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;
   concentration={player:100,cpu:100};
+  kickoutUsed={player:false,cpu:false};
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
   matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},rounds:[]};
@@ -1135,14 +1138,29 @@ function applyCloneRescue(actor,owner,sameRoundContest=false){
   appendLog(`分身効果 ${actorIsPlayer?"RED":"BLUE"} が ${owner==="player"?"RED":"BLUE"}分身をめくって ${choice==="heal"?"最大HPの1/3回復":"防御貫通の最大ダメージ＋防御リセット"}（試合中 ${cloneRescueActivations}/${CLONE_RESCUE_MAX_ACTIVATIONS}回）`);
   return {actor,owner,choice,amount};
 }
-function normalMovePresentation(actor,level){
-  const moveType=String(randInt(1,3)).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`;
+function normalMovePresentation(actor,level,type=randInt(1,3)){
+  const moveType=String(type).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`;
   return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
 }
-async function playNormalAttackEvent(actor,damage,defenseUsed,level){
-  const victim=oppositeActor(actor),move=normalMovePresentation(actor,level),attacker=actorLabel(actor),target=actorLabel(victim);
+async function playNormalAttackEvent(actor,damage,defenseUsed,level,type){
+  const victim=oppositeActor(actor),move=normalMovePresentation(actor,level,type),attacker=actorLabel(actor),target=actorLabel(victim);
   const lines=defenseUsed>0?[`${attacker}の攻撃！`,`しかし攻撃は浅い！`,`${target}に ${damage} ダメージ！`]:[`${attacker}の攻撃！`,`${target}に ${damage} ダメージ！`];
   await playIllustration({...move,lines,tall:lines.length>2,alt:`${attacker}の攻撃`,feedback:()=>{setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red",360);return animateDisplayedHp(victim,displayedHP[victim]-damage,360)}});
+}
+async function playFinishEvent(pinfall){
+  const attacker=actorLabel(pinfall.attacker),defender=actorLabel(pinfall.defender);
+  const lines=pinfall.kickoutSuccess
+    ? [`${attacker} フォールの体勢！`,`${defender} は返せるか！？`]
+    : [`${attacker} フォールの体勢！`,`${defender} 返せない！`];
+  await playIllustration({files:frameFiles("ex_move_finish",2),mirrored:pinfall.attacker==="player"?redEventMirrored.ex_move_finish:!redEventMirrored.ex_move_finish,lines,tall:true,alt:`${attacker}のフィニッシュ`,feedback:()=>wait(320)});
+}
+async function playKickoutEvent(actor){
+  const label=actorLabel(actor);
+  presentationRunning=true;presentationLayer.classList.add("show");illustrationWindow.style.display="none";
+  messageWindow.textContent=`${label} これを返した！`;messageWindow.classList.add("show");
+  restartStatusFeedback(actor,"feedback-white-double",420);
+  await animateDisplayedHp(actor,1,420);await wait(520);
+  hidePresentation();resetPortraitExpressions();presentationRunning=false;syncBattleUi();
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
@@ -1160,7 +1178,7 @@ async function playCloneHealEvent(rescue){
   await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
 async function playRoundPresentations(data){
-  const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
+  const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,pinfall}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
   const order=[roundStarter,oppositeActor(roundStarter)];
   if(cloneExclusive){
     const rescue=rescued[0];
@@ -1177,8 +1195,9 @@ async function playRoundPresentations(data){
       continue;
     }
     const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
+    if(resultData.attackCancelledByKO)continue;
     if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
+    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0){await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else await playDefenseEvent(actor,resultData.attackLevel)}
     if(attackShown)await wait(120);
   }
   if(!attackShown)await playNoAttackEvent(roundStarter);
@@ -1215,6 +1234,9 @@ function resolveRoundEffects(){
   const blueEffectiveAttackLevel=Math.max(0,blue.attackLevel-redDefenseUsed);
   const redNormalDamage=redEffectiveAttackLevel>0?scaledBaseAttack(config.redAttack)+redEffectiveAttackLevel:0;
   const blueNormalDamage=blueEffectiveAttackLevel>0?scaledBaseAttack(config.blueAttack)+blueEffectiveAttackLevel:0;
+  // Type 003 is a submission.  Only types 001/002 can lead into a pinfall.
+  red.moveType=redEffectiveAttackLevel>0?randInt(1,3):null;
+  blue.moveType=blueEffectiveAttackLevel>0?randInt(1,3):null;
 
   red.effectiveAttackLevel=redEffectiveAttackLevel;red.defenseAvailable=redDefenseAvailable;red.defenseUsed=redDefenseUsed;red.defenseUnused=Math.max(0,redDefenseAvailable-redDefenseUsed);
   blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
@@ -1237,7 +1259,35 @@ function resolveRoundEffects(){
   const secondActor=oppositeActor(roundStarter);
   const firstDamage=roundStarter==="player"?roundRedDamage:roundBlueDamage;
   const secondHP=secondActor==="player"?redHP:blueHP;
-  const secondAttackCancelled=!cloneExclusive&&firstDamage>0&&firstDamage>=secondHP;
+  const firstResult=roundStarter==="player"?red:blue;
+  const firstWouldKO=!cloneExclusive&&firstDamage>0&&firstDamage>=secondHP;
+  const secondAttackCancelled=firstWouldKO;
+  let pinfall=null;
+  const pinfallEligible=firstWouldKO&&[1,2].includes(firstResult.moveType);
+  if(pinfallEligible){
+    const level=clamp(firstResult.effectiveAttackLevel,1,3);
+    const chance=[0,.45,.25,.10][level];
+    const available=!kickoutUsed[secondActor];
+    const kickoutSuccess=available&&Math.random()<chance;
+    if(available)kickoutUsed[secondActor]=true;
+    pinfall={attacker:roundStarter,defender:secondActor,level,chance,available,kickoutSuccess};
+    appendLog(`PINFALL: ${actorLabel(roundStarter)} type ${String(firstResult.moveType).padStart(3,"0")} Lv${level} -> ${actorLabel(secondActor)} / kickout ${available?`${Math.round(chance*100)}%`:"unavailable"} / ${kickoutSuccess?"success":"failed"}`);
+  }
+  if(!secondAttackCancelled){
+    const retaliatoryDamage=secondActor==="player"?roundRedDamage:roundBlueDamage;
+    const starterHP=roundStarter==="player"?redHP:blueHP;
+    const retaliatoryResult=secondActor==="player"?red:blue;
+    const retaliationEligible=!cloneExclusive&&retaliatoryDamage>0&&retaliatoryDamage>=starterHP&&[1,2].includes(retaliatoryResult.moveType);
+    if(retaliationEligible){
+      const level=clamp(retaliatoryResult.effectiveAttackLevel,1,3);
+      const chance=[0,.45,.25,.10][level];
+      const available=!kickoutUsed[roundStarter];
+      const kickoutSuccess=available&&Math.random()<chance;
+      if(available)kickoutUsed[roundStarter]=true;
+      pinfall={attacker:secondActor,defender:roundStarter,level,chance,available,kickoutSuccess};
+      appendLog(`PINFALL: ${actorLabel(secondActor)} type ${String(retaliatoryResult.moveType).padStart(3,"0")} Lv${level} -> ${actorLabel(roundStarter)} / kickout ${available?`${Math.round(chance*100)}%`:"unavailable"} / ${kickoutSuccess?"success":"failed"}`);
+    }
+  }
   red.attackCancelledByKO=secondAttackCancelled&&secondActor==="player";
   blue.attackCancelledByKO=secondAttackCancelled&&secondActor==="cpu";
   if(red.attackCancelledByKO)roundRedDamage=0;
@@ -1275,18 +1325,22 @@ function resolveRoundEffects(){
   const beforeRed=roundStartRedHP,beforeBlue=roundStartBlueHP;
   redHP=clamp(redHP-roundBlueDamage,0,config.redMaxHP);
   blueHP=clamp(blueHP-roundRedDamage,0,config.blueMaxHP);
+  if(pinfall?.kickoutSuccess){
+    if(pinfall.defender==="player")redHP=1;
+    else blueHP=1;
+  }
   lastR=-roundBlueDamage;lastB=-roundRedDamage;lastDamage=roundRedDamage;
   matchStats.damage.player+=roundRedDamage;matchStats.damage.cpu+=roundBlueDamage;
   if(roundRedDamage===0)matchStats.zero.player++;
   if(roundBlueDamage===0)matchStats.zero.cpu++;
   applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
-  const nextStarter=red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter;
+  const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter);
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
   appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
-  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
+  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,pinfall}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
 }
 function finishMatch(){
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
