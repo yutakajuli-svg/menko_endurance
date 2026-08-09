@@ -317,7 +317,8 @@ let portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{...cpu
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
 const moveFrameCounts={"001_001_001":4,"001_001_002":4,"001_002_001":4,"001_002_002":4,"001_003_001":4,"001_003_002":4,"002_001_001":2,"002_001_002":3,"002_002_001":4,"002_002_002":4,"002_003_001":3,"002_003_002":4,"003_001_001":2,"003_001_002":4,"003_002_001":2,"003_002_002":5,"003_003_001":3,"003_003_002":5};
-const redMoveMirrored={"001_001":true,"001_002":false,"001_003":true,"002_001":false,"002_002":true,"002_003":false,"003_001":false,"003_002":true,"003_003":false};
+const redMoveMirrored={"001_001_001":false,"001_001_002":false,"001_002_001":false,"001_002_002":true,"001_003_001":true,"001_003_002":false,"002_001_001":false,"002_001_002":true,"002_002_001":false,"002_002_002":true,"002_003_001":false,"002_003_002":false,"003_001_001":false,"003_001_002":true,"003_002_001":true,"003_002_002":true,"003_003_001":true,"003_003_002":false};
+const redEventMirrored={"ex_move_heal":true,"ex_move_defense":true,"ex_move_no_attack":true,"ex_move_Counterattack_01":false,"ex_move_Counterattack_02":false,"ex_move_finish":false,"sp_move01_001":false,"sp_move02_001":true,"sp_move03_001":false};
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
 const readCfg=()=>{const v=Object.fromEntries(cfgIds.map(id=>[id,Math.max(0,Number(document.getElementById(id).value)||0)]));config={redMaxHP:Math.max(1,v.cfgRedHP),blueMaxHP:Math.max(1,v.cfgBlueHP),redAttack:v.cfgRedAtk,blueAttack:v.cfgBlueAtk,redAttackCards:v.cfgRedAttackCards,blueAttackCards:v.cfgBlueAttackCards,redDefenseCards:v.cfgRedDefenseCards,blueDefenseCards:v.cfgBlueDefenseCards};linkedCount=config.redAttackCards+config.redDefenseCards+Math.max(0,config.blueAttackCards-config.redAttackCards)+Math.max(0,config.blueDefenseCards-config.redDefenseCards);countSelect.value=[8,16,24,32,40,48].includes(linkedCount)?String(linkedCount):"16"};
@@ -1134,8 +1135,8 @@ function applyCloneRescue(actor,owner,sameRoundContest=false){
   return {actor,owner,choice,amount};
 }
 function normalMovePresentation(actor,level){
-  const moveType=String(randInt(1,3)).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`,mirrorKey=`${moveType}_${moveLevel}`;
-  return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[mirrorKey]:!redMoveMirrored[mirrorKey]};
+  const moveType=String(randInt(1,3)).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`;
+  return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
 }
 async function playNormalAttackEvent(actor,damage,defenseUsed,level){
   const victim=oppositeActor(actor),move=normalMovePresentation(actor,level),attacker=actorLabel(actor),target=actorLabel(victim);
@@ -1144,18 +1145,18 @@ async function playNormalAttackEvent(actor,damage,defenseUsed,level){
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
-  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:defender==="player",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:actor==="player"?redEventMirrored.ex_move_defense:!redEventMirrored.ex_move_defense,lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
 }
 async function playNoAttackEvent(firstActor){
-  await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="cpu",lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
+  await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="player"?redEventMirrored.ex_move_no_attack:!redEventMirrored.ex_move_no_attack,lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
 }
 async function playCloneDamageEvent(actor,damage){
   const victim=oppositeActor(actor),label=actorLabel(actor),target=actorLabel(victim),type=randInt(1,3),stem=`sp_move${String(type).padStart(2,"0")}_001`;
-  await playIllustration({files:frameFiles(stem,4),mirrored:actor==="cpu",lines:[`${label}の得意技が決まったーっ！`,`${target}は大ダメージ！`,`${damage} ダメージ！`],tall:true,alt:`${label}の得意技`,feedback:()=>{presentationDefenseReset[victim]=true;setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red-double",520);return animateDisplayedHp(victim,displayedHP[victim]-damage,520)}});
+  await playIllustration({files:frameFiles(stem,4),mirrored:actor==="player"?redEventMirrored[stem]:!redEventMirrored[stem],lines:[`${label}の得意技が決まったーっ！`,`${target}は大ダメージ！`,`${damage} ダメージ！`],tall:true,alt:`${label}の得意技`,feedback:()=>{presentationDefenseReset[victim]=true;setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red-double",520);return animateDisplayedHp(victim,displayedHP[victim]-damage,520)}});
 }
 async function playCloneHealEvent(rescue){
   const actor=rescue.actor,label=actorLabel(actor);
-  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
+  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
 async function playRoundPresentations(data){
   const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
