@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MENKO CONCENTRATION LAB</title>
+<style>
+  :root{color-scheme:dark;--bg:#0d0d0d;--panel:#181818;--line:#555;--text:#f4f4f4;--muted:#aaa;--red:#ee665f;--blue:#6fa8ff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:ui-monospace,Consolas,"Noto Sans JP",monospace}main{width:min(720px,calc(100% - 24px));margin:18px auto 42px}h1{font-size:24px;margin:0 0 6px}.lead{margin:0 0 15px;color:var(--muted);font-size:13px;line-height:1.65}.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}.card,.controls,.history{border:1px solid var(--line);background:var(--panel);padding:12px}.name{display:flex;justify-content:space-between;font-size:14px}.meter{height:16px;margin:8px 0;background:#080808;border:1px solid #777;overflow:hidden}.fill{height:100%;transition:width .25s}.red{background:var(--red)}.blue{background:var(--blue)}.stats{font-size:12px;line-height:1.7;color:#ddd}.stats span{color:var(--muted)}.controls{margin-top:10px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.grid label{display:grid;gap:4px;color:var(--muted);font-size:12px}.grid input,.grid select,button{background:#111;color:#fff;border:1px solid #777;padding:8px;font:inherit}button{cursor:pointer}.actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}.history{margin-top:10px;min-height:90px;font-size:12px;line-height:1.6;color:#ddd}.history b{color:#fff}@media(max-width:520px){.cards,.grid{grid-template-columns:1fr}}
+</style>
+<main>
+  <h1>MENKO CONCENTRATION LAB</h1>
+  <p class="lead">連続先攻・大量めくり・大ダメージで集中力が下がり、後攻で回復する試遊ラボ。先攻判定は変えず、集中力だけが投擲の難しさに影響します。</p>
+  <section class="cards">
+    <div class="card"><div class="name"><b>PLAYER</b><b id="playerValue">100</b></div><div class="meter"><div class="fill red" id="playerBar"></div></div><div class="stats" id="playerStats"></div></div>
+    <div class="card"><div class="name"><b>CPU</b><b id="cpuValue">100</b></div><div class="meter"><div class="fill blue" id="cpuBar"></div></div><div class="stats" id="cpuStats"></div></div>
+  </section>
+  <section class="controls">
+    <div class="grid">
+      <label>先攻<select id="first"><option value="player">PLAYER</option><option value="cpu">CPU</option></select></label>
+      <label>PLAYER めくり枚数<input id="playerFlips" type="number" min="0" max="10" value="2"></label>
+      <label>PLAYER ダメージ<input id="playerDamage" type="number" min="0" max="20" value="3"></label>
+      <label>CPU めくり枚数<input id="cpuFlips" type="number" min="0" max="10" value="1"></label>
+      <label>CPU ダメージ<input id="cpuDamage" type="number" min="0" max="20" value="0"></label>
+    </div>
+    <div class="actions"><button id="resolve">このラウンドを解決</button><button id="streak">PLAYER 連続先攻を3回再現</button><button id="reset">リセット</button></div>
+  </section>
+  <section class="history" id="history"><b>Round 0</b>　両者とも集中力100で開始。</section>
+</main>
+<script>
+(()=>{"use strict";
+  const $=id=>document.getElementById(id);let focus={player:100,cpu:100},round=0,logs=[];
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const effects=v=>({speed:1+(1-v/100)*.55,stability:.70+.30*v/100,cpuError:1+(1-v/100)*.80});
+  function text(v,side){const e=effects(v);return `<span>バー速度</span> ×${e.speed.toFixed(2)}<br><span>めくり安定度</span> ×${e.stability.toFixed(2)}${side==="cpu"?`<br><span>狙いぶれ</span> ×${e.cpuError.toFixed(2)}`:""}`}
+  function render(){for(const side of ["player","cpu"]){const v=focus[side];$(side+"Value").textContent=Math.round(v);$(side+"Bar").style.width=v+"%";$(side+"Stats").innerHTML=text(v,side)}$("history").innerHTML=logs.length?logs.slice(-8).reverse().join("<br>"):"<b>Round 0</b>　両者とも集中力100で開始。"}
+  function apply(side,first,flips,damage){const firstDelta=side===first?-25:20;const use=Math.min(3,Math.max(0,flips))*4+Math.min(5,Math.max(0,damage))*2;const before=focus[side];focus[side]=clamp(before+firstDelta-use,0,100);return Math.round(focus[side]-before)}
+  function resolve(data){round++;const p=apply("player",data.first,data.pf,data.pd),c=apply("cpu",data.first,data.cf,data.cd);logs.push(`<b>Round ${round}</b>　先攻: ${data.first.toUpperCase()} ／ PLAYER ${p>=0?"+":""}${p} → ${Math.round(focus.player)} ／ CPU ${c>=0?"+":""}${c} → ${Math.round(focus.cpu)}`);render()}
+  $("resolve").onclick=()=>resolve({first:$("first").value,pf:+$("playerFlips").value,pd:+$("playerDamage").value,cf:+$("cpuFlips").value,cd:+$("cpuDamage").value});
+  $("streak").onclick=()=>{for(let i=0;i<3;i++)resolve({first:"player",pf:2,pd:3,cf:1,cd:0})};
+  $("reset").onclick=()=>{focus={player:100,cpu:100};round=0;logs=[];render()};render();
+})();
+</script>
+</html>
