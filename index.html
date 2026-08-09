@@ -833,7 +833,8 @@ function beginCardMotion(i,impulse,sourceLabel){
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
-  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey);
+  // Trial balance: keep motion and reach intact, but convert impact into flips a little less often.
+  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*.88;
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
