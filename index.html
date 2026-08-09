@@ -100,11 +100,13 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 .info-window{position:relative;z-index:1;flex:1;min-width:0;height:108px;padding:9px 13px 7px;border:2px solid #444;border-radius:4px;background:#202020;box-shadow:inset 0 0 0 2px #292929;overflow:hidden}
 .status-group.blue .info-window{padding-right:25px}
 .status-group.red .info-window{order:2;margin-left:-22px;padding-left:25px}
-.portrait-window{--portrait-scale:1;--portrait-offset-y:0;position:relative;z-index:3;flex:0 0 104px;width:104px;height:104px;overflow:hidden;border:4px solid;border-radius:4px;background:#fff}
+.portrait-window{position:relative;z-index:3;flex:0 0 104px;width:104px;height:104px;overflow:hidden;border:4px solid;border-radius:4px;background:#fff}
+.status-group.red .portrait-window{--portrait-scale:1;--portrait-offset-y:0}
+.status-group.blue .portrait-window{--portrait-scale:1.5;--portrait-offset-y:-20%}
 .status-group.blue .portrait-window{order:2;margin-left:-22px;border-color:#00f}
 .status-group.red .portrait-window{order:1;border-color:#f00}
 .portrait-layer{position:absolute;left:0;top:var(--portrait-offset-y);width:100%;height:100%;max-width:none;object-fit:contain;transform:scale(var(--portrait-scale));transform-origin:50% 0;image-rendering:auto}
-#redFace,#blueFace{display:none}
+#redFace{display:none}
 .hp-line{font-size:18px;line-height:1;white-space:nowrap}
 .hp-rail{width:100%;height:20px;margin:7px 0 9px;padding:3px;border:2px solid #fff;background:#111;overflow:hidden}
 .hp-fill{height:100%;transition:width .04s linear}
@@ -295,6 +297,7 @@ let cloneRescueCooldown=0;
 let cloneRescueActivations=0;
 
 const PORTRAIT_ROOT="assets/characters";
+const LEGACY_PORTRAIT_ROOT="assets/character_portrait_lab";
 const MOVE_ROOT="assets/moves";
 const ui={
   red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),atkMenko:document.getElementById("redAtkMenko"),defTotal:document.getElementById("redDefTotal"),identity:document.getElementById("redIdentity")},
@@ -302,14 +305,15 @@ const ui={
 };
 const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
 const playerPortrait="player_characters_001.jpg";
-const cpuPortraits=["characters_002.jpg","characters_003.jpg","characters_004.jpg","characters_005.jpg","characters_006.jpg","characters_007.jpg","characters_008.jpg","characters_009.jpg","characters_010.jpg","characters_011.jpg"];
+const portraitFaceSets=["01","02","03"],cpuPortraitHairs=["hair_01","hair_02","hair_03","hair_04","hair_05","hair_06","hair_07"];
+const cpuPortraitCombos=cpuPortraitHairs.flatMap(hair=>portraitFaceSets.map(faceSet=>({hair,faceSet})));
 class ShuffleBag{
   constructor(values){this.values=values.slice();this.queue=[];this.last=null}
   refill(){this.queue=this.values.slice();for(let i=this.queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.queue[i],this.queue[j]]=[this.queue[j],this.queue[i]]}if(this.queue.length>1&&this.queue[this.queue.length-1]===this.last)[this.queue[0],this.queue[this.queue.length-1]]=[this.queue[this.queue.length-1],this.queue[0]]}
   next(){if(!this.queue.length)this.refill();const value=this.queue.pop();this.last=value;return value}
 }
-let cpuPortraitBag=new ShuffleBag(cpuPortraits);
-let portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{image:cpuPortraitBag.next(),expression:"normal"}};
+let cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
+let portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{...cpuPortraitBag.next(),expression:"normal"}};
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
 const moveFrameCounts={"001_001_001":4,"001_001_002":4,"001_002_001":4,"001_002_002":4,"001_003_001":4,"001_003_002":4,"002_001_001":2,"002_001_002":3,"002_002_001":4,"002_002_002":4,"002_003_001":3,"002_003_002":4,"003_001_001":2,"003_001_002":4,"003_002_001":2,"003_002_002":5,"003_003_001":3,"003_003_002":5};
@@ -376,11 +380,17 @@ const oppositeActor=actor=>actor==="player"?"cpu":"player";
 const actorLabel=actor=>actor==="player"?"RED":"BLUE";
 const uiKey=actor=>actor==="player"?"red":"blue";
 
-function portraitPath(actor){return `${PORTRAIT_ROOT}/${portraitState[actor].image}`}
+function portraitPath(actor,layer){
+  const p=portraitState[actor];
+  if(actor==="player")return `${PORTRAIT_ROOT}/${p.image}`;
+  return layer==="hair"?`${LEGACY_PORTRAIT_ROOT}/hair_png/${p.hair}.png`:`${LEGACY_PORTRAIT_ROOT}/face_png/face_${p.faceSet}_${p.expression}.png`;
+}
 function syncPortrait(actor){
-  const side=ui[uiKey(actor)],image=portraitPath(actor);
-  if(side.hair.dataset.src!==image){side.hair.src=image;side.hair.dataset.src=image}
-  side.face.removeAttribute("src");side.face.dataset.src="";
+  const side=ui[uiKey(actor)],hair=portraitPath(actor,"hair");
+  if(side.hair.dataset.src!==hair){side.hair.src=hair;side.hair.dataset.src=hair}
+  if(actor==="player"){side.face.removeAttribute("src");side.face.dataset.src="";return}
+  const face=portraitPath(actor,"face");
+  if(side.face.dataset.src!==face){side.face.src=face;side.face.dataset.src=face}
 }
 function setPortraitExpression(actor,expression){
   if(!["normal","attack","damage"].includes(expression))return;
@@ -388,11 +398,11 @@ function setPortraitExpression(actor,expression){
 }
 function resetPortraitExpressions(){setPortraitExpression("player","normal");setPortraitExpression("cpu","normal")}
 function resetPortraitRun(){
-  cpuPortraitBag=new ShuffleBag(cpuPortraits);
+  cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
   portraitState.player={image:playerPortrait,expression:"normal"};
-  portraitState.cpu={image:cpuPortraitBag.next(),expression:"normal"};
+  portraitState.cpu={...cpuPortraitBag.next(),expression:"normal"};
 }
-function chooseCpuPortrait(){portraitState.cpu={image:cpuPortraitBag.next(),expression:"normal"}}
+function chooseCpuPortrait(){portraitState.cpu={...cpuPortraitBag.next(),expression:"normal"}}
 function restartStatusFeedback(actor,className,duration){
   const group=ui[uiKey(actor)].group;
   group.classList.remove("feedback-red","feedback-white","feedback-soft","feedback-red-double","feedback-white-double");
@@ -1604,7 +1614,7 @@ function loadRunProgress(){
 function saveRunProgress(mode=runSaveMode){
   if(!runState)return;
   runSaveMode=mode;
-  const portrait={player:{image:portraitState.player.image},cpu:{image:portraitState.cpu.image}};
+  const portrait={player:{image:playerPortrait},cpu:{hair:portraitState.cpu.hair,faceSet:portraitState.cpu.faceSet}};
   localStorage.setItem(RUN_SAVE_STORAGE_KEY,JSON.stringify({version:RUN_SAVE_VERSION,mode:runSaveMode,runState,portraitState:portrait,rewardOptions:pendingRewardOptions,differenceCardsCountForInitiative}));
 }
 function clearRunProgress(){localStorage.removeItem(RUN_SAVE_STORAGE_KEY)}
@@ -1797,9 +1807,10 @@ function renderProgressPanel(mode="match"){
   renderCareerRecords();
 }
 function restorePortraitState(savedPortrait){
-  if(!savedPortrait?.player?.image||!savedPortrait?.cpu?.image)return false;
-  const cpuImage=cpuPortraits.includes(savedPortrait.cpu.image)?savedPortrait.cpu.image:cpuPortraitBag.next();
-  portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{image:cpuImage,expression:"normal"}};
+  if(!savedPortrait?.cpu?.hair||!savedPortrait?.cpu?.faceSet)return false;
+  const hair=cpuPortraitHairs.includes(savedPortrait.cpu.hair)?savedPortrait.cpu.hair:null,faceSet=portraitFaceSets.includes(savedPortrait.cpu.faceSet)?savedPortrait.cpu.faceSet:null;
+  if(!hair||!faceSet)return false;
+  portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{hair,faceSet,expression:"normal"}};
   return true;
 }
 function initializeIntegratedRun(){
