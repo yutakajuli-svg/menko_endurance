@@ -362,6 +362,8 @@ let lastAttackLevel=0,lastDefenseLevel=0,lastDamage=0;
 let pendingLayerWave=null;
 let linkedCount=16,pendingLandedCard=null,selectedCard=null,heldClone=null,roundThrow=0,roundNo=1,roundStarter="player",flowT=0;
 let roundResults={player:null,cpu:null},roundRedDamage=0,roundBlueDamage=0;
+// Hidden concentration: intentionally not shown in the regular UI during trial.
+let concentration={player:100,cpu:100};
 let matchStats=null;
 let aim={x:0,y:0};
 let turn="player",turnCount=0,cpuWait=0,zoneResult="";
@@ -507,6 +509,9 @@ function gaugeStrength(){return (Math.sin(phase*Math.PI*2-Math.PI/2)+1)/2}
 function gaugePosition(g){return clamp(g,0,1)}
 function classifyGauge(g){const names=["弱すぎる","弱い","普通","ジャスト","強い","強すぎる"];for(let i=0;i<condition.bounds.length;i++)if(g<=condition.bounds[i])return {index:i,name:names[i]};return {index:5,name:names[5]}}
 function throwStability(g){const p=[[0,.55],[.18,.76],[.35,1.32],[.60,1.62],[.68,1.10],[.85,.62],[1,.52]];for(let i=1;i<p.length;i++)if(g<=p[i][0]){const a=p[i-1],b=p[i],t=(g-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t}return .52}
+function concentrationFlipMultiplier(actor){return .70+.30*(concentration[actor]??100)/100}
+function concentrationGaugeSpeed(actor){return 1+(1-(concentration[actor]??100)/100)*.55}
+function applyRoundConcentration(actor,first,flips,damage){const firstShift=actor===first?-25:20;const effort=Math.min(3,Math.max(0,flips))*4+Math.min(5,Math.max(0,damage))*2;concentration[actor]=clamp((concentration[actor]??100)+firstShift-effort,0,100)}
 function startToss(){
   const R=ring(),redWins=Math.random()<.5;
   const r=Math.min(R.s*.105,38)*MENKO_SIZE_SCALE;
@@ -522,6 +527,7 @@ function newMatch(){
   linkedCount=Math.max(config.redAttackCards,config.blueAttackCards)+Math.max(config.redDefenseCards,config.blueDefenseCards);
   redHP=config.redMaxHP;blueHP=config.blueMaxHP;lastR=0;lastB=0;lastAttackLevel=0;lastDefenseLevel=0;lastDamage=0;turnCount=0;phase=0;condition=makeCondition();cards=[];dropper=null;impact=null;pendingLayerWave=null;pendingLandedCard=null;heldClone=null;
   roundThrow=0;roundNo=1;roundStarter="player";selectedCard=null;flowT=0;playerAimReadyAt=0;cpuWait=0;roundResults={player:null,cpu:null};roundRedDamage=0;roundBlueDamage=0;
+  concentration={player:100,cpu:100};
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
   matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},rounds:[]};
@@ -761,6 +767,7 @@ function cpuThrow(){
 }
 function chooseCpuThrow(){
   const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"),candidates=[{x:R.x+R.s*.5,y:R.y+R.s*.5}];
+  const focusError=1+(1-(concentration.cpu??100)/100)*.80;
   for(const c of normalCards)candidates.push({x:c.x,y:c.y});
   const scored=candidates.map(p=>{
     const density=normalCards.reduce((sum,c)=>sum+Math.exp(-Math.hypot(c.x-p.x,c.y-p.y)/(R.s*.20)),0);
@@ -769,11 +776,11 @@ function chooseCpuThrow(){
   // Prefer a cluster but sometimes accept the next best visible pocket.
   const pick=scored[Math.min(scored.length-1,Math.floor(Math.pow(Math.random(),2.25)*Math.min(3,scored.length)))];
   const density=clamp(pick.density/Math.max(1,normalCards.length*.45),0,1);
-  const jitter=R.s*(.018+Math.random()*.032),angle=Math.random()*Math.PI*2;
+  const jitter=R.s*(.018+Math.random()*.032)*focusError,angle=Math.random()*Math.PI*2;
   const aim={x:clamp(pick.x+Math.cos(angle)*jitter,R.x+R.s*.16,R.x+R.s*.84),y:clamp(pick.y+Math.sin(angle)*jitter,R.y+R.s*.16,R.y+R.s*.84)};
   // Dense stacks invite a controlled normal/just throw. Sparse layouts ask for more reach.
   const targetGauge=.57+(1-density)*.10;
-  const gauge=clamp(targetGauge+rand(-.08,.08),0,1);
+  const gauge=clamp(targetGauge+rand(-.08,.08)*focusError,0,1);
   return {aim,gauge};
 }
 function cpuThrow(){
@@ -826,7 +833,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
-  flipChance *= throwStability(wave.gauge);
+  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey);
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
@@ -1252,6 +1259,8 @@ function resolveRoundEffects(){
   matchStats.damage.player+=roundRedDamage;matchStats.damage.cpu+=roundBlueDamage;
   if(roundRedDamage===0)matchStats.zero.player++;
   if(roundBlueDamage===0)matchStats.zero.cpu++;
+  applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
+  applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
   const nextStarter=red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter;
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
   appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
@@ -1376,7 +1385,7 @@ function updateCards(){
 }
 function update(){
   time+=1/60;
-  if(state==="aim")phase=(phase+.012)%1;
+  if(state==="aim")phase=(phase+.012*concentrationGaugeSpeed(turn))%1;
   const gauge=gaugeStrength();
   needle.style.left=`${gaugePosition(gauge)*100}%`;
   if(shake>0)shake*=.88;
