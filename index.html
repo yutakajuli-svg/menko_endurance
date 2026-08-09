@@ -1127,10 +1127,10 @@ async function playNormalAttackEvent(actor,damage,defenseUsed,level){
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
-  await playIllustration({files:frameFiles("ex_move_defense",3),mirrored:defender==="player",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:defender==="player",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
 }
 async function playNoAttackEvent(firstActor){
-  await playIllustration({files:frameFiles("ex_move_no_attack",2),mirrored:firstActor==="cpu",lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
+  await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="cpu",lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
 }
 async function playCloneDamageEvent(actor,damage){
   const victim=oppositeActor(actor),label=actorLabel(actor),target=actorLabel(victim),type=randInt(1,3),stem=`sp_move${String(type).padStart(2,"0")}_001`;
