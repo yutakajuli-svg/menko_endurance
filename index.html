@@ -850,7 +850,8 @@ function beginCardMotion(i,impulse,sourceLabel){
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
   // Trial balance: keep motion and reach intact, but convert impact into flips much less often.
-  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*.77;
+  const playerFlipAssist=wave.actorKey==="player"?1.10:1;
+  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*playerFlipAssist*.77;
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
@@ -1625,8 +1626,10 @@ function generateProgressEnemy(area,stage=4){
   const boss=BOSSES[area*5],prev=area===1?null:BOSSES[(area-1)*5];
   const area1Ranges=[[9,12],[10,14],[12,17],[14,20]],area1Range=area1Ranges[clamp(stage,1,4)-1];
   const maxP=area===1?area1Range[1]:progressPoints(boss),minP=area===1?area1Range[0]:progressPoints(prev)+1;
+  const area1AtkCaps=[2,2,3,3],area1DefCaps=[1,2,3,3],stageIndex=clamp(stage,1,4)-1;
+  const maxAtk=area===1?area1AtkCaps[stageIndex]:boss.atk+3,maxDefMenko=area===1?area1DefCaps[stageIndex]:boss.defMenko+4;
   const candidates=[];
-  for(let atk=0;atk<=boss.atk+3;atk++)for(let atkMenko=0;atkMenko<=boss.atkMenko+4;atkMenko++)for(let defMenko=0;defMenko<=boss.defMenko+4;defMenko++){
+  for(let atk=0;atk<=maxAtk;atk++)for(let atkMenko=0;atkMenko<=boss.atkMenko+4;atkMenko++)for(let defMenko=0;defMenko<=maxDefMenko;defMenko++){
     const x={atk,atkMenko,defMenko},p=progressPoints(x);
     const canFight=atk>=1&&atkMenko>=1;
     if(p>=minP&&p<=maxP&&canFight)candidates.push(x)
