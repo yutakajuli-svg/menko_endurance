@@ -376,6 +376,7 @@ let turn="player",turnCount=0,cpuWait=0,zoneResult="";
 let playerAimReadyAt=0; // 新しいプレイヤーターン直後の持ち越しタップを無効化
 let condition=null,toss=null,tossWait=0;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const scaledBaseAttack=atk=>Math.ceil(atk*.5);
 const wait=ms=>new Promise(resolve=>window.setTimeout(resolve,ms));
 const oppositeActor=actor=>actor==="player"?"cpu":"player";
 const actorLabel=actor=>actor==="player"?"RED":"BLUE";
@@ -1033,14 +1034,14 @@ function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
     ? `攻撃Lv 0 → 0ダメージ`
     : red.effectiveAttackLevel<=0
       ? `攻撃Lv ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ 完全防御・0ダメージ`
-      : `攻撃力 ${config.redAttack} ＋ 有効攻撃Lv ${red.effectiveAttackLevel} ＝ ${redDamage}ダメージ`;
+      : `基礎攻撃力 ${config.redAttack} × 0.5（${scaledBaseAttack(config.redAttack)}）＋ 有効攻撃Lv ${red.effectiveAttackLevel} ＝ ${redDamage}ダメージ`;
   const blueFormula=blue.attackCancelledByKO
     ? `先攻側のKOにより攻撃中止 → 0ダメージ`
     : blue.attackLevel===0
     ? `攻撃Lv 0 → 0ダメージ`
     : blue.effectiveAttackLevel<=0
       ? `攻撃Lv ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ 完全防御・0ダメージ`
-      : `攻撃力 ${config.blueAttack} ＋ 有効攻撃Lv ${blue.effectiveAttackLevel} ＝ ${blueDamage}ダメージ`;
+      : `基礎攻撃力 ${config.blueAttack} × 0.5（${scaledBaseAttack(config.blueAttack)}）＋ 有効攻撃Lv ${blue.effectiveAttackLevel} ＝ ${blueDamage}ダメージ`;
   const redDefDetail=`赤防御：取得 ${red.defenseLevel} ／ 使用 ${red.defenseUsed??0} ／ 未使用 ${red.defenseUnused??red.defenseLevel}（ラウンド終了で消滅）${red.disabledDefense?` ／ 相手所有カードで無効 ${red.disabledDefense}`:""}`;
   const blueDefDetail=`青防御：取得 ${blue.defenseLevel} ／ 使用 ${blue.defenseUsed??0} ／ 未使用 ${blue.defenseUnused??blue.defenseLevel}（ラウンド終了で消滅）${blue.disabledDefense?` ／ 相手所有カードで無効 ${blue.disabledDefense}`:""}`;
   const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
@@ -1212,8 +1213,8 @@ function resolveRoundEffects(){
   const redDefenseUsed=Math.min(redDefenseAvailable,blue.attackLevel);
   const redEffectiveAttackLevel=Math.max(0,red.attackLevel-blueDefenseUsed);
   const blueEffectiveAttackLevel=Math.max(0,blue.attackLevel-redDefenseUsed);
-  const redNormalDamage=redEffectiveAttackLevel>0?config.redAttack+redEffectiveAttackLevel:0;
-  const blueNormalDamage=blueEffectiveAttackLevel>0?config.blueAttack+blueEffectiveAttackLevel:0;
+  const redNormalDamage=redEffectiveAttackLevel>0?scaledBaseAttack(config.redAttack)+redEffectiveAttackLevel:0;
+  const blueNormalDamage=blueEffectiveAttackLevel>0?scaledBaseAttack(config.blueAttack)+blueEffectiveAttackLevel:0;
 
   red.effectiveAttackLevel=redEffectiveAttackLevel;red.defenseAvailable=redDefenseAvailable;red.defenseUsed=redDefenseUsed;red.defenseUnused=Math.max(0,redDefenseAvailable-redDefenseUsed);
   blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
@@ -1252,7 +1253,7 @@ function resolveRoundEffects(){
     `BLUE defense got  : ${blueDefenseAvailable}`,
     `BLUE defense used : ${blueDefenseUsed}`,
     `RED effective Lv  : ${redEffectiveAttackLevel}`,
-    `RED damage formula: ${redEffectiveAttackLevel>0?`${config.redAttack} + ${redEffectiveAttackLevel} = ${redNormalDamage}`:"FULL DEFENSE = 0"}`,
+    `RED damage formula: ${redEffectiveAttackLevel>0?`ceil(${config.redAttack} * 0.5) + ${redEffectiveAttackLevel} = ${redNormalDamage}`:"FULL DEFENSE = 0"}`,
     `RED clone override: ${redCloneOverride==null?"none":redCloneOverride}`,
     `RED final damage  : ${roundRedDamage}`,
     `RED KO cancelled  : ${red.attackCancelledByKO?"yes":"no"}`,
@@ -1260,7 +1261,7 @@ function resolveRoundEffects(){
     `RED defense got   : ${redDefenseAvailable}`,
     `RED defense used  : ${redDefenseUsed}`,
     `BLUE effective Lv : ${blueEffectiveAttackLevel}`,
-    `BLUE damage formula: ${blueEffectiveAttackLevel>0?`${config.blueAttack} + ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"FULL DEFENSE = 0"}`,
+    `BLUE damage formula: ${blueEffectiveAttackLevel>0?`ceil(${config.blueAttack} * 0.5) + ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"FULL DEFENSE = 0"}`,
     `BLUE clone override: ${blueCloneOverride==null?"none":blueCloneOverride}`,
     `BLUE final damage : ${roundBlueDamage}`,
     `BLUE KO cancelled : ${blue.attackCancelledByKO?"yes":"no"}`,
