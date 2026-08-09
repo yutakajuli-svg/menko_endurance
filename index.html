@@ -509,13 +509,13 @@ function classifyGauge(g){const names=["弱すぎる","弱い","普通","ジャ�
 function throwStability(g){const p=[[0,.55],[.18,.76],[.35,1.32],[.60,1.62],[.68,1.10],[.85,.62],[1,.52]];for(let i=1;i<p.length;i++)if(g<=p[i][0]){const a=p[i-1],b=p[i],t=(g-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t}return .52}
 function concentrationFlipMultiplier(actor){
   if(actor!=="cpu")return 1;
-  return .55+.45*(concentration.cpu??100)/100;
+  return .80*(.55+.45*(concentration.cpu??100)/100);
 }
 function concentrationGaugeSpeed(actor){
   if(actor!=="player")return 1;
   return 1+(1-(concentration.player??100)/100)*.55;
 }
-function applyRoundConcentration(actor,first,flips,damage){const firstShift=actor===first?-25:20;const effort=Math.min(3,Math.max(0,flips))*4+Math.min(5,Math.max(0,damage))*2;concentration[actor]=clamp((concentration[actor]??100)+firstShift-effort,0,100)}
+function applyRoundConcentration(actor,first,flips,damage){const firstShift=actor===first?-25:20;const effort=Math.min(3,Math.max(0,flips))*4+Math.min(5,Math.max(0,damage))*2;const next=(concentration[actor]??100)+firstShift-effort;concentration[actor]=next<=0?100:clamp(next,0,100)}
 function startToss(){
   const R=ring(),redWins=Math.random()<.5;
   const r=Math.min(R.s*.105,38)*MENKO_SIZE_SCALE;
@@ -840,7 +840,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
   // Trial balance: keep motion and reach intact, but convert impact into flips much less often.
-  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*.66;
+  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*.77;
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
