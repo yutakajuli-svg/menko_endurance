@@ -301,8 +301,8 @@ const ui={
   blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),atkMenko:document.getElementById("blueAtkMenko"),defTotal:document.getElementById("blueDefTotal"),identity:document.getElementById("blueIdentity")}
 };
 const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
-const playerPortrait="player_characters_001..jpg";
-const cpuPortraits=["characters_002..jpg","characters_003..jpg","characters_004..jpg","characters_005.jpg","characters_006.jpg","characters_007.jpg","characters_008.jpg","characters_009.jpg","characters_010.jpg","characters_011.jpg"];
+const playerPortrait="player_characters_001.jpg";
+const cpuPortraits=["characters_002.jpg","characters_003.jpg","characters_004.jpg","characters_005.jpg","characters_006.jpg","characters_007.jpg","characters_008.jpg","characters_009.jpg","characters_010.jpg","characters_011.jpg"];
 class ShuffleBag{
   constructor(values){this.values=values.slice();this.queue=[];this.last=null}
   refill(){this.queue=this.values.slice();for(let i=this.queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.queue[i],this.queue[j]]=[this.queue[j],this.queue[i]]}if(this.queue.length>1&&this.queue[this.queue.length-1]===this.last)[this.queue[0],this.queue[this.queue.length-1]]=[this.queue[this.queue.length-1],this.queue[0]]}
@@ -1157,9 +1157,9 @@ async function playRoundPresentations(data){
       appendLog(`攻撃演出省略: ${actorLabel(actor)}は先攻側の攻撃演出でHP0`);
       continue;
     }
-    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
+    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel,visualLevel=resultData.attackLevel;
     if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
+    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,visualLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
     if(attackShown)await wait(120);
   }
   if(!attackShown)await playNoAttackEvent(roundStarter);
@@ -1791,7 +1791,8 @@ function renderProgressPanel(mode="match"){
 }
 function restorePortraitState(savedPortrait){
   if(!savedPortrait?.player?.image||!savedPortrait?.cpu?.image)return false;
-  portraitState={player:{image:savedPortrait.player.image,expression:"normal"},cpu:{image:savedPortrait.cpu.image,expression:"normal"}};
+  const cpuImage=cpuPortraits.includes(savedPortrait.cpu.image)?savedPortrait.cpu.image:cpuPortraitBag.next();
+  portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{image:cpuImage,expression:"normal"}};
   return true;
 }
 function initializeIntegratedRun(){
