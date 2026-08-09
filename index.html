@@ -100,10 +100,11 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 .info-window{position:relative;z-index:1;flex:1;min-width:0;height:108px;padding:9px 13px 7px;border:2px solid #444;border-radius:4px;background:#202020;box-shadow:inset 0 0 0 2px #292929;overflow:hidden}
 .status-group.blue .info-window{padding-right:25px}
 .status-group.red .info-window{order:2;margin-left:-22px;padding-left:25px}
-.portrait-window{--portrait-scale:1.5;--portrait-offset-y:-20%;position:relative;z-index:3;flex:0 0 104px;width:104px;height:104px;overflow:hidden;border:4px solid;border-radius:4px;background:#fff}
+.portrait-window{--portrait-scale:1;--portrait-offset-y:0;position:relative;z-index:3;flex:0 0 104px;width:104px;height:104px;overflow:hidden;border:4px solid;border-radius:4px;background:#fff}
 .status-group.blue .portrait-window{order:2;margin-left:-22px;border-color:#00f}
 .status-group.red .portrait-window{order:1;border-color:#f00}
 .portrait-layer{position:absolute;left:0;top:var(--portrait-offset-y);width:100%;height:100%;max-width:none;object-fit:contain;transform:scale(var(--portrait-scale));transform-origin:50% 0;image-rendering:auto}
+#redFace,#blueFace{display:none}
 .hp-line{font-size:18px;line-height:1;white-space:nowrap}
 .hp-rail{width:100%;height:20px;margin:7px 0 9px;padding:3px;border:2px solid #fff;background:#111;overflow:hidden}
 .hp-fill{height:100%;transition:width .04s linear}
@@ -293,25 +294,25 @@ const CLONE_RESCUE_MAX_ACTIVATIONS=2;
 let cloneRescueCooldown=0;
 let cloneRescueActivations=0;
 
-const PORTRAIT_ROOT="assets/character_portrait_lab";
+const PORTRAIT_ROOT="assets/characters";
 const MOVE_ROOT="assets/moves";
 const ui={
   red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),atkMenko:document.getElementById("redAtkMenko"),defTotal:document.getElementById("redDefTotal"),identity:document.getElementById("redIdentity")},
   blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),atkMenko:document.getElementById("blueAtkMenko"),defTotal:document.getElementById("blueDefTotal"),identity:document.getElementById("blueIdentity")}
 };
 const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
-const portraitFaceSets=["01","02","03"],cpuPortraitHairs=["hair_01","hair_02","hair_03","hair_04","hair_05","hair_06","hair_07"];
-const cpuPortraitCombos=cpuPortraitHairs.flatMap(hair=>portraitFaceSets.map(faceSet=>({hair,faceSet})));
+const playerPortrait="player_characters_001..jpg";
+const cpuPortraits=["characters_002..jpg","characters_003..jpg","characters_004..jpg","characters_005.jpg","characters_006.jpg","characters_007.jpg","characters_008.jpg","characters_009.jpg","characters_010.jpg","characters_011.jpg"];
 class ShuffleBag{
   constructor(values){this.values=values.slice();this.queue=[];this.last=null}
   refill(){this.queue=this.values.slice();for(let i=this.queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[this.queue[i],this.queue[j]]=[this.queue[j],this.queue[i]]}if(this.queue.length>1&&this.queue[this.queue.length-1]===this.last)[this.queue[0],this.queue[this.queue.length-1]]=[this.queue[this.queue.length-1],this.queue[0]]}
   next(){if(!this.queue.length)this.refill();const value=this.queue.pop();this.last=value;return value}
 }
-let cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
-let portraitState={player:{hair:"player",faceSet:portraitFaceSets[Math.floor(Math.random()*portraitFaceSets.length)],expression:"normal"},cpu:{...cpuPortraitBag.next(),expression:"normal"}};
+let cpuPortraitBag=new ShuffleBag(cpuPortraits);
+let portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{image:cpuPortraitBag.next(),expression:"normal"}};
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
-const moveFrameCounts={"001_001":4,"001_002":4,"001_003":4,"002_001":2,"002_002":2,"002_003":3,"003_001":2,"003_002":2,"003_003":3};
+const moveFrameCounts={"001_001_001":4,"001_001_002":4,"001_002_001":4,"001_002_002":4,"001_003_001":4,"001_003_002":4,"002_001_001":2,"002_001_002":3,"002_002_001":4,"002_002_002":4,"002_003_001":3,"002_003_002":4,"003_001_001":2,"003_001_002":4,"003_002_001":2,"003_002_002":5,"003_003_001":3,"003_003_002":5};
 const redMoveMirrored={"001_001":true,"001_002":false,"001_003":true,"002_001":false,"002_002":true,"002_003":false,"003_001":false,"003_002":true,"003_003":false};
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
@@ -375,14 +376,11 @@ const oppositeActor=actor=>actor==="player"?"cpu":"player";
 const actorLabel=actor=>actor==="player"?"RED":"BLUE";
 const uiKey=actor=>actor==="player"?"red":"blue";
 
-function portraitPath(actor,layer){
-  const p=portraitState[actor];
-  return layer==="hair"?`${PORTRAIT_ROOT}/hair_png/${p.hair}.png`:`${PORTRAIT_ROOT}/face_png/face_${p.faceSet}_${p.expression}.png`;
-}
+function portraitPath(actor){return `${PORTRAIT_ROOT}/${portraitState[actor].image}`}
 function syncPortrait(actor){
-  const side=ui[uiKey(actor)],hair=portraitPath(actor,"hair"),face=portraitPath(actor,"face");
-  if(side.hair.dataset.src!==hair){side.hair.src=hair;side.hair.dataset.src=hair}
-  if(side.face.dataset.src!==face){side.face.src=face;side.face.dataset.src=face}
+  const side=ui[uiKey(actor)],image=portraitPath(actor);
+  if(side.hair.dataset.src!==image){side.hair.src=image;side.hair.dataset.src=image}
+  side.face.removeAttribute("src");side.face.dataset.src="";
 }
 function setPortraitExpression(actor,expression){
   if(!["normal","attack","damage"].includes(expression))return;
@@ -390,11 +388,11 @@ function setPortraitExpression(actor,expression){
 }
 function resetPortraitExpressions(){setPortraitExpression("player","normal");setPortraitExpression("cpu","normal")}
 function resetPortraitRun(){
-  cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
-  portraitState.player={hair:"player",faceSet:portraitFaceSets[Math.floor(Math.random()*portraitFaceSets.length)],expression:"normal"};
-  portraitState.cpu={...cpuPortraitBag.next(),expression:"normal"};
+  cpuPortraitBag=new ShuffleBag(cpuPortraits);
+  portraitState.player={image:playerPortrait,expression:"normal"};
+  portraitState.cpu={image:cpuPortraitBag.next(),expression:"normal"};
 }
-function chooseCpuPortrait(){portraitState.cpu={...cpuPortraitBag.next(),expression:"normal"}}
+function chooseCpuPortrait(){portraitState.cpu={image:cpuPortraitBag.next(),expression:"normal"}}
 function restartStatusFeedback(actor,className,duration){
   const group=ui[uiKey(actor)].group;
   group.classList.remove("feedback-red","feedback-white","feedback-soft","feedback-red-double","feedback-white-double");
@@ -779,8 +777,9 @@ function chooseCpuThrow(){
   const jitter=R.s*(.018+Math.random()*.032)*focusError,angle=Math.random()*Math.PI*2;
   const aim={x:clamp(pick.x+Math.cos(angle)*jitter,R.x+R.s*.16,R.x+R.s*.84),y:clamp(pick.y+Math.sin(angle)*jitter,R.y+R.s*.16,R.y+R.s*.84)};
   // Dense stacks invite a controlled normal/just throw. Sparse layouts ask for more reach.
-  const targetGauge=.57+(1-density)*.10;
-  const gauge=clamp(targetGauge+rand(-.08,.08)*focusError,0,1);
+  const targetGauge=.64;
+  const gaugeError=.20+(1-(concentration.cpu??100)/100)*.15;
+  const gauge=clamp(targetGauge+rand(-gaugeError,gaugeError),0,1);
   return {aim,gauge};
 }
 function cpuThrow(){
@@ -1117,8 +1116,8 @@ function applyCloneRescue(actor,owner,sameRoundContest=false){
   return {actor,owner,choice,amount};
 }
 function normalMovePresentation(actor,level){
-  const moveType=String(randInt(1,3)).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),key=`${moveType}_${moveLevel}`;
-  return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
+  const moveType=String(randInt(1,3)).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`,mirrorKey=`${moveType}_${moveLevel}`;
+  return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[mirrorKey]:!redMoveMirrored[mirrorKey]};
 }
 async function playNormalAttackEvent(actor,damage,defenseUsed,level){
   const victim=oppositeActor(actor),move=normalMovePresentation(actor,level),attacker=actorLabel(actor),target=actorLabel(victim);
@@ -1127,7 +1126,7 @@ async function playNormalAttackEvent(actor,damage,defenseUsed,level){
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
-  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:defender==="player",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+  await playIllustration({files:frameFiles("ex_move_defense",3),mirrored:defender==="player",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
 }
 async function playNoAttackEvent(firstActor){
   await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="cpu",lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
@@ -1598,10 +1597,7 @@ function loadRunProgress(){
 function saveRunProgress(mode=runSaveMode){
   if(!runState)return;
   runSaveMode=mode;
-  const portrait={
-    player:{hair:portraitState.player.hair,faceSet:portraitState.player.faceSet,expression:"normal"},
-    cpu:{hair:portraitState.cpu.hair,faceSet:portraitState.cpu.faceSet,expression:"normal"}
-  };
+  const portrait={player:{image:portraitState.player.image},cpu:{image:portraitState.cpu.image}};
   localStorage.setItem(RUN_SAVE_STORAGE_KEY,JSON.stringify({version:RUN_SAVE_VERSION,mode:runSaveMode,runState,portraitState:portrait,rewardOptions:pendingRewardOptions,differenceCardsCountForInitiative}));
 }
 function clearRunProgress(){localStorage.removeItem(RUN_SAVE_STORAGE_KEY)}
@@ -1793,11 +1789,8 @@ function renderProgressPanel(mode="match"){
   renderCareerRecords();
 }
 function restorePortraitState(savedPortrait){
-  if(!savedPortrait?.player?.hair||!savedPortrait?.player?.faceSet||!savedPortrait?.cpu?.hair||!savedPortrait?.cpu?.faceSet)return false;
-  portraitState={
-    player:{hair:savedPortrait.player.hair,faceSet:savedPortrait.player.faceSet,expression:"normal"},
-    cpu:{hair:savedPortrait.cpu.hair,faceSet:savedPortrait.cpu.faceSet,expression:"normal"}
-  };
+  if(!savedPortrait?.player?.image||!savedPortrait?.cpu?.image)return false;
+  portraitState={player:{image:savedPortrait.player.image,expression:"normal"},cpu:{image:savedPortrait.cpu.image,expression:"normal"}};
   return true;
 }
 function initializeIntegratedRun(){
