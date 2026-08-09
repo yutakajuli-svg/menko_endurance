@@ -1163,9 +1163,9 @@ async function playRoundPresentations(data){
       appendLog(`攻撃演出省略: ${actorLabel(actor)}は先攻側の攻撃演出でHP0`);
       continue;
     }
-    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel,visualLevel=resultData.attackLevel;
+    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
     if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,visualLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
+    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0)await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel);else await playDefenseEvent(actor,resultData.attackLevel)}
     if(attackShown)await wait(120);
   }
   if(!attackShown)await playNoAttackEvent(roundStarter);
