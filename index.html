@@ -370,6 +370,7 @@ let linkedCount=16,pendingLandedCard=null,selectedCard=null,heldClone=null,round
 let roundResults={player:null,cpu:null},roundRedDamage=0,roundBlueDamage=0;
 // Hidden concentration: intentionally not shown in the regular UI during trial.
 let concentration={player:100,cpu:100};
+let flipTest={mode:"current",player:1,cpu:1,cpuFinalFocus:true};
 let matchStats=null;
 // A wrestler gets one pinfall escape per match.  Submissions and specials never use this.
 let kickoutUsed={player:false,cpu:false};
@@ -522,8 +523,14 @@ function gaugePosition(g){return clamp(g,0,1)}
 function classifyGauge(g){const names=["弱すぎる","弱い","普通","ジャスト","強い","強すぎる"];for(let i=0;i<condition.bounds.length;i++)if(g<=condition.bounds[i])return {index:i,name:names[i]};return {index:5,name:names[5]}}
 function throwStability(g){const p=[[0,.55],[.18,.76],[.35,1.32],[.60,1.62],[.68,1.10],[.85,.62],[1,.52]];for(let i=1;i<p.length;i++)if(g<=p[i][0]){const a=p[i-1],b=p[i],t=(g-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t}return .52}
 function concentrationFlipMultiplier(actor){
+  if(!flipTest.cpuFinalFocus||flipTest.mode==="common")return 1;
   if(actor!=="cpu")return 1;
   return .80*(.55+.45*(concentration.cpu??100)/100);
+}
+function actorFlipMultiplier(actor){
+  if(flipTest.mode==="common")return 1;
+  if(flipTest.mode==="custom")return actor==="player"?flipTest.player:flipTest.cpu;
+  return actor==="player"?1.10:1;
 }
 function concentrationGaugeSpeed(actor){
   if(actor!=="player")return 1;
@@ -857,8 +864,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   flipChance += clamp((impactPower-.45)*.22,-.04,.15);
   flipChance += directOverlap*.18;
   // Trial balance: keep motion and reach intact, but convert impact into flips much less often.
-  const playerFlipAssist=wave.actorKey==="player"?1.10:1;
-  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*playerFlipAssist*.77;
+  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*actorFlipMultiplier(wave.actorKey)*.77;
   flipChance *= 1/(1+upperCount*.30);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
