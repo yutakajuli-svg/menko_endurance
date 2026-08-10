@@ -987,7 +987,9 @@ function advanceLayerWave(){
   }
 }
 function hit(x,y,power,gauge,zone){
-  const R=ring(),impactRadius=R.s*(.18+.78*gauge);if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  // Keep the full-game impact reach aligned with the fixed throw-strength lab.
+  // The lab's 288px maximum maps to the main board's canonical 390px ring.
+  const R=ring(),impactRadius=R.s*(.18+.78*gauge)*(288/390);if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
