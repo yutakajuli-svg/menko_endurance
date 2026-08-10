@@ -527,9 +527,9 @@ function concentrationFlipMultiplier(actor){
 }
 function concentrationGaugeSpeed(actor){
   if(actor!=="player")return 1;
-  return 1+(1-(concentration.player??100)/100)*.55;
+  return 1+(1-(concentration.player??100)/100)*.90;
 }
-function applyRoundConcentration(actor,first,flips,damage){const firstShift=actor===first?-25:20;const effort=Math.min(3,Math.max(0,flips))*4+Math.min(5,Math.max(0,damage))*2;const next=(concentration[actor]??100)+firstShift-effort;concentration[actor]=next<=0?100:clamp(next,0,100)}
+function applyRoundConcentration(actor,first,flips,damage){const firstShift=actor===first?-25:20;const effort=Math.min(3,Math.max(0,flips))*4+Math.min(5,Math.max(0,damage))*2;const next=(concentration[actor]??100)+firstShift-effort;concentration[actor]=next<=0?40:clamp(next,0,100)}
 function startToss(){
   const R=ring(),redWins=Math.random()<.5;
   const r=Math.min(R.s*.105,38)*MENKO_SIZE_SCALE;
@@ -1203,7 +1203,7 @@ async function playRoundPresentations(data){
     const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
     if(resultData.attackCancelledByKO)continue;
     if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0){await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else await playDefenseEvent(actor,resultData.attackLevel)}
+    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0){await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor)await playDefenseEvent(actor,resultData.attackLevel)}
     if(counter?.target===actor)await playCounterEvent(counter.actor,counter.damage);
     if(attackShown)await wait(120);
   }
@@ -1250,18 +1250,25 @@ function resolveRoundEffects(){
   roundRedDamage=cloneExclusive?0:redNormalDamage;
   roundBlueDamage=cloneExclusive?0:blueNormalDamage;
 
-  // Only the round opener can be countered: a strictly stronger defense answers a fully stopped attack.
-  // If the defender still has a normal attack, that normal attack takes priority instead.
+  // Either attack can be countered once per round. A remaining normal attack always takes priority.
   const openingResult=roundStarter==="player"?red:blue;
   const respondingActor=oppositeActor(roundStarter);
   const respondingResult=respondingActor==="player"?red:blue;
   let counter=null;
-  const counterEligible=!cloneExclusive&&openingResult.attackLevel>0&&respondingResult.defenseLevel>openingResult.attackLevel&&respondingResult.effectiveAttackLevel<=0;
-  if(counterEligible){
-    counter={actor:respondingActor,target:roundStarter,damage:1};
-    if(respondingActor==="player")roundRedDamage+=counter.damage;
+  const openingDamage=roundStarter==="player"?roundRedDamage:roundBlueDamage;
+  const respondingHP=respondingActor==="player"?redHP:blueHP;
+  const openingWouldKO=!cloneExclusive&&openingDamage>0&&openingDamage>=respondingHP;
+  const counterPairs=[{attacker:roundStarter,defender:respondingActor,attackerResult:openingResult,defenderResult:respondingResult},{attacker:respondingActor,defender:roundStarter,attackerResult:respondingResult,defenderResult:openingResult}];
+  for(let pairIndex=0;pairIndex<counterPairs.length;pairIndex++){
+    if(pairIndex===1&&openingWouldKO)continue;
+    const pair=counterPairs[pairIndex];
+    const eligible=!cloneExclusive&&pair.attackerResult.attackLevel>0&&pair.defenderResult.defenseLevel>pair.attackerResult.attackLevel&&pair.defenderResult.effectiveAttackLevel<=0;
+    if(!eligible)continue;
+    counter={actor:pair.defender,target:pair.attacker,damage:1};
+    if(counter.actor==="player")roundRedDamage+=counter.damage;
     else roundBlueDamage+=counter.damage;
-    appendLog(`COUNTER: ${actorLabel(respondingActor)} DEF ${respondingResult.defenseLevel} > ${actorLabel(roundStarter)} ATK ${openingResult.attackLevel} / ${actorLabel(respondingActor)} deals ${counter.damage}`);
+    appendLog(`COUNTER: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK ${pair.attackerResult.attackLevel} / ${actorLabel(counter.actor)} deals ${counter.damage}`);
+    break;
   }
 
   let redCloneOverride=null,blueCloneOverride=null;
