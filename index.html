@@ -784,24 +784,26 @@ function cpuThrow(){
   const a={x:rand(R.x+R.s*.23,R.x+R.s*.77),y:rand(R.y+R.s*.23,R.y+R.s*.77)};
   throwMenko(gauge,a);
 }
+const CPU_THROW_PROFILE={precision:.55,cluster:.66,edge:.72,safe:.50};
 function chooseCpuThrow(){
-  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"),candidates=[{x:R.x+R.s*.5,y:R.y+R.s*.5}];
-  const focusError=1+(1-(concentration.cpu??100)/100)*.80;
-  for(const c of normalCards)candidates.push({x:c.x,y:c.y});
-  const scored=candidates.map(p=>{
-    const density=normalCards.reduce((sum,c)=>sum+Math.exp(-Math.hypot(c.x-p.x,c.y-p.y)/(R.s*.20)),0);
-    return {...p,density};
-  }).sort((a,b)=>b.density-a.density);
-  // Prefer a cluster but sometimes accept the next best visible pocket.
-  const pick=scored[Math.min(scored.length-1,Math.floor(Math.pow(Math.random(),2.25)*Math.min(3,scored.length)))];
-  const density=clamp(pick.density/Math.max(1,normalCards.length*.45),0,1);
-  const jitter=R.s*(.018+Math.random()*.032)*focusError,angle=Math.random()*Math.PI*2;
-  const aim={x:clamp(pick.x+Math.cos(angle)*jitter,R.x+R.s*.16,R.x+R.s*.84),y:clamp(pick.y+Math.sin(angle)*jitter,R.y+R.s*.16,R.y+R.s*.84)};
-  // Dense stacks invite a controlled normal/just throw. Sparse layouts ask for more reach.
-  const targetGauge=.64;
-  const fatigue=1-(concentration.cpu??100)/100;
-  const gaugeError=clamp(rand(.20,.35)+fatigue*.06,.20,.35);
-  const gauge=clamp(targetGauge+rand(-gaugeError,gaugeError),0,1);
+  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
+  const densityAt=p=>normalCards.reduce((sum,c)=>sum+Math.exp(-Math.hypot(c.x-p.x,c.y-p.y)/(R.s*.20)),0);
+  const cluster=normalCards.map(c=>({...c,density:densityAt(c)})).sort((a,b)=>b.density-a.density)[0]||center;
+  const precision=normalCards.slice().sort((a,b)=>(a.coverDepth||0)-(b.coverDepth||0))[0]||center;
+  const edge=normalCards.slice().sort((a,b)=>Math.min(b.x-R.x,R.x+R.s-b.x,b.y-R.y,R.y+R.s-b.y)-Math.min(a.x-R.x,R.x+R.s-a.x,a.y-R.y,R.y+R.s-a.y))[0]||center;
+  const roll=Math.random(),intent=roll<.42?"cluster":roll<.67?"precision":roll<.84?"edge":"safe";
+  const target={cluster,precision,edge,safe:center}[intent],idealAim={x:target.x,y:target.y},idealPower=CPU_THROW_PROFILE[intent];
+  const fatigue=1-(concentration.cpu??100)/100,missRoll=Math.random();
+  const errorType=missRoll<.54-fatigue*.16?"NORMAL":missRoll<.70?"UNDERPOWER":missRoll<.86?"OVERPOWER":missRoll<.97?"AIM_MISS":"BIG_MISS";
+  const positionScale=R.s*({NORMAL:.018,UNDERPOWER:.030,OVERPOWER:.030,AIM_MISS:.095,BIG_MISS:.16}[errorType])*(1+fatigue*.65);
+  const angle=Math.random()*Math.PI*2,positionError=rand(.35,1)*positionScale;
+  let powerError=rand(-.04,.04)*(1+fatigue*.5);
+  if(errorType==="UNDERPOWER")powerError=-rand(.08,.18)*(1+fatigue*.35);
+  if(errorType==="OVERPOWER")powerError=rand(.08,.18)*(1+fatigue*.35);
+  if(errorType==="BIG_MISS")powerError=rand(-.24,.24);
+  const aim={x:clamp(idealAim.x+Math.cos(angle)*positionError,R.x+R.s*.10,R.x+R.s*.90),y:clamp(idealAim.y+Math.sin(angle)*positionError,R.y+R.s*.10,R.y+R.s*.90)};
+  const gauge=clamp(idealPower+powerError,0,1);
+  appendLog(`CPU THROW: intent=${intent.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
   return {aim,gauge};
 }
 function cpuThrow(){
