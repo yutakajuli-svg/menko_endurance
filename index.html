@@ -1400,8 +1400,9 @@ function finishMatch(){
   appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
   pendingIntegratedResult=winner==="RED";
-  clearPlayerLog();presentationLayer.classList.add("show");illustrationWindow.style.display="none";messageWindow.textContent=`${winner} WIN!`;messageWindow.classList.add("show");
-  window.setTimeout(()=>{const won=pendingIntegratedResult;pendingIntegratedResult=null;hidePresentation();handleIntegratedBattleResult(won)},950);
+  clearPlayerLog();presentationLayer.classList.add("show");illustrationWindow.style.display="none";messageWindow.textContent=`${winner} WIN!\nタップで結果へ`;messageWindow.classList.add("show");
+  presentationLayer.style.pointerEvents="auto";messageWindow.style.pointerEvents="auto";
+  messageWindow.onclick=()=>{const won=pendingIntegratedResult;pendingIntegratedResult=null;messageWindow.onclick=null;presentationLayer.style.pointerEvents="";messageWindow.style.pointerEvents="";hidePresentation();handleIntegratedBattleResult(won)};
 }
 function advanceTurnAfterHold(){
   roundThrow++;
