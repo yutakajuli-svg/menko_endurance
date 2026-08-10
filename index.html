@@ -268,6 +268,13 @@ const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=doc
 const playerLog=document.getElementById("playerLog");
 const debugPanel=document.getElementById("debugPanel"),debugLog=document.getElementById("debugLog"),copyStatus=document.getElementById("copyStatus");
 const balancePanel=document.getElementById("balancePanel");
+function installFlipTestControls(){
+  const host=document.getElementById("balanceActions");if(!host)return;
+  const box=document.createElement("div");box.style.cssText="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0";
+  box.innerHTML='<label>FLIP MODE <select id="flipMode"><option value="current">CURRENT</option><option value="common">COMMON</option><option value="custom">CUSTOM</option></select></label><label>CPU FOCUS <select id="cpuFinalFocus"><option value="on">FINAL</option><option value="off">INPUT ONLY</option></select></label><label>PLAYER <input id="playerFlipMultiplier" type="number" min="0" max="2" step=".05" value="1"></label><label>CPU <input id="cpuFlipMultiplier" type="number" min="0" max="2" step=".05" value="1"></label>';
+  host.parentNode.insertBefore(box,host);
+}
+installFlipTestControls();
 const progressPanel=document.getElementById("progressPanel");
 function setProgressScreen(visible){
   document.body.classList.toggle("progress-screen",visible);
@@ -325,7 +332,7 @@ const readCfg=()=>{const v=Object.fromEntries(cfgIds.map(id=>[id,Math.max(0,Numb
 const writeCfg=(x)=>{document.getElementById("cfgRedHP").value=x.redMaxHP;document.getElementById("cfgBlueHP").value=x.blueMaxHP;document.getElementById("cfgRedAtk").value=x.redAttack;document.getElementById("cfgBlueAtk").value=x.blueAttack;document.getElementById("cfgRedAttackCards").value=x.redAttackCards;document.getElementById("cfgBlueAttackCards").value=x.blueAttackCards;document.getElementById("cfgRedDefenseCards").value=x.redDefenseCards;document.getElementById("cfgBlueDefenseCards").value=x.blueDefenseCards};
 document.getElementById("balanceFab").onclick=()=>balancePanel.style.display="block";
 document.getElementById("closeBalance").onclick=()=>balancePanel.style.display="none";
-document.getElementById("applyBalance").onclick=()=>{readCfg();balancePanel.style.display="none";newMatch()};
+document.getElementById("applyBalance").onclick=()=>{readCfg();flipTest={mode:document.getElementById("flipMode").value,player:Math.max(0,Number(document.getElementById("playerFlipMultiplier").value)||1),cpu:Math.max(0,Number(document.getElementById("cpuFlipMultiplier").value)||1),cpuFinalFocus:document.getElementById("cpuFinalFocus").value==="on"};balancePanel.style.display="none";newMatch()};
 const presets={
 initial:{redMaxHP:15,blueMaxHP:20,redAttack:1,blueAttack:3,redAttackCards:2,blueAttackCards:4,redDefenseCards:2,blueDefenseCards:3},
 attack:{redMaxHP:20,blueMaxHP:20,redAttack:5,blueAttack:3,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3},
@@ -556,7 +563,7 @@ function newMatch(){
   kickoutUsed={player:false,cpu:false};
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
-  matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},rounds:[]};
+  matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},flow:{both:0,playerOnly:0,cpuOnly:0,none:0},attacks:{player:0,cpu:0},fullDefense:0,counters:0,firstKoCancels:0,rounds:[]};
   displayedHP={player:redHP,cpu:blueHP};
   logEntries=[];debugLog.value="";clearPlayerLog();startToss();syncBattleUi();
 }
@@ -1369,6 +1376,15 @@ function resolveRoundEffects(){
   matchStats.damage.player+=roundRedDamage;matchStats.damage.cpu+=roundBlueDamage;
   if(roundRedDamage===0)matchStats.zero.player++;
   if(roundBlueDamage===0)matchStats.zero.cpu++;
+  if(roundRedDamage>0&&roundBlueDamage>0)matchStats.flow.both++;
+  else if(roundRedDamage>0)matchStats.flow.playerOnly++;
+  else if(roundBlueDamage>0)matchStats.flow.cpuOnly++;
+  else matchStats.flow.none++;
+  if(redEffectiveAttackLevel>0)matchStats.attacks.player++;
+  if(blueEffectiveAttackLevel>0)matchStats.attacks.cpu++;
+  if((red.attackLevel>0&&redEffectiveAttackLevel===0)||(blue.attackLevel>0&&blueEffectiveAttackLevel===0))matchStats.fullDefense++;
+  if(counter)matchStats.counters++;
+  if(secondAttackCancelled)matchStats.firstKoCancels++;
   applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
   const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(counter?.actor??(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter));
@@ -1379,6 +1395,7 @@ function resolveRoundEffects(){
   playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
 }
 function finishMatch(){
+  appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} fullDefense=${matchStats.fullDefense} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
   appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
