@@ -940,7 +940,7 @@ function exposedImpactNow(i,wave){
   const c=cards[i],d=Math.hypot(c.x-wave.x,c.y-wave.y);
   const fall=clamp(1-d/wave.maxRadius,0,1);
   // 中心距離だけで下層を起動しない。実際に露出している面積を主に使う。
-  const spatial=inf.exposedImpactFraction*.88+fall*inf.exposedImpactFraction*.12;
+  const spatial=inf.exposedImpactFraction*(.30+fall*.70);
   return {inf,spatial};
 }
 function advanceLayerWave(){
@@ -988,8 +988,8 @@ function advanceLayerWave(){
   }
 }
 function hit(x,y,power,gauge,zone){
-  // Main-board trial: keep the strength curve, but tighten the footprint one more step.
-  const R=ring(),impactRadius=R.s*(.18+.78*gauge)*.60;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  // Restore the lab-sized reach; distance now determines how much force survives at the edge.
+  const R=ring(),impactRadius=R.s*(.18+.78*gauge)*(288/390);if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
