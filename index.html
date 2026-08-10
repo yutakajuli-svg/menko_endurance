@@ -805,7 +805,7 @@ function cpuThrow(){
 }
 const CPU_THROW_PROFILE={precision:.55,cluster:.66,edge:.72,safe:.50};
 function chooseCpuThrow(){
-  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
+  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"&&c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
   const densityAt=p=>normalCards.reduce((sum,c)=>sum+Math.exp(-Math.hypot(c.x-p.x,c.y-p.y)/(R.s*.20)),0);
   const cluster=normalCards.map(c=>({...c,density:densityAt(c)})).sort((a,b)=>b.density-a.density)[0]||center;
   const precision=normalCards.slice().sort((a,b)=>(a.coverDepth||0)-(b.coverDepth||0))[0]||center;
