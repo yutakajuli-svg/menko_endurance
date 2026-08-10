@@ -775,7 +775,11 @@ function prepareCloneRescueChance(actor){
 function throwMenko(forcedGauge=null,forcedAim=null){
   if(state!=="aim"||dropper)return;
   if(turn==="player")clearPlayerLog();
-  const gauge=forcedGauge??gaugeStrength(),z=classifyGauge(gauge),R=ring();
+  const intendedGauge=forcedGauge??gaugeStrength();
+  const playerFatigue=turn==="player"?1-(concentration.player??100)/100:0;
+  const playerInputDrift=turn==="player"?rand(-1,1)*playerFatigue*.06:0;
+  const gauge=clamp(intendedGauge+playerInputDrift,0,1),z=classifyGauge(gauge),R=ring();
+  if(turn==="player"&&playerFatigue>.01)appendLog(`PLAYER THROW: power=${intendedGauge.toFixed(2)} -> ${gauge.toFixed(2)} inputDrift=${playerInputDrift>=0?"+":""}${playerInputDrift.toFixed(2)} focus=${(concentration.player??100).toFixed(0)}`);
   prepareCloneRescueChance(turn);
   const target=forcedAim||{x:R.x+R.s/2,y:R.y+R.s/2};
   const power=.52+.76*gauge;
@@ -808,13 +812,13 @@ function chooseCpuThrow(){
   const roll=Math.random(),intent=roll<.42?"cluster":roll<.67?"precision":roll<.84?"edge":"safe";
   const target={cluster,precision,edge,safe:center}[intent],idealAim={x:target.x,y:target.y},idealPower=CPU_THROW_PROFILE[intent];
   const fatigue=1-(concentration.cpu??100)/100,missRoll=Math.random();
-  const errorType=missRoll<.54-fatigue*.16?"NORMAL":missRoll<.70?"UNDERPOWER":missRoll<.86?"OVERPOWER":missRoll<.97?"AIM_MISS":"BIG_MISS";
-  const positionScale=R.s*({NORMAL:.018,UNDERPOWER:.030,OVERPOWER:.030,AIM_MISS:.095,BIG_MISS:.16}[errorType])*(1+fatigue*.65);
+  const errorType=missRoll<.70-fatigue*.12?"NORMAL":missRoll<.82?"UNDERPOWER":missRoll<.94?"OVERPOWER":missRoll<.99?"AIM_MISS":"BIG_MISS";
+  const positionScale=R.s*({NORMAL:.015,UNDERPOWER:.026,OVERPOWER:.026,AIM_MISS:.080,BIG_MISS:.14}[errorType])*(1+fatigue*.60);
   const angle=Math.random()*Math.PI*2,positionError=rand(.35,1)*positionScale;
-  let powerError=rand(-.04,.04)*(1+fatigue*.5);
-  if(errorType==="UNDERPOWER")powerError=-rand(.08,.18)*(1+fatigue*.35);
-  if(errorType==="OVERPOWER")powerError=rand(.08,.18)*(1+fatigue*.35);
-  if(errorType==="BIG_MISS")powerError=rand(-.24,.24);
+  let powerError=rand(-.03,.03)*(1+fatigue*.45);
+  if(errorType==="UNDERPOWER")powerError=-rand(.06,.13)*(1+fatigue*.30);
+  if(errorType==="OVERPOWER")powerError=rand(.06,.13)*(1+fatigue*.30);
+  if(errorType==="BIG_MISS")powerError=rand(-.20,.20);
   const aim={x:clamp(idealAim.x+Math.cos(angle)*positionError,R.x+R.s*.10,R.x+R.s*.90),y:clamp(idealAim.y+Math.sin(angle)*positionError,R.y+R.s*.10,R.y+R.s*.90)};
   const gauge=clamp(idealPower+powerError,0,1);
   appendLog(`CPU THROW: intent=${intent.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
