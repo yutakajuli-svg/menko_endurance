@@ -323,7 +323,8 @@ let cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
 let portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{...cpuPortraitBag.next(),expression:"normal"}};
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
-const moveFrameCounts={"001_001_001":4,"001_001_002":4,"001_002_001":4,"001_002_002":4,"001_003_001":4,"001_003_002":4,"002_001_001":2,"002_001_002":3,"002_002_001":4,"002_002_002":4,"002_003_001":3,"002_003_002":4,"003_001_001":2,"003_001_002":4,"003_002_001":2,"003_002_002":5,"003_003_001":3,"003_003_002":5};
+const moveFrameCounts={"001_001_001":4,"001_001_002":4,"001_002_001":4,"001_002_002":4,"001_003_001":4,"001_003_002":3,"002_001_001":2,"002_001_002":3,"002_002_001":4,"002_002_002":3,"002_003_001":3,"002_003_002":4,"003_001_001":2,"003_001_002":4,"003_002_001":2,"003_002_002":5,"003_003_001":3,"003_003_002":5};
+const moveFrameNumbers={"001_003_002":[1,2,4]};
 const redMoveMirrored={"001_001_001":false,"001_001_002":false,"001_002_001":false,"001_002_002":true,"001_003_001":true,"001_003_002":false,"002_001_001":false,"002_001_002":true,"002_002_001":false,"002_002_002":true,"002_003_001":false,"002_003_002":false,"003_001_001":false,"003_001_002":true,"003_002_001":true,"003_002_002":true,"003_003_001":true,"003_003_002":false};
 const redEventMirrored={"ex_move_heal":true,"ex_move_defense":true,"ex_move_no_attack":true,"ex_move_Counterattack_01":false,"ex_move_Counterattack_02":false,"ex_move_finish_01":false,"ex_move_finish_02":false,"sp_move01_001":false,"sp_move02_001":true,"sp_move03_001":false};
 
@@ -987,9 +988,8 @@ function advanceLayerWave(){
   }
 }
 function hit(x,y,power,gauge,zone){
-  // Keep the full-game impact reach aligned with the fixed throw-strength lab.
-  // The lab's 288px maximum maps to the main board's canonical 390px ring.
-  const R=ring(),impactRadius=R.s*(.18+.78*gauge)*(288/390);if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  // Main-board trial: keep the strength curve, but tighten the footprint one more step.
+  const R=ring(),impactRadius=R.s*(.18+.78*gauge)*.60;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
@@ -1160,8 +1160,9 @@ function applyCloneRescue(actor,owner,sameRoundContest=false){
   return {actor,owner,choice,amount};
 }
 function normalMovePresentation(actor,level,type=randInt(1,3)){
-  const moveType=String(type).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`;
-  return {files:frameFiles(`move${key}`,moveFrameCounts[key]),mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
+  const moveType=String(type).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`,stem=`move${key}`;
+  const files=(moveFrameNumbers[key]||Array.from({length:moveFrameCounts[key]},(_,i)=>i+1)).map(n=>`${MOVE_ROOT}/${stem}_${String(n).padStart(2,"0")}.jpg`);
+  return {files,mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
 }
 async function playNormalAttackEvent(actor,damage,defenseUsed,level,type){
   const victim=oppositeActor(actor),move=normalMovePresentation(actor,level,type),attacker=actorLabel(actor),target=actorLabel(victim);
