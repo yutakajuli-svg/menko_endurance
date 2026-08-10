@@ -271,7 +271,7 @@ const balancePanel=document.getElementById("balancePanel");
 function installFlipTestControls(){
   const host=document.getElementById("balanceActions");if(!host)return;
   const box=document.createElement("div");box.style.cssText="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0";
-  box.innerHTML='<label>FLIP MODE <select id="flipMode"><option value="current">CURRENT</option><option value="common">COMMON</option><option value="custom">CUSTOM</option></select></label><label>CPU FOCUS <select id="cpuFinalFocus"><option value="on">FINAL</option><option value="off">INPUT ONLY</option></select></label><label>PLAYER <input id="playerFlipMultiplier" type="number" min="0" max="2" step=".05" value="1"></label><label>CPU <input id="cpuFlipMultiplier" type="number" min="0" max="2" step=".05" value="1"></label>';
+  box.innerHTML='<label>FLIP MODE <select id="flipMode"><option value="common" selected>COMMON</option><option value="current">CURRENT</option><option value="custom">CUSTOM</option></select></label><label>CPU FOCUS <select id="cpuFinalFocus"><option value="off" selected>INPUT ONLY</option><option value="on">FINAL</option></select></label><label>PLAYER <input id="playerFlipMultiplier" type="number" min="0" max="2" step=".05" value="1"></label><label>CPU <input id="cpuFlipMultiplier" type="number" min="0" max="2" step=".05" value="1"></label>';
   host.parentNode.insertBefore(box,host);
 }
 installFlipTestControls();
@@ -377,7 +377,7 @@ let linkedCount=16,pendingLandedCard=null,selectedCard=null,heldClone=null,round
 let roundResults={player:null,cpu:null},roundRedDamage=0,roundBlueDamage=0;
 // Hidden concentration: intentionally not shown in the regular UI during trial.
 let concentration={player:100,cpu:100};
-let flipTest={mode:"current",player:1,cpu:1,cpuFinalFocus:true};
+let flipTest={mode:"common",player:1,cpu:1,cpuFinalFocus:false};
 let matchStats=null;
 // A wrestler gets one pinfall escape per match.  Submissions and specials never use this.
 let kickoutUsed={player:false,cpu:false};
@@ -565,7 +565,7 @@ function newMatch(){
   cloneRescueActivations=0;
   matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},flow:{both:0,playerOnly:0,cpuOnly:0,none:0},attacks:{player:0,cpu:0},fullDefense:0,counters:0,firstKoCancels:0,rounds:[]};
   displayedHP={player:redHP,cpu:blueHP};
-  logEntries=[];debugLog.value="";clearPlayerLog();startToss();syncBattleUi();
+  logEntries=[];debugLog.value="";clearPlayerLog();appendLog("FLIP RULE: COMMON PHYSICS / FOCUS = INPUT ERROR ONLY");startToss();syncBattleUi();
 }
 function deck(){
   const d=[];
