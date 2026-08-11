@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>MENKO ENDURANCE</title>
+<title>MENKO ENDURANCE - STAMINA BATTLE LAB</title>
 <style>
 :root{--ink:#111;--paper:#f8f8f3;--red:#b00020;--blue:#0057b8}
 *{box-sizing:border-box}
@@ -1999,6 +1999,42 @@ function loop(now){
 countSelect.addEventListener("change",()=>{});
 window.addEventListener("resize",resize);canvas.addEventListener("click",()=>{});
 try{resize();initializeIntegratedRun();requestAnimationFrame(loop)}catch(err){showProgressError(err)}
+})();
+</script>
+<script>
+/* Lab-only stamina layer.  The underlying MENKO, initiative, defense, counter,
+   clone, and damage rules above remain the same as index.html. */
+(()=>{
+  const stamina={player:100,cpu:100},rest={player:false,cpu:false};
+  const cap=actor=>Math.max(.01,stamina[actor]/100);
+  const opponent=actor=>actor==="player"?"cpu":"player";
+  const hud=document.createElement("div");
+  hud.id="staminaLabHud";
+  hud.innerHTML='<div class="red">RED <b>♥</b><i></i><span></span></div><div class="blue">BLUE <b>♥</b><i></i><span></span></div>';
+  document.getElementById("battleUi").prepend(hud);
+  const style=document.createElement("style");
+  style.textContent='#staminaLabHud{display:flex;justify-content:space-between;gap:8px;padding:4px 8px;background:#171b22;border:1px solid #56606e;font:11px monospace}#staminaLabHud div{min-width:45%;position:relative}#staminaLabHud b{color:#3e4651;font-size:21px;line-height:1}#staminaLabHud i{position:absolute;left:31px;top:0;overflow:hidden;white-space:nowrap;color:#e94e55;font-size:21px;font-style:normal;width:0}#staminaLabHud i:after{content:"♥"}#staminaLabHud .blue i{color:#5797e8}#staminaLabHud span{color:#c9d2de;margin-left:4px}';
+  document.head.append(style);
+  function drawStamina(){for(const a of ["player","cpu"]){const el=hud.querySelector(a==="player"?".red":".blue"),v=Math.round(stamina[a]);el.querySelector("i").style.width=`${v}%`;el.querySelector("span").textContent=rest[a]?"REST NEXT":`${v}%`;}}
+  const baseNewMatch=newMatch;
+  newMatch=function(){stamina.player=100;stamina.cpu=100;rest.player=false;rest.cpu=false;baseNewMatch();drawStamina();};
+  const baseThrow=throwMenko;
+  throwMenko=function(forcedGauge=null,forcedAim=null){
+    if(state!=="aim"||dropper)return;
+    if(rest[turn]){const actor=turn;rest[actor]=false;stamina[actor]=20;appendLog(`STAMINA REST: ${actorLabel(actor)} skips this throw and returns at 20%`);drawStamina();advanceTurnAfterHold();return;}
+    const selected=forcedGauge??gaugeStrength(),limit=cap(turn),used=Math.min(selected,limit),effort=used/limit;
+    baseThrow(used,forcedAim);
+    const cost=35*Math.pow(effort,1.35);stamina[turn]=Math.max(0,stamina[turn]-cost);
+    if(stamina[turn]<=0){rest[turn]=true;appendLog(`STAMINA EMPTY: ${actorLabel(turn)} may still resolve this round; next throw is REST`);}
+    appendLog(`STAMINA THROW: ${actorLabel(turn)} cap=${(limit*100).toFixed(0)}% selected=${(used*100).toFixed(0)}% effort=${(effort*100).toFixed(0)}% cost=${cost.toFixed(1)} remain=${stamina[turn].toFixed(1)}`);drawStamina();
+  };
+  const baseResolve=resolveRoundEffects;
+  resolveRoundEffects=function(){
+    baseResolve();
+    for(const actor of ["player","cpu"]){const foe=opponent(actor),own=roundResults[actor],enemy=roundResults[foe];if(!own||!enemy)continue;const damage=actor==="player"?roundBlueDamage:roundRedDamage;if(enemy.attackLevel>0&&damage===0){const gain=own.defenseLevel>enemy.attackLevel?18:12;stamina[actor]=Math.min(100,stamina[actor]+gain);rest[actor]=false;appendLog(`STAMINA RECOVERY: ${actorLabel(actor)} +${gain} (${own.defenseLevel>enemy.attackLevel?"COUNTER / FULL DEFENSE":"FULL DEFENSE"})`);}}
+    drawStamina();
+  };
+  drawStamina();
 })();
 </script>
 </body>
