@@ -389,6 +389,11 @@ let condition=null,toss=null,tossWait=0;
 const rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const scaledBaseAttack=atk=>Math.ceil(atk*.5);
 const wait=ms=>new Promise(resolve=>window.setTimeout(resolve,ms));
+// Auto-advance stays on, but important battle text needs a small readable beat.
+const PRESENTATION_MESSAGE_HOLD=1050;
+const PRESENTATION_OUTRO_HOLD=620;
+const BETWEEN_BATTLE_EVENTS_HOLD=280;
+const ROUND_SUMMARY_HOLD=.78;
 const oppositeActor=actor=>actor==="player"?"cpu":"player";
 const actorLabel=actor=>actor==="player"?"RED":"BLUE";
 const uiKey=actor=>actor==="player"?"red":"blue";
@@ -464,8 +469,8 @@ function frameFiles(stem,count){return Array.from({length:count},(_,i)=>`${MOVE_
 async function playIllustration({files,mirrored=false,lines,tall=false,alt="演出イラスト",feedback}){
   await preloadImages(files);presentationRunning=true;showPresentation(lines,tall);moveImage.alt=alt;moveImage.classList.toggle("mirrored",mirrored);
   for(let i=0;i<files.length;i++){moveImage.src=files[i];frameCounter.textContent=`${i+1} / ${files.length}`;if(i<files.length-1)await wait(320)}
-  messageWindow.classList.add("show");const effect=feedback?feedback():Promise.resolve();await Promise.all([effect,wait(700)]);
-  illustrationWindow.style.display="none";await wait(500);hidePresentation();resetPortraitExpressions();presentationRunning=false;syncBattleUi();
+  messageWindow.classList.add("show");const effect=feedback?feedback():Promise.resolve();await Promise.all([effect,wait(PRESENTATION_MESSAGE_HOLD)]);
+  illustrationWindow.style.display="none";await wait(PRESENTATION_OUTRO_HOLD);hidePresentation();resetPortraitExpressions();presentationRunning=false;syncBattleUi();
 }
 
 function ring(){
@@ -1182,7 +1187,7 @@ async function playKickoutEvent(actor){
   presentationRunning=true;presentationLayer.classList.add("show");illustrationWindow.style.display="none";
   messageWindow.textContent=`${label} これを返した！`;messageWindow.classList.add("show");
   restartStatusFeedback(actor,"feedback-white-double",420);
-  await animateDisplayedHp(actor,1,420);await wait(520);
+  await animateDisplayedHp(actor,1,420);await wait(820);
   hidePresentation();resetPortraitExpressions();presentationRunning=false;syncBattleUi();
 }
 async function playDefenseEvent(actor,level){
@@ -1212,7 +1217,7 @@ async function playRoundPresentations(data){
     const rescue=rescued[0];
     if(rescue.choice==="heal")await playCloneHealEvent(rescue);
     else await playCloneDamageEvent(rescue.actor,damages[rescue.actor]);
-    displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=.34;
+    displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD;
     return;
   }
   for(const actor of order){const heal=rescued.find(r=>r.actor===actor&&r.choice==="heal");if(heal)await playCloneHealEvent(heal)}
@@ -1227,10 +1232,10 @@ async function playRoundPresentations(data){
     if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
     else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0){await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor)await playDefenseEvent(actor,resultData.attackLevel)}
     if(counter?.target===actor)await playCounterEvent(counter.actor,counter.damage);
-    if(attackShown)await wait(120);
+    if(attackShown)await wait(BETWEEN_BATTLE_EVENTS_HOLD);
   }
   if(!attackShown)await playNoAttackEvent(roundStarter);
-  displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=.34;
+  displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD;
 }
 function resolveRoundEffects(){
   const roundStartRedHP=displayedHP.player,roundStartBlueHP=displayedHP.cpu;
@@ -1399,7 +1404,7 @@ function resolveRoundEffects(){
   appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
-  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.34});
+  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD});
 }
 function finishMatch(){
   appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} fullDefense=${matchStats.fullDefense} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
@@ -1756,6 +1761,8 @@ function generateProgressEnemy(area,stage=4){
 }
 function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match),(match-1)%5+1)}
 const progressTypeNames={attack:"攻撃型",defense:"防御型",hp:"体力型",balance:"万能型"},progressWeightNames={light:"LIGHT",middle:"MIDDLE",heavy:"HEAVY"};
+const playerWeightKeys=["light","middle","heavy"];
+function validPlayerWeight(weight){return playerWeightKeys.includes(weight)}
 function describeProgressEnemy(enemy,area){
   if(enemy.isBoss)return {...enemy,weight:"heavy",type:"balance"};
   const boss=BOSSES[area*5],hpRatio=enemy.hp/boss.hp,weight=hpRatio<.60?"light":hpRatio<.70?"middle":"heavy";
@@ -1787,7 +1794,7 @@ function startIntegratedRun(){
   clearRunProgress();resumedFromSave=false;runSaveMode="match";pendingRewardOptions=[];
   records.runs++;saveProgressRecords();
   resetPortraitRun();
-  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},enemy:null,routes:{}};
+  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},playerWeight:null,enemy:null,routes:{}};
   prepareIntegratedMatch();
 }
 function syncIntegratedMatchFromRunState(){
@@ -1805,10 +1812,14 @@ function prepareIntegratedMatch(){
 }
 function selectProgressOpponent(row,side){
   const area=progressArea(runState.match),localMatch=(runState.match-1)%5+1;
-  if(localMatch===5||row!==localMatch-1||![0,1].includes(side))return;
+  if(!validPlayerWeight(runState.playerWeight)||localMatch===5||row!==localMatch-1||![0,1].includes(side))return;
   const areaRoute=ensureAreaRoute(area);areaRoute.selections[row]=side;runState.enemy=areaRoute.rounds[row][side];
   chooseCpuPortrait();syncIntegratedMatchFromRunState();saveRunProgress("match");renderProgressPanel("match");
   const flash=document.getElementById("progressSelectionFlash");if(flash){flash.classList.add("show");setTimeout(()=>flash.classList.remove("show"),430)}
+}
+function selectPlayerWeight(weight){
+  if(!runState||!validPlayerWeight(weight))return;
+  runState.playerWeight=weight;runState.enemy=null;saveRunProgress("match");renderProgressPanel("match");
 }
 function startCurrentIntegratedBattle(){
   const errorBox=document.getElementById("progressError");
@@ -1879,7 +1890,7 @@ function renderProgressPanel(mode="match"){
   const isBoss=!!runState?.enemy?.isBoss;
   box.className=mode==="reward"?`result-mode${isBoss?" boss-mode":""}`:mode==="match"?"map-mode":"outcome-mode";
   choices.innerHTML="";actions.innerHTML="";route.innerHTML="";route.style.display="none";growth.style.display=mode==="reward"?"block":"none";sum.style.display=mode==="match"?"none":"block";stats.style.display=mode==="match"?"none":"grid";
-  const p=runState?.player||{hp:15,atk:2,atkMenko:2,defMenko:2},e=runState?.enemy;
+  const p=runState?.player||{hp:15,atk:2,atkMenko:2,defMenko:2},e=runState?.enemy,choosingWeight=mode==="match"&&!validPlayerWeight(runState?.playerWeight);
   const statCard=(side,label,x)=>`<section class="progress-status-card ${side}"><span class="progress-status-label">${label}</span><div class="progress-stat"><span>MAX HP</span><b>${x.hp}</b></div><div class="progress-stat"><span>ATK</span><b>${x.atk}</b></div><div class="progress-stat"><span>ATK MENKO</span><b>${x.atkMenko}</b></div><div class="progress-stat"><span>DEF MENKO</span><b>${x.defMenko}</b></div></section>`;
   const match=runState?.match||1,area=progressArea(match),areaMatch=(match-1)%5+1,marked=mode==="reward"||mode==="clear"?areaMatch:Math.max(0,areaMatch-1),progressMarks=`${"■".repeat(marked)}${"□".repeat(5-marked)}`;
   if(mode==="reward"){
@@ -1888,15 +1899,16 @@ function renderProgressPanel(mode="match"){
     stats.innerHTML=statCard("red","RED STATUS",p)+statCard("blue","BLUE / DEFEATED",e);
     growthRule.textContent=isBoss?"3種からさらに1つ":"抽選された2種から1つ";
   }else if(mode==="match"){
-    title.textContent=`AREA ${area}`;subhead.textContent=isBoss?"AREA BOSS BATTLE":"ROAD TO AREA BOSS";record.innerHTML=`${runState?.wins||0} WIN<br><span>${isBoss?"NEXT AREA BOSS":`NEXT MATCH ${match}`}</span>`;
+    title.textContent=choosingWeight?"CHOOSE WEIGHT":`AREA ${area}`;subhead.textContent=choosingWeight?"SELECT RED STYLE FOR THIS RUN":isBoss?"AREA BOSS BATTLE":"ROAD TO AREA BOSS";record.innerHTML=choosingWeight?"RUN START<br><span>WEIGHT LOCKED FOR RUN</span>":`${runState?.wins||0} WIN<br><span>${isBoss?"NEXT AREA BOSS":`NEXT MATCH ${match}`}</span>`;
+    if(choosingWeight){sum.style.display="block";sum.innerHTML="<strong>RED WEIGHT</strong><span>LIGHT: low-power precision / MIDDLE: balanced / HEAVY: high-power range</span>";}
     route.style.display="block";renderProgressRouteMap(route);
   }else{
     const cleared=mode==="clear";title.textContent=cleared?"CLEAR!":"GAME OVER";subhead.textContent=cleared?"ALL 15 MATCHES COMPLETE":`AREA ${area} / MATCH ${areaMatch}`;record.innerHTML=`${runState?.wins||0} WIN`;
     sum.innerHTML=`<strong>${cleared?"RED COMPLETE!":"BLUE WIN"}</strong><span>${cleared?"15試合制覇":`到達：第${match}試合`}</span>`;
     stats.innerHTML=statCard("red","RED FINAL STATUS",p)+(e?statCard("blue",cleared?"LAST OPPONENT":"BLUE / WINNER",e):"");
   }
-  footer.innerHTML=mode==="match"?`<span>${e?`<strong>MATCH ${areaMatch}</strong> 対戦相手決定`:`<strong>MATCH ${areaMatch}</strong> の相手を選択`}</span><span style="color:#f00">● 選択ルート</span>`:`<span>AREA PROGRESS　<b>${progressMarks}</b></span><span>${mode==="reward"?"1 / 1 SELECT":mode==="clear"?"ALL CLEAR":`MATCH ${areaMatch} / 5`}</span>`;
-  if(mode==="match")actions.innerHTML='';
+  footer.innerHTML=mode==="match"?`<span>${choosingWeight?"SELECT RED WEIGHT":e?`<strong>MATCH ${areaMatch}</strong> 対戦相手決定`:`<strong>MATCH ${areaMatch}</strong> の相手を選択`}</span><span style="color:#f00">● 選択ルート</span>`:`<span>AREA PROGRESS　<b>${progressMarks}</b></span><span>${mode==="reward"?"1 / 1 SELECT":mode==="clear"?"ALL CLEAR":`MATCH ${areaMatch} / 5`}</span>`;
+  if(mode==="match")actions.innerHTML=choosingWeight?'<button id="chooseWeightLight">LIGHT<br><small>LOW POWER / LOW COST</small></button><button id="chooseWeightMiddle">MIDDLE<br><small>BALANCED</small></button><button id="chooseWeightHeavy">HEAVY<br><small>HIGH POWER / WIDE RANGE</small></button>':'';
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
     normalizePendingRewardOptions();
@@ -1923,8 +1935,9 @@ function renderProgressPanel(mode="match"){
   };
 
   bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
+  bindTap("chooseWeightLight",()=>selectPlayerWeight("light"));bindTap("chooseWeightMiddle",()=>selectPlayerWeight("middle"));bindTap("chooseWeightHeavy",()=>selectPlayerWeight("heavy"));
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
-  fixedStart.style.display=mode==="match"&&!!runState?.enemy?"block":"none";
+  fixedStart.style.display=mode==="match"&&validPlayerWeight(runState?.playerWeight)&&!!runState?.enemy?"block":"none";
   fixedStart.textContent=resumedFromSave?"つづきから":"試合開始";
   fixedRestart.textContent=(mode==="lose"||mode==="clear")?"もう一度挑戦":"最初から";
   fixedRestart.style.display=(mode==="reward")?"none":"block";
@@ -1941,6 +1954,7 @@ function initializeIntegratedRun(){
   const saved=loadRunProgress();
   if(!saved){startIntegratedRun();return}
   runState=saved.runState;
+  if(!Object.prototype.hasOwnProperty.call(runState,"playerWeight"))runState.playerWeight="middle";
   runSaveMode=saved.mode==="reward"?"reward":"match";
   pendingRewardOptions=Array.isArray(saved.rewardOptions)?saved.rewardOptions:[];
   differenceCardsCountForInitiative=saved.differenceCardsCountForInitiative!==false;
@@ -1991,15 +2005,22 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 
 /* Battle stamina and weight: hidden in the regular UI.  The labs remain the tuning surface. */
 const mainStamina={player:100,cpu:100},mainRest={player:false,cpu:false},mainPendingCost={player:0,cpu:0},mainWeight={player:"middle",cpu:"middle"};
+const mainExhaustionNotices=[];
 const MAIN_WEIGHT_RULES={light:{cost:.88},middle:{cost:1},heavy:{cost:1}};
 function mainWeightImpact(actor,gauge){const weight=mainWeight[actor]||"middle";if(weight==="light")return {range:1.10-.40*gauge,power:1.18-.30*gauge};if(weight==="heavy")return {range:.40+1.10*gauge,power:.55+.75*gauge};return {range:1,power:1};}
 function mainStaminaPowerCap(actor){const s=clamp(mainStamina[actor]/100,0,1);return s<=.25?.40+.20*s:s<=.50?.45+.40*(s-.25):.55+.40*(s-.50);}
 function mainBlankRoundResult(){return {attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null};}
 const mainStaminaNewMatch=newMatch;
-newMatch=function(){mainStamina.player=100;mainStamina.cpu=100;mainRest.player=false;mainRest.cpu=false;mainPendingCost.player=0;mainPendingCost.cpu=0;mainWeight.player="middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
+newMatch=function(){mainStamina.player=100;mainStamina.cpu=100;mainRest.player=false;mainRest.cpu=false;mainPendingCost.player=0;mainPendingCost.cpu=0;mainExhaustionNotices.length=0;mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
+const mainAdvanceTurnAfterHold=advanceTurnAfterHold;
+advanceTurnAfterHold=function(){
+  const result=roundResults[turn];
+  if(roundThrow===0&&(result?.cloneFlips||0)>0){appendLog(`CLONE EARLY RESOLVE: ${actorLabel(turn)} activated clone / opponent throw skipped`);roundThrow=2;resolveRoundEffects();return;}
+  mainAdvanceTurnAfterHold();
+};
 const mainStaminaPrepareThrowPhase=prepareThrowPhase;
 prepareThrowPhase=function(){
-  if(state==="aim"&&mainRest[turn]){const actor=turn;playerAimReadyAt=Infinity;cpuWait=999;setTimeout(()=>{if(state==="aim"&&turn===actor&&mainRest[actor]){msg=`${actorLabel(actor)} 動けない！`;throwMenko();}},420);return;}
+  if(state==="aim"&&mainRest[turn]){const actor=turn;playerAimReadyAt=Infinity;cpuWait=999;msg=`${actorLabel(actor)} 動けない！`;setTimeout(()=>{if(state==="aim"&&turn===actor&&mainRest[actor])throwMenko();},720);return;}
   mainStaminaPrepareThrowPhase();
 };
 const mainStaminaThrow=throwMenko;
@@ -2015,7 +2036,25 @@ concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
 const mainStaminaResolve=resolveRoundEffects;
-resolveRoundEffects=function(){mainStaminaResolve();for(const actor of ["player","cpu"]){const own=roundResults[actor],effective=own?.effectiveFlippedCount??0,pending=mainPendingCost[actor];if(pending){const cost=pending.base+pending.perFlip*effective;mainStamina[actor]=Math.max(0,mainStamina[actor]-cost);appendLog(`STAMINA COST: ${actorLabel(actor)} -${cost.toFixed(1)} / effective flips=${effective}`);}mainPendingCost[actor]=0;if(mainStamina[actor]<=15&&!mainRest[actor]){mainRest[actor]=true;const next=actor==="player"?"cpu":"player",lastRound=matchStats.rounds[matchStats.rounds.length-1];if(lastRound)lastRound.nextStarter=next;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} / ${actorLabel(next)} starts next / ${actorLabel(actor)} cannot throw`);}mainStamina[actor]=Math.min(100,mainStamina[actor]+2);}};
+resolveRoundEffects=function(){mainStaminaResolve();for(const actor of ["player","cpu"]){const own=roundResults[actor],effective=own?.effectiveFlippedCount??0,pending=mainPendingCost[actor];if(pending){const cost=pending.base+pending.perFlip*effective;mainStamina[actor]=Math.max(0,mainStamina[actor]-cost);appendLog(`STAMINA COST: ${actorLabel(actor)} -${cost.toFixed(1)} / effective flips=${effective}`);}mainPendingCost[actor]=0;if(mainStamina[actor]<=15&&!mainRest[actor]){mainRest[actor]=true;mainExhaustionNotices.push(actor);const next=actor==="player"?"cpu":"player",lastRound=matchStats.rounds[matchStats.rounds.length-1];if(lastRound)lastRound.nextStarter=next;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} / ${actorLabel(next)} starts next / ${actorLabel(actor)} cannot throw`);}mainStamina[actor]=Math.min(100,mainStamina[actor]+2);}};
+
+const mainReadablePresentations=playRoundPresentations;
+playRoundPresentations=async function(data){
+  await mainReadablePresentations(data);
+  const exhausted=mainExhaustionNotices.splice(0);
+  if(!exhausted.length)return;
+  presentationRunning=true;
+  presentationLayer.classList.add("show");
+  illustrationWindow.style.display="none";
+  messageWindow.textContent=exhausted.map(actor=>`${actorLabel(actor)} の動きが止まった！\n次のターンは動けない！`).join("\n\n");
+  messageWindow.classList.add("show");
+  await wait(1250);
+  hidePresentation();
+  presentationRunning=false;
+  syncBattleUi();
+  state="roundResult";
+  resultT=ROUND_SUMMARY_HOLD;
+};
 function loop(now){
   if(lastFrameTime==null)lastFrameTime=now;
   const elapsed=Math.min(MAX_FRAME_DELTA,Math.max(0,(now-lastFrameTime)/1000));
