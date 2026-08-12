@@ -61,12 +61,12 @@ body.progress-screen #testTools{display:none}
 .progress-map-field{position:relative;width:100%;height:574px;background:linear-gradient(90deg,transparent 49.5%,#333 49.5% 50.5%,transparent 50.5%),linear-gradient(#171717,#0c0c0c)}
 .progress-map-lines{position:absolute;inset:0;width:100%;height:100%;z-index:1;overflow:visible}.progress-route-base,.progress-route-active{fill:none;vector-effect:non-scaling-stroke}.progress-route-base{stroke:#777;stroke-width:2}.progress-route-active{stroke:#f00;stroke-width:5}
 .progress-round-label{position:absolute;z-index:2;left:50%;transform:translateX(-50%);border:1px solid #555;background:#111;padding:3px 6px;color:#aaa;font-size:9px;white-space:nowrap}.progress-round-label.current{color:#fff}
-.progress-route-node{position:absolute;z-index:3;display:grid;width:92px;height:72px;grid-template-columns:1fr 1fr;grid-template-rows:37px 1fr;gap:0;align-items:center;justify-items:center;padding:5px;border:3px solid #aaa!important;background:#242424!important;color:#fff;transform:translate(-50%,-50%);clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);cursor:default}.progress-route-node.current{border-color:#fff!important;background:#303030!important;cursor:pointer;animation:routeReady 1.15s steps(2,end) infinite}.progress-route-node.chosen{border-color:#f00!important;background:#250000!important}.progress-route-node.rejected{border-color:#333!important;color:#555;opacity:.62}.progress-route-node.future{opacity:.68}
+.progress-route-node{position:absolute;z-index:3;display:grid;width:92px;height:84px;grid-template-columns:1fr 1fr;grid-template-rows:37px 1fr;gap:0;align-items:center;justify-items:center;padding:5px;border:3px solid #aaa!important;background:#242424!important;color:#fff;transform:translate(-50%,-50%);clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);cursor:default}.progress-route-node.current{border-color:#fff!important;background:#303030!important;cursor:pointer;animation:routeReady 1.15s steps(2,end) infinite}.progress-route-node.chosen{border-color:#f00!important;background:#250000!important}.progress-route-node.rejected{border-color:#333!important;color:#555;opacity:.62}.progress-route-node.future{opacity:.68}
 @keyframes routeReady{50%{border-color:#888}}
 .progress-node-stage{position:absolute;left:3px;top:2px;color:#777;font-size:8px}.progress-route-node.current .progress-node-stage,.progress-route-node.chosen .progress-node-stage{color:#fff}
 .progress-mini{position:relative;width:32px;height:34px;color:#f4f4f4;image-rendering:pixelated}.progress-mini i{position:absolute;display:block;background:currentColor}.progress-mini .head{top:0}.progress-mini .body{top:10px}.progress-mini .leg{top:24px}.progress-mini.light .head{left:12px;width:8px;height:8px}.progress-mini.light .body{left:12px;width:8px;height:13px;clip-path:polygon(1px 0,7px 0,8px 2px,7px 13px,1px 13px,0 2px)}.progress-mini.light .leg.left{left:12px;width:3px;height:9px}.progress-mini.light .leg.right{right:12px;width:3px;height:9px}.progress-mini.middle .head{left:11px;width:10px;height:8px}.progress-mini.middle .body{left:8px;width:16px;height:14px;clip-path:polygon(2px 0,14px 0,16px 4px,14px 14px,2px 14px,0 4px)}.progress-mini.middle .leg.left{left:9px;width:5px;height:9px}.progress-mini.middle .leg.right{right:9px;width:5px;height:9px}.progress-mini.heavy .head{left:10px;width:12px;height:9px}.progress-mini.heavy .body{left:2px;width:28px;height:15px;clip-path:polygon(3px 0,25px 0,28px 3px,25px 15px,3px 15px,0 3px)}.progress-mini.heavy .leg.left{left:6px;width:8px;height:9px}.progress-mini.heavy .leg.right{right:6px;width:8px;height:9px}.progress-route-node.rejected .progress-mini{color:#555}
 .progress-type-icon{display:grid;place-items:center;width:27px;height:27px}.progress-type-icon img{display:block;width:25px;height:25px;object-fit:contain;image-rendering:pixelated}.progress-route-node.rejected .progress-type-icon{opacity:.42}.progress-node-copy{grid-column:1/-1;text-align:center;white-space:nowrap}.progress-weight,.progress-type-name{display:block}.progress-weight{font-size:9px;line-height:1.05;color:#aaa}.progress-type-name{margin-top:2px;font-size:10px;line-height:1}
-.progress-route-node.boss{width:124px;height:76px;grid-template-columns:42px 1fr;grid-template-rows:1fr;border-color:#00f!important;background:#000035!important}.progress-route-node.boss.current{border-color:#fff!important}.progress-route-node.boss .progress-type-icon{width:36px;height:36px}.progress-route-node.boss .progress-type-icon img{width:32px;height:32px}.progress-route-node.boss .progress-node-copy{grid-column:2;grid-row:1;align-self:center;white-space:normal}.progress-boss-name,.progress-boss-sub,.progress-boss-name span,.progress-boss-sub span{display:block}.progress-boss-name{font-size:10px;line-height:1}.progress-boss-sub{margin-top:3px;color:#999;font-size:8px;line-height:1.05}
+.progress-reward-preview{display:block;margin-top:3px;color:#f0c66a;font-size:7px;line-height:1;white-space:nowrap}.progress-route-node.rejected .progress-reward-preview{color:#555}.progress-route-node.boss{width:124px;height:76px;grid-template-columns:42px 1fr;grid-template-rows:1fr;border-color:#00f!important;background:#000035!important}.progress-route-node.boss.current{border-color:#fff!important}.progress-route-node.boss .progress-type-icon{width:36px;height:36px}.progress-route-node.boss .progress-type-icon img{width:32px;height:32px}.progress-route-node.boss .progress-node-copy{grid-column:2;grid-row:1;align-self:center;white-space:normal}.progress-boss-name,.progress-boss-sub,.progress-boss-name span,.progress-boss-sub span{display:block}.progress-boss-name{font-size:10px;line-height:1}.progress-boss-sub{margin-top:3px;color:#999;font-size:8px;line-height:1.05}
 .progress-start-node{position:absolute;z-index:3;left:50%;bottom:7px;transform:translateX(-50%);display:grid;place-items:center;width:62px;height:38px;border:3px solid #f00;background:#180000;color:#fff;font-size:11px;clip-path:polygon(7px 0,calc(100% - 7px) 0,100% 7px,100% calc(100% - 7px),calc(100% - 7px) 100%,7px 100%,0 calc(100% - 7px),0 7px)}
 .progress-selection-flash{position:absolute;z-index:10;inset:0;display:none;place-items:center;background:#000c;pointer-events:none}.progress-selection-flash.show{display:grid;animation:routeFlash .42s steps(2,end) both}.progress-selection-flash div{border:3px solid #fff;background:#111;padding:12px 20px;font-size:18px;box-shadow:5px 5px 0 #f00}@keyframes routeFlash{0%,70%{opacity:1}100%{opacity:0}}
 #growthSection{position:relative;z-index:1;margin:0 12px 12px;padding:11px 10px 10px;border-top:2px solid #555;border-bottom:2px solid #555;background:#111}
@@ -989,7 +989,7 @@ function advanceLayerWave(){
 }
 function hit(x,y,power,gauge,zone){
   // Restore the lab-sized reach; distance now determines how much force survives at the edge.
-  const R=ring(),impactRadius=R.s*(.18+.78*gauge)*(288/390);if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),impactRadius=R.s*(.18+.78*gauge)*(288/390)*weightProfile.range;power*=weightProfile.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
@@ -1763,13 +1763,16 @@ function describeProgressEnemy(enemy,area){
   const type=scores[0].score-scores[1].score<1.5?"balance":scores[0].key;
   return {...enemy,weight,type};
 }
+function routeRewardKeys(enemy){return enemy.isBoss?rewardDefs.map(x=>x.key):shuffled(rewardDefs).slice(0,2).map(x=>x.key)}
+function withRouteRewards(enemy,area){const data=describeProgressEnemy(enemy,area);return {...data,rewardOptions:routeRewardKeys(data)}}
+function normalizeRouteRewards(route,area){for(const row of route.rounds||[])for(const enemy of row)if(enemy&&!Array.isArray(enemy.rewardOptions))enemy.rewardOptions=routeRewardKeys(enemy);if(route.boss&&!Array.isArray(route.boss.rewardOptions))route.boss.rewardOptions=routeRewardKeys(route.boss);return route}
 function createAreaRoute(area){
-  return {rounds:Array.from({length:4},(_,stage)=>[describeProgressEnemy(generateProgressEnemy(area,stage+1),area),describeProgressEnemy(generateProgressEnemy(area,stage+1),area)]),selections:[null,null,null,null],boss:describeProgressEnemy({...BOSSES[area*5],isBoss:true},area)};
+  return normalizeRouteRewards({rounds:Array.from({length:4},(_,stage)=>[withRouteRewards(generateProgressEnemy(area,stage+1),area),withRouteRewards(generateProgressEnemy(area,stage+1),area)]),selections:[null,null,null,null],boss:withRouteRewards({...BOSSES[area*5],isBoss:true},area)},area);
 }
 function ensureAreaRoute(area){
   if(!runState.routes||typeof runState.routes!=="object")runState.routes={};
   if(!runState.routes[area])runState.routes[area]=createAreaRoute(area);
-  return runState.routes[area];
+  return normalizeRouteRewards(runState.routes[area],area);
 }
 function normalizeRunRouteState(){
   const area=progressArea(runState.match),localMatch=(runState.match-1)%5+1,areaRoute=ensureAreaRoute(area);
@@ -1831,7 +1834,7 @@ function handleIntegratedBattleResult(playerWon){
 const rewardDefs=[{key:"atkMenko",label:"攻撃MENKO",value:"+1"},{key:"defMenko",label:"防御MENKO",value:"+1"},{key:"hp",label:"最大HP",value:"+2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
 function createPendingRewardOptions(){
-  return (runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
+  return Array.isArray(runState.enemy?.rewardOptions)?[...runState.enemy.rewardOptions]:(runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
 }
 function normalizePendingRewardOptions(){
   const validKeys=new Set(rewardDefs.map(x=>x.key));
@@ -1844,7 +1847,8 @@ function progressRouteNodeMarkup(data,row,side,status){
   const boss=!!data.isBoss,tag=!boss&&status==="current"?"button":"div",stage=boss?"BOSS":`M${row+1}-${side===0?"A":"B"}`;
   const mini=boss?"":`<span class="progress-mini ${data.weight}" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="leg left"></i><i class="leg right"></i></span>`;
   const icon=`<span class="progress-type-icon"><img src="${progressRouteIconUrl(data.type)}" alt=""></span>`;
-  const copy=boss?`<span class="progress-boss-name"><span>AREA</span><span>BOSS</span></span><span class="progress-boss-sub"><span>${progressWeightNames[data.weight]}</span><span>${progressTypeNames[data.type]}</span></span>`:`<span class="progress-weight">${progressWeightNames[data.weight]}</span><span class="progress-type-name">${progressTypeNames[data.type]}</span>`;
+  const rewardNames={atkMenko:"ATK",defMenko:"DEF",hp:"HP"},rewardPreview=(data.rewardOptions||[]).map(key=>rewardNames[key]).filter(Boolean).join(" / ");
+  const copy=boss?`<span class="progress-boss-name"><span>AREA</span><span>BOSS</span></span><span class="progress-boss-sub"><span>${progressWeightNames[data.weight]}</span><span>${progressTypeNames[data.type]}</span><span>REWARD ALL</span></span>`:`<span class="progress-weight">${progressWeightNames[data.weight]}</span><span class="progress-type-name">${progressTypeNames[data.type]}</span><span class="progress-reward-preview">REWARD ${rewardPreview}</span>`;
   const aria=tag==="button"?` aria-label="MATCH ${row+1} ${progressWeightNames[data.weight]} ${progressTypeNames[data.type]}を選択"`:"";
   return `<${tag}${tag==="button"?' type="button"':''} class="progress-route-node ${status}${boss?" boss":""}" data-row="${row}" data-side="${side}"${aria}><span class="progress-node-stage">${stage}</span>${mini}${icon}<span class="progress-node-copy">${copy}</span></${tag}>`;
 }
@@ -1984,6 +1988,34 @@ function setTestToolsOpen(open){
 testToolsToggle.onclick=()=>setTestToolsOpen(!testTools.classList.contains("open"));
 testToolsMenu.addEventListener("click",e=>{if(e.target.closest("button"))setTestToolsOpen(false)});
 document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCardsCountForInitiative=e.target.value==="on";saveRunProgress(runSaveMode)};
+
+/* Battle stamina and weight: hidden in the regular UI.  The labs remain the tuning surface. */
+const mainStamina={player:100,cpu:100},mainRest={player:false,cpu:false},mainPendingCost={player:0,cpu:0},mainWeight={player:"middle",cpu:"middle"};
+const MAIN_WEIGHT_RULES={light:{cost:.88},middle:{cost:1},heavy:{cost:1}};
+function mainWeightImpact(actor,gauge){const weight=mainWeight[actor]||"middle";if(weight==="light")return {range:1.10-.40*gauge,power:1.18-.30*gauge};if(weight==="heavy")return {range:.40+1.10*gauge,power:.55+.75*gauge};return {range:1,power:1};}
+function mainStaminaPowerCap(actor){const s=clamp(mainStamina[actor]/100,0,1);return s<=.25?.40+.20*s:s<=.50?.45+.40*(s-.25):.55+.40*(s-.50);}
+function mainBlankRoundResult(){return {attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null};}
+const mainStaminaNewMatch=newMatch;
+newMatch=function(){mainStamina.player=100;mainStamina.cpu=100;mainRest.player=false;mainRest.cpu=false;mainPendingCost.player=0;mainPendingCost.cpu=0;mainWeight.player="middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
+const mainStaminaPrepareThrowPhase=prepareThrowPhase;
+prepareThrowPhase=function(){
+  if(state==="aim"&&mainRest[turn]){const actor=turn;playerAimReadyAt=Infinity;cpuWait=999;setTimeout(()=>{if(state==="aim"&&turn===actor&&mainRest[actor]){msg=`${actorLabel(actor)} 動けない！`;throwMenko();}},420);return;}
+  mainStaminaPrepareThrowPhase();
+};
+const mainStaminaThrow=throwMenko;
+throwMenko=function(forcedGauge=null,forcedAim=null){
+  if(state!=="aim"||dropper)return;
+  if(mainRest[turn]){const actor=turn;mainRest[actor]=false;mainStamina[actor]=30;roundResults[actor]=mainBlankRoundResult();appendLog(`STAMINA REST: ${actorLabel(actor)} cannot throw this round / returns at 30%`);advanceTurnAfterHold();return;}
+  const selected=forcedGauge??gaugeStrength(),cap=mainStaminaPowerCap(turn),used=Math.min(clamp(selected,.01,1),cap),effort=used,weight=mainWeight[turn]||"middle",weightCost=MAIN_WEIGHT_RULES[weight].cost,perFlip=(5+18*Math.pow(effort,1.35))*weightCost;
+  mainStaminaThrow(used,forcedAim);
+  mainPendingCost[turn]={base:4*weightCost,perFlip};
+  appendLog(`STAMINA: ${actorLabel(turn)} cap=${Math.round(cap*100)}% / ${weight.toUpperCase()} / base ${(4*weightCost).toFixed(1)} + ${perFlip.toFixed(1)} per effective flip`);
+};
+concentrationGaugeSpeed=()=>1;
+concentrationFlipMultiplier=()=>1;
+applyRoundConcentration=()=>{};
+const mainStaminaResolve=resolveRoundEffects;
+resolveRoundEffects=function(){mainStaminaResolve();for(const actor of ["player","cpu"]){const own=roundResults[actor],effective=own?.effectiveFlippedCount??0,pending=mainPendingCost[actor];if(pending){const cost=pending.base+pending.perFlip*effective;mainStamina[actor]=Math.max(0,mainStamina[actor]-cost);appendLog(`STAMINA COST: ${actorLabel(actor)} -${cost.toFixed(1)} / effective flips=${effective}`);}mainPendingCost[actor]=0;if(mainStamina[actor]<=15&&!mainRest[actor]){mainRest[actor]=true;const next=actor==="player"?"cpu":"player",lastRound=matchStats.rounds[matchStats.rounds.length-1];if(lastRound)lastRound.nextStarter=next;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} / ${actorLabel(next)} starts next / ${actorLabel(actor)} cannot throw`);}mainStamina[actor]=Math.min(100,mainStamina[actor]+2);}};
 function loop(now){
   if(lastFrameTime==null)lastFrameTime=now;
   const elapsed=Math.min(MAX_FRAME_DELTA,Math.max(0,(now-lastFrameTime)/1000));
