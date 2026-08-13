@@ -1394,6 +1394,8 @@ function resolveRoundEffects(){
   if(secondAttackCancelled)matchStats.firstKoCancels++;
   applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
+  red.staminaCloneHeal=rescued.some(rescue=>rescue.actor==="player"&&rescue.choice==="heal");
+  blue.staminaCloneHeal=rescued.some(rescue=>rescue.actor==="cpu"&&rescue.choice==="heal");
   const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(counter?.actor??(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter));
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
   appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
@@ -2001,29 +2003,56 @@ window.addEventListener("resize",resize);canvas.addEventListener("click",()=>{})
 try{resize();initializeIntegratedRun();requestAnimationFrame(loop)}catch(err){showProgressError(err)}
 /* Stamina battle lab: injected inside the same scope as the real battle rules. */
 const labStamina={player:100,cpu:100},labRest={player:false,cpu:false},labPendingCost={player:0,cpu:0};
+const LAB_WEIGHT_COST={light:.88,middle:1,heavy:1.15};
+const labWeight={player:"middle",cpu:"middle"};
 const labHud=document.createElement("div");
 labHud.style.cssText="display:flex;justify-content:space-between;gap:8px;padding:5px 8px;background:#171b22;border:1px solid #56606e;font:11px monospace";
 labHud.innerHTML='<span id="labStRed">RED ♥ 100%</span><span id="labStBlue">BLUE ♥ 100%</span>';
 document.getElementById("battleUi").prepend(labHud);
+labHud.insertAdjacentHTML("beforeend",'<label style="color:#e94e55">RED W <select id="labWeightRed"><option value="light">LIGHT</option><option value="middle" selected>MIDDLE</option><option value="heavy">HEAVY</option></select></label><label style="color:#5797e8">BLUE W <select id="labWeightBlue"><option value="light">LIGHT</option><option value="middle" selected>MIDDLE</option><option value="heavy">HEAVY</option></select></label>');
 function labPowerCap(actor){const s=clamp(labStamina[actor]/100,0,1);return s<=.25?.40+.20*s:s<=.50?.45+.40*(s-.25):.55+.40*(s-.50);}
 function syncLabStamina(){const red=document.getElementById("labStRed"),blue=document.getElementById("labStBlue"),redCap=Math.round(labPowerCap("player")*100),blueCap=Math.round(labPowerCap("cpu")*100);red.textContent=`RED ♥ ${Math.round(labStamina.player)}% / MAX ${redCap}%${labRest.player?" / EXHAUSTED":""}`;blue.textContent=`BLUE ♥ ${Math.round(labStamina.cpu)}% / MAX ${blueCap}%${labRest.cpu?" / EXHAUSTED":""}`;red.style.color="#e94e55";blue.style.color="#5797e8";}
+document.getElementById("labWeightRed").onchange=e=>{labWeight.player=e.target.value;appendLog(`LAB WEIGHT: RED ${labWeight.player.toUpperCase()}`);syncLabStamina();};
+document.getElementById("labWeightBlue").onchange=e=>{labWeight.cpu=e.target.value;appendLog(`LAB WEIGHT: BLUE ${labWeight.cpu.toUpperCase()}`);syncLabStamina();};
 const staminaNewMatch=newMatch;
 newMatch=function(){labStamina.player=100;labStamina.cpu=100;labRest.player=false;labRest.cpu=false;labPendingCost.player=0;labPendingCost.cpu=0;staminaNewMatch();syncLabStamina();};
 const staminaThrow=throwMenko;
 throwMenko=function(forcedGauge=null,forcedAim=null){
   if(state!=="aim"||dropper)return;
   if(labRest[turn]){const actor=turn;labRest[actor]=false;labStamina[actor]=30;roundResults[actor]={attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null};appendLog(`STAMINA REST: ${actorLabel(actor)} cannot throw this round / returns at 30%`);syncLabStamina();advanceTurnAfterHold();return;}
-  const selected=forcedGauge??gaugeStrength(),cap=labPowerCap(turn),used=Math.min(clamp(selected,.01,1),cap),effort=used;
+  const selected=forcedGauge??gaugeStrength(),cap=labPowerCap(turn),used=Math.min(clamp(selected,.01,1),cap),effort=used,weightCost=LAB_WEIGHT_COST[labWeight[turn]]||1;
   staminaThrow(used,forcedAim);
-  const perFlip=5+18*Math.pow(effort,1.35);labPendingCost[turn]={base:4,perFlip};
-  appendLog(`STAMINA PENDING: ${actorLabel(turn)} cap=${Math.round(cap*100)}% strength=${Math.round(effort*100)}% baseCost=4 + ${perFlip.toFixed(1)} per effective flip`);syncLabStamina();
+  const perFlip=(5+18*Math.pow(effort,1.35))*weightCost;labPendingCost[turn]={base:4*weightCost,perFlip};
+  appendLog(`STAMINA PENDING: ${actorLabel(turn)} ${labWeight[turn].toUpperCase()} cap=${Math.round(cap*100)}% strength=${Math.round(effort*100)}% baseCost=${(4*weightCost).toFixed(1)} + ${perFlip.toFixed(1)} per effective flip`);syncLabStamina();
 };
 /* Old concentration was a previous prototype.  It must not stack with stamina. */
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
 const staminaResolve=resolveRoundEffects;
-resolveRoundEffects=function(){staminaResolve();for(const actor of ["player","cpu"]){const own=roundResults[actor],effective=own?.effectiveFlippedCount??0,pending=labPendingCost[actor];if(pending){const cost=pending.base+pending.perFlip*effective;labStamina[actor]=Math.max(0,labStamina[actor]-cost);appendLog(`STAMINA COST: ${actorLabel(actor)} effective flips=${effective} -${cost.toFixed(1)} (base ${pending.base} + ${pending.perFlip.toFixed(1)} x ${effective}) remain=${labStamina[actor].toFixed(1)}`);}labPendingCost[actor]=0;if(labStamina[actor]<=15&&!labRest[actor]){labRest[actor]=true;const next=actor==="player"?"cpu":"player",lastRound=matchStats.rounds[matchStats.rounds.length-1];if(lastRound)lastRound.nextStarter=next;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} is below 15% / next round ${actorLabel(next)} starts first and ${actorLabel(actor)} cannot throw`);}labStamina[actor]=Math.min(100,labStamina[actor]+2);appendLog(`STAMINA BREATHER: ${actorLabel(actor)} +2`);}syncLabStamina();};
+resolveRoundEffects=function(){
+  staminaResolve();
+  const lastRound=matchStats.rounds[matchStats.rounds.length-1];
+  for(const actor of ["player","cpu"]){
+    const own=roundResults[actor],foe=actor==="player"?"cpu":"player",pending=labPendingCost[actor];
+    if(pending){
+      const effective=own?.effectiveFlippedCount??0,cost=pending.base+pending.perFlip*effective;
+      labStamina[actor]=Math.max(0,labStamina[actor]-cost);
+      appendLog(`STAMINA COST: ${actorLabel(actor)} effective flips=${effective} -${cost.toFixed(1)} remain=${labStamina[actor].toFixed(1)}`);
+    }
+    labPendingCost[actor]=0;
+    const damageTaken=actor==="player"?roundBlueDamage:roundRedDamage;
+    if(damageTaken>0){const fatigue=damageTaken*2;labStamina[actor]=Math.max(0,labStamina[actor]-fatigue);appendLog(`STAMINA DAMAGE: ${actorLabel(actor)} -${fatigue} / damage taken=${damageTaken}`);}
+    const defenseGain=(own?.defenseUsed??0)*3;
+    if(defenseGain>0){labStamina[actor]=Math.min(100,labStamina[actor]+defenseGain);appendLog(`STAMINA DEFENSE: ${actorLabel(actor)} +${defenseGain} / defense used=${own.defenseUsed}`);}
+    const ownRound=actor==="player"?lastRound?.red:lastRound?.blue;
+    if(ownRound?.staminaCloneHeal){labStamina[actor]=Math.min(100,labStamina[actor]+18);appendLog(`STAMINA CLONE HEAL: ${actorLabel(actor)} +18`);}
+    if(labStamina[actor]<=15&&!labRest[actor]){labRest[actor]=true;if(lastRound)lastRound.nextStarter=foe;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} is below 15% / next round ${actorLabel(foe)} starts first and ${actorLabel(actor)} cannot throw`);}
+    labStamina[actor]=Math.min(100,labStamina[actor]+2);
+    appendLog(`STAMINA BREATHER: ${actorLabel(actor)} +2`);
+  }
+  syncLabStamina();
+};
 syncLabStamina();
 })();
 </script>
@@ -2031,7 +2060,8 @@ syncLabStamina();
 /* Lab-only stamina layer.  The underlying MENKO, initiative, defense, counter,
    clone, and damage rules above remain the same as index.html. */
 (()=>{
-  if(typeof newMatch!=="function")return;
+  // Retired prototype: keep this block inert so the unified lab layer above is the only stamina system.
+  return;
   const stamina={player:100,cpu:100},rest={player:false,cpu:false};
   const cap=actor=>Math.max(.01,stamina[actor]/100);
   const opponent=actor=>actor==="player"?"cpu":"player";
