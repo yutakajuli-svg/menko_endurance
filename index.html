@@ -1399,6 +1399,9 @@ function resolveRoundEffects(){
   if(secondAttackCancelled)matchStats.firstKoCancels++;
   applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
+  // The selected clone effect is kept with the round so stamina recovery can use it too.
+  red.staminaCloneHeal=rescued.some(rescue=>rescue.actor==="player"&&rescue.choice==="heal");
+  blue.staminaCloneHeal=rescued.some(rescue=>rescue.actor==="cpu"&&rescue.choice==="heal");
   const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(counter?.actor??(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter));
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
   appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
@@ -2007,7 +2010,7 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 const mainStamina={player:100,cpu:100},mainRest={player:false,cpu:false},mainPendingCost={player:0,cpu:0},mainWeight={player:"middle",cpu:"middle"};
 const mainExhaustionNotices=[];
 const showStrengthBar=show=>{strengthWrap.style.display=show?"grid":"none"};
-const MAIN_WEIGHT_RULES={light:{cost:.88},middle:{cost:1},heavy:{cost:1}};
+const MAIN_WEIGHT_RULES={light:{cost:.88},middle:{cost:1},heavy:{cost:1.15}};
 function mainWeightImpact(actor,gauge){const weight=mainWeight[actor]||"middle";if(weight==="light")return {range:1.10-.40*gauge,power:1.18-.30*gauge};if(weight==="heavy")return {range:.40+1.10*gauge,power:.55+.75*gauge};return {range:1,power:1};}
 function mainStaminaPowerCap(actor){const s=clamp(mainStamina[actor]/100,0,1);return s<=.25?.40+.20*s:s<=.50?.45+.40*(s-.25):.55+.40*(s-.50);}
 function mainBlankRoundResult(){return {attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null};}
@@ -2038,7 +2041,28 @@ concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
 const mainStaminaResolve=resolveRoundEffects;
-resolveRoundEffects=function(){mainStaminaResolve();for(const actor of ["player","cpu"]){const own=roundResults[actor],effective=own?.effectiveFlippedCount??0,pending=mainPendingCost[actor];if(pending){const cost=pending.base+pending.perFlip*effective;mainStamina[actor]=Math.max(0,mainStamina[actor]-cost);appendLog(`STAMINA COST: ${actorLabel(actor)} -${cost.toFixed(1)} / effective flips=${effective}`);}mainPendingCost[actor]=0;if(mainStamina[actor]<=15&&!mainRest[actor]){mainRest[actor]=true;mainExhaustionNotices.push(actor);const next=actor==="player"?"cpu":"player",lastRound=matchStats.rounds[matchStats.rounds.length-1];if(lastRound)lastRound.nextStarter=next;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} / ${actorLabel(next)} starts next / ${actorLabel(actor)} cannot throw`);}mainStamina[actor]=Math.min(100,mainStamina[actor]+2);}};
+resolveRoundEffects=function(){
+  mainStaminaResolve();
+  const lastRound=matchStats.rounds[matchStats.rounds.length-1];
+  for(const actor of ["player","cpu"]){
+    const own=roundResults[actor],foe=actor==="player"?"cpu":"player",pending=mainPendingCost[actor];
+    if(pending){
+      const effective=own?.effectiveFlippedCount??0,cost=pending.base+pending.perFlip*effective;
+      mainStamina[actor]=Math.max(0,mainStamina[actor]-cost);
+      appendLog(`STAMINA COST: ${actorLabel(actor)} -${cost.toFixed(1)} / effective flips=${effective}`);
+    }
+    mainPendingCost[actor]=0;
+    const damageTaken=actor==="player"?roundBlueDamage:roundRedDamage;
+    if(damageTaken>0){const fatigue=damageTaken*2;mainStamina[actor]=Math.max(0,mainStamina[actor]-fatigue);appendLog(`STAMINA DAMAGE: ${actorLabel(actor)} -${fatigue} / damage taken=${damageTaken}`);}
+    const defenseGain=(own?.defenseUsed??0)*3;
+    if(defenseGain>0){mainStamina[actor]=Math.min(100,mainStamina[actor]+defenseGain);appendLog(`STAMINA DEFENSE: ${actorLabel(actor)} +${defenseGain} / defense used=${own.defenseUsed}`);}
+    const ownRound=actor==="player"?lastRound?.red:lastRound?.blue;
+    if(ownRound?.staminaCloneHeal){mainStamina[actor]=Math.min(100,mainStamina[actor]+18);appendLog(`STAMINA CLONE HEAL: ${actorLabel(actor)} +18`);}
+    if(mainStamina[actor]<=15&&!mainRest[actor]){mainRest[actor]=true;mainExhaustionNotices.push(actor);if(lastRound)lastRound.nextStarter=foe;appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} / ${actorLabel(foe)} starts next / ${actorLabel(actor)} cannot throw`);}
+    mainStamina[actor]=Math.min(100,mainStamina[actor]+2);
+    appendLog(`STAMINA BREATHER: ${actorLabel(actor)} +2`);
+  }
+};
 
 const mainReadablePresentations=playRoundPresentations;
 playRoundPresentations=async function(data){
