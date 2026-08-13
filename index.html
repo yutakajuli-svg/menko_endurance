@@ -2009,7 +2009,8 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 /* Battle stamina and weight: hidden in the regular UI.  The labs remain the tuning surface. */
 const mainStamina={player:100,cpu:100},mainRest={player:false,cpu:false},mainPendingCost={player:0,cpu:0},mainWeight={player:"middle",cpu:"middle"};
 const mainExhaustionNotices=[];
-const showStrengthBar=show=>{strengthWrap.style.display=show?"grid":"none"};
+// Keep the bar's space during a stamina rest. Removing it from layout made the board jump vertically.
+const showStrengthBar=show=>{strengthWrap.style.visibility=show?"visible":"hidden"};
 const MAIN_WEIGHT_RULES={light:{cost:.88},middle:{cost:1},heavy:{cost:1.15}};
 function mainWeightImpact(actor,gauge){const weight=mainWeight[actor]||"middle";if(weight==="light")return {range:1.10-.40*gauge,power:1.18-.30*gauge};if(weight==="heavy")return {range:.40+1.10*gauge,power:.55+.75*gauge};return {range:1,power:1};}
 function mainStaminaPowerCap(actor){const s=clamp(mainStamina[actor]/100,0,1);return s<=.25?.40+.20*s:s<=.50?.45+.40*(s-.25):.55+.40*(s-.50);}
