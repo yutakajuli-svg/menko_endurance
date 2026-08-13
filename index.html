@@ -124,8 +124,10 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #presentationLayer{position:absolute;z-index:20;inset:0;display:none;pointer-events:none}
 #presentationLayer.show{display:block}
 #illustrationWindow{position:absolute;left:6px;right:6px;top:158px;aspect-ratio:4/3;overflow:hidden;border:3px solid #fff;background:#050505}
-#moveImage{width:100%;height:100%;display:block;object-fit:cover}
-#moveImage.mirrored{transform:scaleX(-1)}
+#moveLayers{position:absolute;inset:0;overflow:hidden}
+#moveLayers img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+#moveLayers.mirrored{transform:scaleX(-1)}
+#moveBlue.generated{filter:hue-rotate(145deg) saturate(2.4) brightness(.9)}
 #frameCounter{position:absolute;right:6px;bottom:5px;padding:3px 5px;background:#000c;font-size:11px}
 #messageWindow{position:absolute;left:4px;right:4px;top:478px;display:none;min-height:68px;padding:10px 13px;border:3px solid #fff;background:#050505;color:#fff;font-size:17px;line-height:1.45;white-space:pre-line}
 #messageWindow.show{display:block}#messageWindow.tall{min-height:88px}
@@ -240,7 +242,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 
   <div id="presentationLayer" aria-live="polite">
     <div id="illustrationWindow">
-      <img id="moveImage" alt="技・イベントイラスト">
+      <div id="moveLayers" role="img" aria-label="技・イベントイラスト"><img id="moveLine" alt=""><img id="moveRed" alt=""><img id="moveBlue" alt=""></div>
       <span id="frameCounter">1 / 1</span>
     </div>
     <div id="messageWindow"></div>
@@ -310,7 +312,7 @@ const ui={
   red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),atkMenko:document.getElementById("redAtkMenko"),defTotal:document.getElementById("redDefTotal"),identity:document.getElementById("redIdentity")},
   blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),atkMenko:document.getElementById("blueAtkMenko"),defTotal:document.getElementById("blueDefTotal"),identity:document.getElementById("blueIdentity")}
 };
-const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveImage=document.getElementById("moveImage"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
+const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveLayers=document.getElementById("moveLayers"),moveLine=document.getElementById("moveLine"),moveRed=document.getElementById("moveRed"),moveBlue=document.getElementById("moveBlue"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
 const playerPortrait="player_characters_001.jpg";
 const portraitFaceSets=["01","02","03"],cpuPortraitHairs=["hair_01","hair_02","hair_03","hair_04","hair_05","hair_06","hair_07"];
 const cpuPortraitCombos=cpuPortraitHairs.flatMap(hair=>portraitFaceSets.map(faceSet=>({hair,faceSet})));
@@ -323,8 +325,8 @@ let cpuPortraitBag=new ShuffleBag(cpuPortraitCombos);
 let portraitState={player:{image:playerPortrait,expression:"normal"},cpu:{...cpuPortraitBag.next(),expression:"normal"}};
 let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTimer=0;
 let presentationDefenseReset={player:false,cpu:false};
-const moveFrameCounts={"001_001_001":4,"001_001_002":4,"001_002_001":4,"001_002_002":4,"001_003_001":4,"001_003_002":3,"002_001_001":2,"002_001_002":3,"002_002_001":4,"002_002_002":3,"002_003_001":3,"002_003_002":4,"003_001_001":2,"003_001_002":4,"003_002_001":2,"003_002_002":5,"003_003_001":3,"003_003_002":5};
-const moveFrameNumbers={"001_003_002":[1,2,4]};
+const moveFrameCounts={"001_001_001":3,"001_001_002":3,"001_002_001":3,"001_002_002":3,"001_003_001":3,"001_003_002":3,"002_001_001":2,"002_001_002":3,"002_002_001":3,"002_002_002":3,"002_003_001":3,"002_003_002":3,"003_001_001":2,"003_001_002":3,"003_002_001":2,"003_002_002":4,"003_003_001":3,"003_003_002":4};
+const moveFrameNumbers={};
 const redMoveMirrored={"001_001_001":false,"001_001_002":false,"001_002_001":false,"001_002_002":true,"001_003_001":true,"001_003_002":false,"002_001_001":false,"002_001_002":true,"002_002_001":false,"002_002_002":true,"002_003_001":false,"002_003_002":false,"003_001_001":false,"003_001_002":true,"003_002_001":true,"003_002_002":true,"003_003_001":true,"003_003_002":false};
 const redEventMirrored={"ex_move_heal":true,"ex_move_defense":true,"ex_move_no_attack":true,"ex_move_Counterattack_01":false,"ex_move_Counterattack_02":false,"ex_move_finish_01":false,"ex_move_finish_02":false,"sp_move01_001":false,"sp_move02_001":true,"sp_move03_001":false};
 
@@ -463,12 +465,22 @@ function showPresentation(lines,tall=false){
   presentationLayer.classList.add("show");illustrationWindow.style.display="";
   messageWindow.classList.remove("show","tall");messageWindow.textContent=lines.join("\n");messageWindow.classList.toggle("tall",tall);
 }
-function hidePresentation(){presentationLayer.classList.remove("show");messageWindow.classList.remove("show","tall");illustrationWindow.style.display="";moveImage.classList.remove("mirrored")}
-function preloadImages(files){return Promise.all(files.map(src=>new Promise(resolve=>{const image=new Image();image.onload=resolve;image.onerror=resolve;image.src=src})))}
-function frameFiles(stem,count){return Array.from({length:count},(_,i)=>`${MOVE_ROOT}/${stem}_${String(i+1).padStart(2,"0")}.jpg`)}
-async function playIllustration({files,mirrored=false,lines,tall=false,alt="演出イラスト",feedback}){
-  await preloadImages(files);presentationRunning=true;showPresentation(lines,tall);moveImage.alt=alt;moveImage.classList.toggle("mirrored",mirrored);
-  for(let i=0;i<files.length;i++){moveImage.src=files[i];frameCounter.textContent=`${i+1} / ${files.length}`;if(i<files.length-1)await wait(320)}
+function hidePresentation(){presentationLayer.classList.remove("show");messageWindow.classList.remove("show","tall");illustrationWindow.style.display="";moveLayers.classList.remove("mirrored")}
+const singleRedLayerFrames=new Set(["ex_move_stamina_01","move002_003_001_01"]);
+function layerSources(src,colorSwap){
+  const base=src.replace(/\.png$/i,""),stem=base.split("/").pop(),red=`${base}_r.png`,blue=`${base}_b.png`;
+  if(singleRedLayerFrames.has(stem))return {line:src,red:colorSwap?"":red,blue:colorSwap?red:"",generatedBlue:colorSwap};
+  return {line:src,red:colorSwap?blue:red,blue:colorSwap?red:blue,generatedBlue:false};
+}
+function preloadImages(files,colorSwap=false){return Promise.all(files.flatMap(src=>Object.values(layerSources(src,colorSwap)).filter(value=>typeof value==="string"&&value)).map(src=>new Promise(resolve=>{const image=new Image();image.onload=resolve;image.onerror=resolve;image.src=src}))) }
+function frameFiles(stem,count){return Array.from({length:count},(_,i)=>`${MOVE_ROOT}/${stem}_${String(i+1).padStart(2,"0")}.png`)}
+async function playIllustration({files,mirrored=false,colorSwap=false,lines,tall=false,alt="演出イラスト",feedback}){
+  await preloadImages(files,colorSwap);presentationRunning=true;showPresentation(lines,tall);moveLayers.setAttribute("aria-label",alt);moveLayers.classList.toggle("mirrored",mirrored);
+  for(let i=0;i<files.length;i++){
+    const frame=layerSources(files[i],colorSwap);moveLine.src=frame.line;moveRed.src=frame.red;moveBlue.src=frame.blue;
+    moveRed.onerror=()=>{moveRed.src=""};moveBlue.onerror=()=>{moveBlue.src=""};moveBlue.classList.toggle("generated",frame.generatedBlue);
+    frameCounter.textContent=`${i+1} / ${files.length}`;if(i<files.length-1)await wait(320)
+  }
   messageWindow.classList.add("show");const effect=feedback?feedback():Promise.resolve();await Promise.all([effect,wait(PRESENTATION_MESSAGE_HOLD)]);
   illustrationWindow.style.display="none";await wait(PRESENTATION_OUTRO_HOLD);hidePresentation();resetPortraitExpressions();presentationRunning=false;syncBattleUi();
 }
@@ -1166,8 +1178,8 @@ function applyCloneRescue(actor,owner,sameRoundContest=false){
 }
 function normalMovePresentation(actor,level,type=randInt(1,3)){
   const moveType=String(type).padStart(3,"0"),moveLevel=String(clamp(level,1,3)).padStart(3,"0"),variant=String(randInt(1,2)).padStart(3,"0"),key=`${moveType}_${moveLevel}_${variant}`,stem=`move${key}`;
-  const files=(moveFrameNumbers[key]||Array.from({length:moveFrameCounts[key]},(_,i)=>i+1)).map(n=>`${MOVE_ROOT}/${stem}_${String(n).padStart(2,"0")}.jpg`);
-  return {files,mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key]};
+  const files=(moveFrameNumbers[key]||Array.from({length:moveFrameCounts[key]},(_,i)=>i+1)).map(n=>`${MOVE_ROOT}/${stem}_${String(n).padStart(2,"0")}.png`);
+  return {files,mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key],colorSwap:actor==="cpu"};
 }
 async function playNormalAttackEvent(actor,damage,defenseUsed,level,type){
   const victim=oppositeActor(actor),move=normalMovePresentation(actor,level,type),attacker=actorLabel(actor),target=actorLabel(victim);
@@ -1180,7 +1192,7 @@ async function playFinishEvent(pinfall){
   const lines=pinfall.kickoutSuccess
     ? [`${attacker} フォールの体勢！`,`${defender} は返せるか！？`]
     : [`${attacker} フォールの体勢！`,`${defender} 返せない！`];
-  await playIllustration({files:frameFiles(stem,1),mirrored:pinfall.attacker==="player"?redEventMirrored[stem]:!redEventMirrored[stem],lines,tall:true,alt:`${attacker}のフィニッシュ`,feedback:()=>wait(320)});
+  await playIllustration({files:frameFiles(stem,1),mirrored:pinfall.attacker==="player"?redEventMirrored[stem]:!redEventMirrored[stem],colorSwap:pinfall.attacker==="cpu",lines,tall:true,alt:`${attacker}のフィニッシュ`,feedback:()=>wait(320)});
 }
 async function playKickoutEvent(actor){
   const label=actorLabel(actor);
@@ -1192,23 +1204,24 @@ async function playKickoutEvent(actor){
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
-  await playIllustration({files:frameFiles("ex_move_defense",2),mirrored:actor==="player"?redEventMirrored.ex_move_defense:!redEventMirrored.ex_move_defense,lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+  const variant=randInt(1,2),stem=`ex_move_defense_${String(variant).padStart(2,"0")}`;
+  await playIllustration({files:frameFiles(stem,variant===1?2:3),mirrored:actor==="player"?redEventMirrored.ex_move_defense:!redEventMirrored.ex_move_defense,colorSwap:actor==="cpu",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
 }
 async function playCounterEvent(actor,damage=1){
   const target=oppositeActor(actor),label=actorLabel(actor),victim=actorLabel(target),type=randInt(1,2),stem=`ex_move_Counterattack_${String(type).padStart(2,"0")}`;
   const frameCount=type===1?4:3;
-  await playIllustration({files:frameFiles(stem,frameCount),mirrored:actor==="player"?redEventMirrored[stem]:!redEventMirrored[stem],lines:[`${label} カウンター！`,`${victim}に ${damage} ダメージ！`],tall:false,alt:`${label}のカウンター`,feedback:()=>{setPortraitExpression(actor,"attack");setPortraitExpression(target,"damage");restartStatusFeedback(target,"feedback-red-double",420);return animateDisplayedHp(target,displayedHP[target]-damage,420)}});
+  await playIllustration({files:frameFiles(stem,frameCount),mirrored:actor==="player"?redEventMirrored[stem]:!redEventMirrored[stem],colorSwap:actor==="cpu",lines:[`${label} カウンター！`,`${victim}に ${damage} ダメージ！`],tall:false,alt:`${label}のカウンター`,feedback:()=>{setPortraitExpression(actor,"attack");setPortraitExpression(target,"damage");restartStatusFeedback(target,"feedback-red-double",420);return animateDisplayedHp(target,displayedHP[target]-damage,420)}});
 }
 async function playNoAttackEvent(firstActor){
   await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:firstActor==="player"?redEventMirrored.ex_move_no_attack:!redEventMirrored.ex_move_no_attack,lines:["両者とも攻撃なし！","次のラウンドへ！"],alt:"両者攻撃なし",feedback:()=>{restartStatusFeedback("player","feedback-soft",360);restartStatusFeedback("cpu","feedback-soft",360);return wait(360)}});
 }
 async function playCloneDamageEvent(actor,damage){
   const victim=oppositeActor(actor),label=actorLabel(actor),target=actorLabel(victim),type=randInt(1,3),stem=`sp_move${String(type).padStart(2,"0")}_001`;
-  await playIllustration({files:frameFiles(stem,4),mirrored:actor==="player"?redEventMirrored[stem]:!redEventMirrored[stem],lines:[`${label}の得意技が決まったーっ！`,`${target}は大ダメージ！`,`${damage} ダメージ！`],tall:true,alt:`${label}の得意技`,feedback:()=>{presentationDefenseReset[victim]=true;setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red-double",520);return animateDisplayedHp(victim,displayedHP[victim]-damage,520)}});
+  await playIllustration({files:frameFiles(stem,4),mirrored:actor==="player"?redEventMirrored[stem]:!redEventMirrored[stem],colorSwap:actor==="cpu",lines:[`${label}の得意技が決まったーっ！`,`${target}は大ダメージ！`,`${damage} ダメージ！`],tall:true,alt:`${label}の得意技`,feedback:()=>{presentationDefenseReset[victim]=true;setPortraitExpression(actor,"attack");setPortraitExpression(victim,"damage");restartStatusFeedback(victim,"feedback-red-double",520);return animateDisplayedHp(victim,displayedHP[victim]-damage,520)}});
 }
 async function playCloneHealEvent(rescue){
   const actor=rescue.actor,label=actorLabel(actor);
-  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
+  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,colorSwap:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
 async function playRoundPresentations(data){
   const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,pinfall,counter}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
@@ -2070,19 +2083,15 @@ playRoundPresentations=async function(data){
   await mainReadablePresentations(data);
   const exhausted=mainExhaustionNotices.splice(0);
   if(!exhausted.length)return;
-  presentationRunning=true;
-  presentationLayer.classList.add("show");
-  illustrationWindow.style.display="none";
-  messageWindow.textContent=exhausted.length===2
-    ? "両者、様子をうかがっている！"
-    : `${actorLabel(exhausted[0])} 少し動きが鈍いか？\n次のターンは動けない！`;
-  messageWindow.classList.add("show");
-  await wait(1250);
-  hidePresentation();
-  presentationRunning=false;
-  syncBattleUi();
+  if(exhausted.length===2){
+    await playIllustration({files:frameFiles("ex_move_stamina_both",3),lines:["両者、様子をうかがっている！"],tall:false,alt:"両者のスタミナ切れ",feedback:()=>wait(160)});
+  }else{
+    const actor=exhausted[0],label=actorLabel(actor);
+    await playIllustration({files:frameFiles("ex_move_stamina",1),mirrored:actor==="cpu",colorSwap:actor==="cpu",lines:[`${label} 少し動きが鈍いか？`,`次のターンは動けない！`],tall:false,alt:`${label}のスタミナ切れ`,feedback:()=>wait(160)});
+  }
   state="roundResult";
   resultT=ROUND_SUMMARY_HOLD;
+  return;
 };
 function loop(now){
   if(lastFrameTime==null)lastFrameTime=now;
