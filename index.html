@@ -851,7 +851,9 @@ function chooseCpuThrow(){
   return {aim,gauge};
 }
 function cpuThrow(){
-  if(state!=="aim"||turn!=="cpu"||dropper)return;
+  // A stamina illustration is a hard beat between turns.  The CPU may already
+  // have a queued wait from the turn hand-off, so it must not throw underneath it.
+  if(state!=="aim"||turn!=="cpu"||dropper||presentationRunning)return;
   cpuWait=999;
   const choice=chooseCpuThrow();
   throwMenko(choice.gauge,choice.aim);
@@ -2071,7 +2073,7 @@ prepareThrowPhase=function(){
 };
 const mainStaminaThrow=throwMenko;
 throwMenko=function(forcedGauge=null,forcedAim=null){
-  if(state!=="aim"||dropper)return;
+  if(state!=="aim"||dropper||presentationRunning)return;
   if(mainRest[turn]){const actor=turn;mainRest[actor]=false;mainStamina[actor]=30;roundResults[actor]=mainBlankRoundResult();appendLog(`STAMINA REST: ${actorLabel(actor)} cannot throw this round / returns at 30%`);advanceTurnAfterHold();return;}
   const selected=forcedGauge??gaugeStrength(),cap=mainStaminaPowerCap(turn),used=Math.min(clamp(selected,.01,1),cap),effort=used,weight=mainWeight[turn]||"middle",weightCost=MAIN_WEIGHT_RULES[weight].cost,perFlip=(5+18*Math.pow(effort,1.35))*weightCost;
   mainStaminaThrow(used,forcedAim);
