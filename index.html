@@ -888,6 +888,8 @@ function beginCardMotion(i,impulse,sourceLabel){
   else if(impactPower>=.40){behavior="SHORT_HOP";behaviorJP="低い飛び"}
   else if(impactPower>=.22){behavior="EDGE_LIFT";behaviorJP="角浮き"}
 
+  const labRadial=clamp(1-d/Math.max(1,wave.maxRadius),0,1);
+  if(behavior==="STOP"&&labRadial>.06){behavior="EDGE_LIFT";behaviorJP="edge lift";}
   wave.processed[i]=true;
   if(behavior==="STOP"){
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
@@ -896,15 +898,14 @@ function beginCardMotion(i,impulse,sourceLabel){
   }
 
   // めくれは挙動と別抽選。上に乗っている枚数は成功率を下げ、直撃は上げる。
-  let flipChance={EDGE_LIFT:.06,SHORT_HOP:.34,HIGH_HOP:.62,DIRECT_HIT:.76}[behavior];
+  let flipChance=labRadial*.88*[.72,1.02,1.25,1.38,1.04,.82][wave.zone.index];
   // 分身は通常の物理めくれ率を完成させた後、専用補正を掛けた1回の抽選だけを行う。
   // この抽選でめくれた分身は、追加抽選なしで効果が確定発動する。
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
-  flipChance += clamp((impactPower-.45)*.22,-.04,.15);
-  flipChance += directOverlap*.18;
+  // Range and distance define the baseline; motion only supplies the animation.
   // Trial balance: keep motion and reach intact, but convert impact into flips much less often.
   // One throw has a small shared catch quality.  Clones use the same physical roll.
-  flipChance *= throwStability(wave.gauge)*concentrationFlipMultiplier(wave.actorKey)*actorFlipMultiplier(wave.actorKey)*wave.texture.stability*.95;
+  flipChance *= wave.texture.stability;
   flipChance *= 1/(1+upperCount*.16);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
