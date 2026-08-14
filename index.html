@@ -2083,6 +2083,45 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
+// Board economy trial: every throw has its own board.  The four common cards are
+// always present; each side's growth above that baseline becomes a difference card.
+deck=function(){
+  const d=[];
+  for(let i=0;i<2;i++)d.push({team:"common",type:"attack",isDifference:false});
+  for(let i=0;i<2;i++)d.push({team:"common",type:"defense",isDifference:false});
+  const add=(team,type,n)=>{for(let i=0;i<Math.max(0,n-2);i++)d.push({team,type,isDifference:true})};
+  add("player","attack",config.redAttackCards);add("cpu","attack",config.blueAttackCards);
+  add("player","defense",config.redDefenseCards);add("cpu","defense",config.blueDefenseCards);
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  return d;
+};
+const boardEconomyResolveFaces=resolveStackFaces;
+resolveStackFaces=function(){
+  boardEconomyResolveFaces();
+  const actor=pendingLayerWave?.actorKey||turn,result=roundResults[actor];
+  if(!result)return;
+  const foe=oppositeActor(actor);let enemyAttack=0,enemyDefense=0;
+  for(const c of cards){
+    if(c.type==="clone"||!c.isDifference||c.team!==foe||c.face!==1||c.faceBeforeThrow===1)continue;
+    if(c.type==="attack")enemyAttack++;else if(c.type==="defense")enemyDefense++;
+  }
+  if(enemyAttack||enemyDefense){
+    result.attackLevel=Math.max(0,result.attackLevel-enemyAttack);
+    result.defenseLevel=Math.max(0,result.defenseLevel-enemyDefense);
+    result.disabledAttack=(result.disabledAttack||0)+enemyAttack;
+    result.disabledDefense=(result.disabledDefense||0)+enemyDefense;
+    result.effectiveFlippedCount=Math.max(0,(result.effectiveFlippedCount||0)-enemyAttack-enemyDefense);
+    appendLog(`BOARD ECONOMY: ${actorLabel(actor)} hit opponent difference / ATK -${enemyAttack} DEF -${enemyDefense}`);
+  }
+};
+const boardEconomyAdvance=advanceTurnAfterHold;
+advanceTurnAfterHold=function(){
+  const wasFirst=roundThrow===0;
+  boardEconomyAdvance();
+  // The original flow changes to the other thrower after the first result.
+  // Re-deal here so the second throw never inherits a depleted board.
+  if(wasFirst&&roundThrow===1&&state==="aim")deal();
+};
 const mainStaminaResolve=resolveRoundEffects;
 resolveRoundEffects=function(){
   mainStaminaResolve();
