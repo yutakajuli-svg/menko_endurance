@@ -327,7 +327,7 @@ let displayedHP={player:20,cpu:18},presentationRunning=false,expressionResetTime
 let presentationDefenseReset={player:false,cpu:false};
 const moveFrameCounts={"001_001_001":3,"001_001_002":3,"001_002_001":3,"001_002_002":3,"001_003_001":3,"001_003_002":3,"002_001_001":2,"002_001_002":3,"002_002_001":3,"002_002_002":3,"002_003_001":3,"002_003_002":3,"003_001_001":2,"003_001_002":3,"003_002_001":2,"003_002_002":4,"003_003_001":3,"003_003_002":4};
 const moveFrameNumbers={};
-const redMoveMirrored={"001_001_001":false,"001_001_002":false,"001_002_001":false,"001_002_002":true,"001_003_001":true,"001_003_002":false,"002_001_001":false,"002_001_002":true,"002_002_001":false,"002_002_002":true,"002_003_001":false,"002_003_002":false,"003_001_001":false,"003_001_002":true,"003_002_001":true,"003_002_002":true,"003_003_001":true,"003_003_002":false};
+const redMoveMirrored={"001_001_001":true,"001_001_002":false,"001_002_001":false,"001_002_002":true,"001_003_001":true,"001_003_002":false,"002_001_001":false,"002_001_002":true,"002_002_001":false,"002_002_002":true,"002_003_001":false,"002_003_002":false,"003_001_001":false,"003_001_002":true,"003_002_001":true,"003_002_002":true,"003_003_001":true,"003_003_002":false};
 const redEventMirrored={"ex_move_heal":true,"ex_move_defense":true,"ex_move_no_attack":true,"ex_move_Counterattack_01":false,"ex_move_Counterattack_02":false,"ex_move_finish_01":false,"ex_move_finish_02":false,"sp_move01_001":false,"sp_move02_001":true,"sp_move03_001":false};
 
 const cfgIds=["cfgRedHP","cfgBlueHP","cfgRedAtk","cfgBlueAtk","cfgRedAttackCards","cfgBlueAttackCards","cfgRedDefenseCards","cfgBlueDefenseCards"];
@@ -471,13 +471,20 @@ function showPresentation(tall=false){
 }
 function hidePresentation(){presentationLayer.classList.remove("show");messageWindow.classList.remove("show","tall");illustrationWindow.style.display="";moveLayers.classList.remove("mirrored")}
 function layerSources(src){return {line:src,red:"",blue:"",generatedBlue:false}}
+function setIllustrationLayer(image,src){
+  image.onerror=null;
+  if(!src){image.removeAttribute("src");image.style.display="none";return}
+  image.style.display="block";
+  image.onerror=()=>{image.removeAttribute("src");image.style.display="none"};
+  image.src=src;
+}
 function preloadImages(files,colorSwap=false){return Promise.all(files.flatMap(src=>Object.values(layerSources(src,colorSwap)).filter(value=>typeof value==="string"&&value)).map(src=>new Promise(resolve=>{const image=new Image();image.onload=resolve;image.onerror=resolve;image.src=src}))) }
 function frameFiles(stem,count){return Array.from({length:count},(_,i)=>`${MOVE_ROOT}/${stem}_${String(i+1).padStart(2,"0")}.png`)}
 async function playIllustration({files,mirrored=false,colorSwap=false,lines,tall=false,alt="演出イラスト",feedback}){
   await preloadImages(files,colorSwap);presentationRunning=true;showPresentation(tall);moveLayers.setAttribute("aria-label",alt);moveLayers.classList.toggle("mirrored",mirrored);
   for(let i=0;i<files.length;i++){
-    const frame=layerSources(files[i],colorSwap);moveLine.src=frame.line;moveRed.src=frame.red;moveBlue.src=frame.blue;
-    moveRed.onerror=()=>{moveRed.src=""};moveBlue.onerror=()=>{moveBlue.src=""};moveBlue.classList.toggle("generated",frame.generatedBlue);
+    const frame=layerSources(files[i],colorSwap);setIllustrationLayer(moveLine,frame.line);setIllustrationLayer(moveRed,frame.red);setIllustrationLayer(moveBlue,frame.blue);
+    moveBlue.classList.toggle("generated",frame.generatedBlue);
     frameCounter.textContent=`${i+1} / ${files.length}`;if(i<files.length-1)await wait(PRESENTATION_FRAME_HOLD)
   }
   messageWindow.classList.add("show");const effect=feedback?feedback():Promise.resolve();
@@ -1254,7 +1261,9 @@ async function playRoundPresentations(data){
     if(counter?.target===actor)await playCounterEvent(counter.actor,counter.damage);
     if(attackShown)await wait(BETWEEN_BATTLE_EVENTS_HOLD);
   }
-  if(!attackShown)await playNoAttackEvent(roundStarter);
+  // The shared both-exhausted illustration already tells the player that neither
+  // side can attack.  Do not immediately repeat it with the normal no-attack cut.
+  if(!attackShown&&mainBothRestPresentationRound!==roundNo)await playNoAttackEvent(roundStarter);
   displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD;
 }
 function resolveRoundEffects(){
@@ -2028,7 +2037,7 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 
 /* Battle stamina and weight: hidden in the regular UI.  The labs remain the tuning surface. */
 const mainStamina={player:100,cpu:100},mainRest={player:false,cpu:false},mainPendingCost={player:0,cpu:0},mainWeight={player:"middle",cpu:"middle"};
-let mainRestPresentationRound=0;
+let mainRestPresentationRound=0,mainBothRestPresentationRound=0;
 // Keep the bar's space during a stamina rest. Removing it from layout made the board jump vertically.
 const showStrengthBar=show=>{strengthWrap.style.visibility=show?"visible":"hidden"};
 const MAIN_WEIGHT_RULES={light:{cost:.88},middle:{cost:1},heavy:{cost:1.15}};
@@ -2036,7 +2045,7 @@ function mainWeightImpact(actor,gauge){const weight=mainWeight[actor]||"middle";
 function mainStaminaPowerCap(actor){const s=clamp(mainStamina[actor]/100,0,1);return s<=.25?.40+.20*s:s<=.50?.45+.40*(s-.25):.55+.40*(s-.50);}
 function mainBlankRoundResult(){return {attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null};}
 const mainStaminaNewMatch=newMatch;
-newMatch=function(){mainStamina.player=100;mainStamina.cpu=100;mainRest.player=false;mainRest.cpu=false;mainPendingCost.player=0;mainPendingCost.cpu=0;mainRestPresentationRound=0;showStrengthBar(true);mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
+newMatch=function(){mainStamina.player=100;mainStamina.cpu=100;mainRest.player=false;mainRest.cpu=false;mainPendingCost.player=0;mainPendingCost.cpu=0;mainRestPresentationRound=0;mainBothRestPresentationRound=0;showStrengthBar(true);mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
 const mainAdvanceTurnAfterHold=advanceTurnAfterHold;
 advanceTurnAfterHold=function(){
   const result=roundResults[turn];
@@ -2052,7 +2061,7 @@ function playMainStaminaRestPresentation(){
 }
 prepareThrowPhase=function(){
   if(state==="aim"&&(mainRest.player||mainRest.cpu)&&mainRestPresentationRound!==roundNo){
-    const presentationRound=roundNo;mainRestPresentationRound=presentationRound;showStrengthBar(false);playerAimReadyAt=Infinity;cpuWait=999;
+    const presentationRound=roundNo;mainRestPresentationRound=presentationRound;if(mainRest.player&&mainRest.cpu)mainBothRestPresentationRound=presentationRound;showStrengthBar(false);playerAimReadyAt=Infinity;cpuWait=999;
     playMainStaminaRestPresentation().then(()=>{if(state==="aim"&&roundNo===presentationRound)prepareThrowPhase()}).catch(error=>{appendLog(`STAMINA PRESENTATION ERROR: ${error?.message||error}`);if(state==="aim"&&roundNo===presentationRound)prepareThrowPhase()});
     return;
   }
