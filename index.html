@@ -2083,6 +2083,13 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
+// Lab-confirmed flip curve: ordinary and just throws remain rewarding, and a
+// strong throw keeps broad-card potential instead of collapsing into a miss.
+throwStability=function(g){
+  const p=[[0,.95],[.18,1.30],[.40,1.55],[.60,1.70],[.68,1.35],[.85,1.05],[1,.95]];
+  for(let i=1;i<p.length;i++)if(g<=p[i][0]){const a=p[i-1],b=p[i],t=(g-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t}
+  return .95;
+};
 // Board economy trial: every throw has its own board.  The four common cards are
 // always present; each side's growth above that baseline becomes a difference card.
 deck=function(){
