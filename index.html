@@ -824,12 +824,16 @@ function cpuThrow(){
 const CPU_THROW_PROFILE={precision:.55,cluster:.66,edge:.72,safe:.50};
 function chooseCpuThrow(){
   const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"&&c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
+  const enemyClone=cards.find(c=>c.type==="clone"&&c.team!=="cpu");
+  const canCloneAllIn=!!enemyClone&&typeof mainStamina!=="undefined"&&mainStamina.cpu>=5;
   const densityAt=p=>normalCards.reduce((sum,c)=>sum+Math.exp(-Math.hypot(c.x-p.x,c.y-p.y)/(R.s*.20)),0);
   const cluster=normalCards.map(c=>({...c,density:densityAt(c)})).sort((a,b)=>b.density-a.density)[0]||center;
   const precision=normalCards.slice().sort((a,b)=>(a.coverDepth||0)-(b.coverDepth||0))[0]||center;
   const edge=normalCards.slice().sort((a,b)=>Math.min(b.x-R.x,R.x+R.s-b.x,b.y-R.y,R.y+R.s-b.y)-Math.min(a.x-R.x,R.x+R.s-a.x,a.y-R.y,R.y+R.s-a.y))[0]||center;
-  const roll=Math.random(),intent=roll<.42?"cluster":roll<.67?"precision":roll<.84?"edge":"safe";
-  const target={cluster,precision,edge,safe:center}[intent],idealAim={x:target.x,y:target.y},idealPower=CPU_THROW_PROFILE[intent];
+  const roll=Math.random();
+  const intent=canCloneAllIn&&roll<.22?"clone_all_in":roll<.42?"cluster":roll<.67?"precision":roll<.84?"edge":"safe";
+  const target={cluster,precision,edge,safe:center,clone_all_in:enemyClone}[intent];
+  const idealAim={x:target.x,y:target.y},idealPower=intent==="clone_all_in"?.95:CPU_THROW_PROFILE[intent];
   const fatigue=1-(concentration.cpu??100)/100,missRoll=Math.random();
   const errorType=missRoll<.70-fatigue*.12?"NORMAL":missRoll<.82?"UNDERPOWER":missRoll<.94?"OVERPOWER":missRoll<.99?"AIM_MISS":"BIG_MISS";
   const positionScale=R.s*({NORMAL:.015,UNDERPOWER:.026,OVERPOWER:.026,AIM_MISS:.080,BIG_MISS:.14}[errorType])*(1+fatigue*.60);
@@ -839,7 +843,9 @@ function chooseCpuThrow(){
   if(errorType==="OVERPOWER")powerError=rand(.06,.13)*(1+fatigue*.30);
   if(errorType==="BIG_MISS")powerError=rand(-.20,.20);
   const aim={x:clamp(idealAim.x+Math.cos(angle)*positionError,R.x+R.s*.10,R.x+R.s*.90),y:clamp(idealAim.y+Math.sin(angle)*positionError,R.y+R.s*.10,R.y+R.s*.90)};
-  const gauge=clamp(idealPower+powerError,0,1);
+  let gauge=clamp(idealPower+powerError,0,1);
+  // 分身は通常投擲で捲れない。狙うならALL-IN圏を必ず維持する。
+  if(intent==="clone_all_in")gauge=Math.max(.90,gauge);
   appendLog(`CPU THROW: intent=${intent.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
   return {aim,gauge};
 }
