@@ -118,6 +118,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
 #bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
 #bar::after{content:"";position:absolute;left:4px;right:4px;top:50%;height:4px;transform:translateY(-50%);background:#555}
+.power-mark{position:absolute;z-index:1;top:2px;bottom:2px;width:2px;background:#888;transform:translateX(-50%)}.power-mark.cost-2{left:50%}.power-mark.cost-3{left:75%}.power-mark.all-in{left:90%;width:3px;background:#f00}
 #needle{z-index:2;top:2px;width:18px;height:14px;background:#fff;transform:translateX(-50%);will-change:left}
 #ringArea{position:relative;z-index:1;width:100%;height:auto;aspect-ratio:420/430;overflow:hidden;background:#111}
 #ringVisual,#c{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -181,8 +182,8 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   </section>
 
   <div id="strengthWrap">
-    <div id="strengthCaption"><span>POWER　1–50:1 / 51–75:2 / 76–89:3 / 90–100:ALL（ST5）</span><span id="turnCaption">ROUND 1</span></div>
-    <div id="bar"><div id="needle"></div></div>
+    <div id="strengthCaption"><span>POWER　ST消費: 1（〜50）/ 2（〜75）/ 3（〜89）/ ALL（90〜・ST5）</span><span id="turnCaption">ROUND 1</span></div>
+    <div id="bar"><i class="power-mark cost-2" aria-hidden="true"></i><i class="power-mark cost-3" aria-hidden="true"></i><i class="power-mark all-in" aria-hidden="true"></i><div id="needle"></div></div>
   </div>
 
   <div id="ringArea">
@@ -720,23 +721,12 @@ function makeCloneCard(team){
 }
 function deal(){
   const R=ring(),rad=Math.min(R.s*.105,36)*MENKO_SIZE_SCALE;
-  // 通常メンコだけ毎ラウンド再配置。分身メンコは現在位置を維持する。
-  const clones=cards.filter(c=>c.type==="clone");
-  if(!clones.some(c=>c.team==="player"))clones.push(makeCloneCard("player"));
-  if(!clones.some(c=>c.team==="cpu"))clones.push(makeCloneCard("cpu"));
-  // 各陣営の分身は常に1枚だけ。
-  const uniqueClones=[clones.find(c=>c.team==="player"),clones.find(c=>c.team==="cpu")].filter(Boolean);
-  for(const c of uniqueClones){
-    c.x=clamp(c.x,R.x+c.r*.55,R.x+R.s-c.r*.55);
-    c.y=clamp(c.y,R.y+c.r*.55,R.y+R.s-c.r*.55);
-    c.face=0;c.tilt=0;c.provisionalFace=null;c.exiting=false;c.flip=false;c.settled=true;c.dealing=false;
-  }
   cards=[];const ds=deck();
   linkedCount=ds.length;
   const ts=targets(linkedCount,rad);
   for(let i=0;i<ds.length;i++)cards.push(makeCommonCard(ts[i],ds[i],i,rad));
-  // 分身は通常メンコより上の層として残す。
-  cards.push(...uniqueClones);
+  // 場に置かれるのは常に相手の分身だけ。投げた側の分身は着地後に残らない。
+  cards.push(makeCloneCard(oppositeActor(turn)));
   aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……（青色は相手専用）`;
 }
 function pos(e){const r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}}
@@ -918,18 +908,17 @@ function beginCardMotion(i,impulse,sourceLabel){
   flipChance *= 1/(1+upperCount*layerResistance);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   flipChance=clamp(flipChance,.01,.88);
-  if(c.type==="clone")flipChance=cloneFlipAllowed?flipChance*CLONE_FLIP_RATE:0;
+  if(c.type==="clone")flipChance=0; // 分身はALL-INの確定対象になった時だけめくれる。
   const animationPower=["tooWeak","weak","normal","just","strong","tooStrong"][wave.zone.index]||"normal";
   let willFlip=false;
+  const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
   if(c.type==="clone"){
-    const canRoll=animationPower!=="tooWeak"&&cloneFlipAllowed&&!c.cloneRescueRolled;
-    if(canRoll){
+    if(forcedAllInFlip){
       c.cloneRescueRolled=true;
-      willFlip=Math.random()<flipChance;
-      appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ${willFlip?"成功・効果確定":"失敗"} / 抽選率 ${(flipChance*100).toFixed(1)}%`);
+      willFlip=true;
+      appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ALL-IN確定・効果確定`);
     }
   }else{
-    const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
     willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
   }
   const targetFace=willFlip?1-c.face:c.face;
@@ -1046,11 +1035,14 @@ function hit(x,y,power,gauge,zone){
   if(allIn){
     let nearest=Infinity;
     for(let i=0;i<cards.length;i++){
-      if(cards[i].type==="clone")continue;
       const distance=Math.hypot(cards[i].x-x,cards[i].y-y);
       if(distance<nearest){nearest=distance;allInTarget=i;}
     }
-    if(allInTarget>=0)appendLog(`ALL-IN GUARANTEE: Card ${allInTarget+1} will flip`);
+    if(allInTarget>=0){
+      const target=cards[allInTarget];
+      const targetLabel=target.type==="clone"?`${target.team==="player"?"RED":"BLUE"} CLONE`:`Card ${allInTarget+1}`;
+      appendLog(`ALL-IN GUARANTEE: ${targetLabel} will flip`);
+    }
   }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
@@ -1062,10 +1054,8 @@ function hit(x,y,power,gauge,zone){
   };
   pendingLayerWave.initialImpact=cards.map((_,i)=>exposedImpactNow(i,pendingLayerWave));
   advanceLayerWave();
-  pendingLandedCard=dropper?.sourceClone||makeCloneCard(dropper?.actor||turn);
-  Object.assign(pendingLandedCard,{team:dropper?.actor||turn,type:"clone",x:x+rand(-4,4),y:y+rand(-4,4),r:Math.min(R.s*.105,36)*MENKO_SIZE_SCALE,rot:dropper?.rot||rand(-.3,.3),z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:false,delay:0});
-  // 衝撃計算中にcardsの枚数を変えると、層判定とprocessed配列がずれる。
-  // 投げた分身は既存メンコの動きがすべて終わってから、同じ1枚を場へ戻す。
+  // 投げた側の分身は投擲に使い切り、場には残さない。
+  pendingLandedCard=null;
 }
 function resolveStackFaces(){
   // cards配列の後ろほど上。候補面を上から確定する。
@@ -2104,11 +2094,12 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
   if(state!=="aim"||dropper||presentationRunning)return;
   const selected=forcedGauge??gaugeStrength(),staminaBefore=mainStamina[turn],cap=staminaGaugeCap(staminaBefore),used=Math.min(clamp(selected,.01,1),cap),allIn=used>=.90&&staminaBefore===5,cost=staminaCostForGauge(used);
   mainStamina[turn]=Math.max(0,mainStamina[turn]-cost);
-  if(allIn)mainAllInExhausted[turn]=true;
+  const staminaAfterSpend=mainStamina[turn];
   mainStaminaThrow(used,forcedAim);
+  if(allIn)mainAllInExhausted[turn]=true;
   if(dropper)dropper.allIn=allIn;
   syncBattleUi();
-  appendLog(`STAMINA SPEND: ${actorLabel(turn)} -${cost} / POWER ${Math.round(used*100)}% / ${mainStamina[turn]} of 5${allIn?" / ALL-IN": ""}`);
+  appendLog(`STAMINA SPEND: ${actorLabel(turn)} -${cost} / POWER ${Math.round(used*100)}% / ${staminaAfterSpend} of 5${allIn?" / ALL-IN": ""}`);
 };
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
