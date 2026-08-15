@@ -971,7 +971,8 @@ function beginCardMotion(i,impulse,sourceLabel){
   c.targetFace=targetFace;c.flipChance=flipChance;
   wave.moved[i]=true;
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Direct overlap: ${(directOverlap*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].join("\n"));
+  const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
+  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Direct overlap: ${(directOverlap*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function exposedImpactNow(i,wave){
@@ -1049,6 +1050,7 @@ function hit(x,y,power,gauge,zone){
       const distance=Math.hypot(cards[i].x-x,cards[i].y-y);
       if(distance<nearest){nearest=distance;allInTarget=i;}
     }
+    if(allInTarget>=0)appendLog(`ALL-IN GUARANTEE: Card ${allInTarget+1} will flip`);
   }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
