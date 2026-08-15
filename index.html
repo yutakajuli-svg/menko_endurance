@@ -901,6 +901,9 @@ function beginCardMotion(i,impulse,sourceLabel){
   // exposed card easier to turn over. The remaining variance is only texture
   // and card layering, not a hidden "correct" point on the bar.
   let flipChance=labRadial*(.40+.56*wave.gauge);
+  // ALL-IN直後で相手が息切れ中なら、無防備な隙として少し捲れやすくなる。
+  const opponentExhausted=typeof mainStamina!=="undefined"&&mainStamina[oppositeActor(turn)]===0;
+  if(opponentExhausted&&c.type!=="clone")flipChance*=1.15;
   // 分身は通常の物理めくれ率を完成させた後、専用補正を掛けた1回の抽選だけを行う。
   // この抽選でめくれた分身は、追加抽選なしで効果が確定発動する。
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
