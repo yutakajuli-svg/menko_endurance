@@ -181,7 +181,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
   </section>
 
   <div id="strengthWrap">
-    <div id="strengthCaption"><span>POWER　1–50:1 / 51–75:2 / 76–100:3</span><span id="turnCaption">ROUND 1</span></div>
+    <div id="strengthCaption"><span>POWER　1–50:1 / 51–75:2 / 76–90:3 / 91–100:ALL</span><span id="turnCaption">ROUND 1</span></div>
     <div id="bar"><div id="needle"></div></div>
   </div>
 
@@ -892,7 +892,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   else if(impactPower>=.22){behavior="EDGE_LIFT";behaviorJP="角浮き"}
 
   const labRadial=clamp(1-d/Math.max(1,wave.maxRadius),0,1);
-  if(behavior==="STOP"&&labRadial>.06){behavior="EDGE_LIFT";behaviorJP="edge lift";}
+  if(behavior==="STOP"&&(labRadial>.06||(wave.allIn&&i===wave.allInTarget))){behavior="EDGE_LIFT";behaviorJP="edge lift";}
   wave.processed[i]=true;
   if(behavior==="STOP"){
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
@@ -929,7 +929,8 @@ function beginCardMotion(i,impulse,sourceLabel){
       appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ${willFlip?"成功・効果確定":"失敗"} / 抽選率 ${(flipChance*100).toFixed(1)}%`);
     }
   }else{
-    willFlip=animationPower!=="tooWeak"&&Math.random()<flipChance;
+    const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
+    willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
   }
   const targetFace=willFlip?1-c.face:c.face;
 
@@ -1039,8 +1040,19 @@ function hit(x,y,power,gauge,zone){
     c.faceBeforeThrow=c.face;c.throwStartX=c.x;c.throwStartY=c.y;c.provisionalFace=null;
     c.flip=false;c.settled=true;
   }
+  const allIn=!!dropper?.allIn;
+  let allInTarget=-1;
+  if(allIn){
+    let nearest=Infinity;
+    for(let i=0;i<cards.length;i++){
+      if(cards[i].type==="clone")continue;
+      const distance=Math.hypot(cards[i].x-x,cards[i].y-y);
+      if(distance<nearest){nearest=distance;allInTarget=i;}
+    }
+  }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
+    allIn,allInTarget,
     efficiency:1,
     processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),cardImpulse:new Array(cards.length).fill(0),
     initialImpact:[],lines:[],complete:false,
@@ -2044,15 +2056,17 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 
 /* Five visible stamina pips pay for output before a MENKO is thrown. */
 const mainStamina={player:5,cpu:5},mainWeight={player:"middle",cpu:"middle"};
+const mainAllInExhausted={player:false,cpu:false};
 let mainStaminaTurnToken="";
 // Keep weight neutral during this stamina/output trial. The prior light-weight
 // profile narrowed its impact at high power, contradicting the new rule that
 // every fighter gets more reach as the bar moves right.
 function mainWeightImpact(){return {range:1,power:1};}
-const staminaCostForGauge=g=>g>.75?3:g>.50?2:1;
-const staminaGaugeCap=stamina=>stamina>=3?1:stamina===2?.75:.50;
+const staminaCostForGauge=g=>g>.90?5:g>.75?3:g>.50?2:1;
+const staminaGaugeCap=stamina=>stamina>=5?1:stamina>=4?.90:stamina>=3?.75:.50;
+const mainBlankRoundResult=()=>({attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
 const mainStaminaNewMatch=newMatch;
-newMatch=function(){mainStamina.player=5;mainStamina.cpu=5;mainStaminaTurnToken="";mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
+newMatch=function(){mainStamina.player=5;mainStamina.cpu=5;mainAllInExhausted.player=false;mainAllInExhausted.cpu=false;mainStaminaTurnToken="";mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
 const mainAdvanceTurnAfterHold=advanceTurnAfterHold;
 advanceTurnAfterHold=function(){
   const result=roundResults[turn];
@@ -2062,6 +2076,17 @@ advanceTurnAfterHold=function(){
 const mainStaminaPrepareThrowPhase=prepareThrowPhase;
 prepareThrowPhase=function(){
   if(state==="aim"){
+    if(mainAllInExhausted[turn]){
+      const actor=turn;
+      mainAllInExhausted[actor]=false;
+      mainStamina[actor]=2;
+      roundResults[actor]=mainBlankRoundResult();
+      appendLog(`STAMINA EXHAUSTED: ${actorLabel(actor)} skips this throw / returns at 2 of 5`);
+      syncBattleUi();
+      msg=`${actorLabel(actor)}は息切れ！\n攻防できない！`;
+      setTimeout(()=>{if(state==="aim"&&turn===actor&&!dropper)advanceTurnAfterHold();},360);
+      return;
+    }
     const token=`${roundNo}:${roundThrow}:${turn}`;
     if(mainStaminaTurnToken!==token){
       mainStaminaTurnToken=token;
@@ -2075,11 +2100,13 @@ prepareThrowPhase=function(){
 const mainStaminaThrow=throwMenko;
 throwMenko=function(forcedGauge=null,forcedAim=null){
   if(state!=="aim"||dropper||presentationRunning)return;
-  const selected=forcedGauge??gaugeStrength(),cap=staminaGaugeCap(mainStamina[turn]),used=Math.min(clamp(selected,.01,1),cap),cost=staminaCostForGauge(used);
+  const selected=forcedGauge??gaugeStrength(),staminaBefore=mainStamina[turn],cap=staminaGaugeCap(staminaBefore),used=Math.min(clamp(selected,.01,1),cap),allIn=used>.90&&staminaBefore===5,cost=staminaCostForGauge(used);
   mainStamina[turn]=Math.max(0,mainStamina[turn]-cost);
+  if(allIn)mainAllInExhausted[turn]=true;
   mainStaminaThrow(used,forcedAim);
+  if(dropper)dropper.allIn=allIn;
   syncBattleUi();
-  appendLog(`STAMINA SPEND: ${actorLabel(turn)} -${cost} / POWER ${Math.round(used*100)}% / ${mainStamina[turn]} of 5`);
+  appendLog(`STAMINA SPEND: ${actorLabel(turn)} -${cost} / POWER ${Math.round(used*100)}% / ${mainStamina[turn]} of 5${allIn?" / ALL-IN": ""}`);
 };
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
@@ -2108,6 +2135,7 @@ const mainStaminaResolve=resolveRoundEffects;
 resolveRoundEffects=function(){
   mainStaminaResolve();
   for(const actor of ["player","cpu"]){
+    if(mainAllInExhausted[actor])continue;
     const defenseGain=Math.min(2,roundResults[actor]?.defenseLevel??0);
     if(defenseGain){
       mainStamina[actor]=Math.min(5,mainStamina[actor]+defenseGain);
