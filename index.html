@@ -2045,7 +2045,10 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 /* Five visible stamina pips pay for output before a MENKO is thrown. */
 const mainStamina={player:5,cpu:5},mainWeight={player:"middle",cpu:"middle"};
 let mainStaminaTurnToken="";
-function mainWeightImpact(actor,gauge){const weight=mainWeight[actor]||"middle";if(weight==="light")return {range:1.10-.40*gauge,power:1.18-.30*gauge};if(weight==="heavy")return {range:.40+1.10*gauge,power:.55+.75*gauge};return {range:1,power:1};}
+// Keep weight neutral during this stamina/output trial. The prior light-weight
+// profile narrowed its impact at high power, contradicting the new rule that
+// every fighter gets more reach as the bar moves right.
+function mainWeightImpact(){return {range:1,power:1};}
 const staminaCostForGauge=g=>g>.75?3:g>.50?2:1;
 const staminaGaugeCap=stamina=>stamina>=3?1:stamina===2?.75:.50;
 const mainStaminaNewMatch=newMatch;
