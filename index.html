@@ -1273,8 +1273,9 @@ async function playKickoutEvent(actor){
 }
 async function playDefenseEvent(actor,level){
   const defender=oppositeActor(actor),attacker=actorLabel(actor),target=actorLabel(defender);
-  const variant=randInt(1,2),stem=`ex_move_defense_${String(variant).padStart(2,"0")}`;
-  await playIllustration({files:frameFiles(stem,variant===1?2:3),mirrored:actor==="player"?redEventMirrored.ex_move_defense:!redEventMirrored.ex_move_defense,colorSwap:actor==="cpu",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
+  // 追加した3コマ版は試遊中は外し、従来の2コマ防御演出だけを使う。
+  const stem="ex_move_defense_01";
+  await playIllustration({files:frameFiles(stem,2),mirrored:actor==="player"?redEventMirrored.ex_move_defense:!redEventMirrored.ex_move_defense,colorSwap:actor==="cpu",lines:[`${attacker}の攻撃！`,`${target}はうまく防いだ！`,`ダメージ 0`],tall:true,alt:`${target}の防御`,feedback:()=>{setPortraitExpression(actor,"attack");restartStatusFeedback(defender,"feedback-white",360);return wait(360)}});
 }
 async function playCounterEvent(actor,damage=1){
   const target=oppositeActor(actor),label=actorLabel(actor),victim=actorLabel(target),type=randInt(1,2),stem=`ex_move_Counterattack_${String(type).padStart(2,"0")}`;
