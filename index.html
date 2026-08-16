@@ -626,6 +626,19 @@ function polygonsOverlap(a,b){
   return true;
 }
 function cardsOverlap(a,b){return polygonsOverlap(cardFootprint(a),cardFootprint(b))}
+function pointInPolygon(x,y,polygon){
+  let inside=false;
+  for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+    const a=polygon[i],b=polygon[j];
+    if((a.y>y)!==(b.y>y)&&x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+  }
+  return inside;
+}
+function landingTopCardIndex(x,y){
+  // 後ろにある札ほど上層。着地点を覆う最上層の通常札だけは確定で捲れる。
+  for(let i=cards.length-1;i>=0;i--)if(cards[i].type!=="clone"&&pointInPolygon(x,y,cardFootprint(cards[i])))return i;
+  return -1;
+}
 const MIN_STACK_OVERLAP=.08;
 function stackCardsOverlap(a,b){return cardsOverlap(a,b)&&overlapAmount(a,b)>=MIN_STACK_OVERLAP}
 function updateStackDepths(){
@@ -800,7 +813,13 @@ function throwMenko(forcedGauge=null,forcedAim=null){
   const gauge=clamp(intendedGauge+playerInputDrift,0,1),z=classifyGauge(gauge),R=ring();
   if(turn==="player"&&playerFatigue>.01)appendLog(`PLAYER THROW: power=${intendedGauge.toFixed(2)} -> ${gauge.toFixed(2)} inputDrift=${playerInputDrift>=0?"+":""}${playerInputDrift.toFixed(2)} focus=${(concentration.player??100).toFixed(0)}`);
   prepareCloneRescueChance(turn);
-  const target=forcedAim||{x:R.x+R.s/2,y:R.y+R.s/2};
+  const aimedTarget=forcedAim||{x:R.x+R.s/2,y:R.y+R.s/2};
+  // 強く、重いMENKOほど着地点は荒れる。軽く弱い投擲なら一点を正確に狙える。
+  const weightImpact=mainWeightImpact(turn,gauge);
+  const aimSpread=R.s*(.006+.065*Math.pow(gauge,1.35))*weightImpact.aim;
+  const aimAngle=Math.random()*Math.PI*2,aimDrift=rand(.35,1)*aimSpread;
+  const target={x:clamp(aimedTarget.x+Math.cos(aimAngle)*aimDrift,R.x+R.s*.06,R.x+R.s*.94),y:clamp(aimedTarget.y+Math.sin(aimAngle)*aimDrift,R.y+R.s*.06,R.y+R.s*.94)};
+  if(aimSpread>R.s*.012)appendLog(`THROW DRIFT: ${actorLabel(turn)} ${aimDrift.toFixed(0)}px / ${mainWeight[turn]} / POWER ${Math.round(gauge*100)}%`);
   const power=.52+.76*gauge;
   prepareThrowPhase();
   const sourceClone=heldClone&&heldClone.team===turn?heldClone:makeCloneCard(turn);
@@ -888,7 +907,8 @@ function beginCardMotion(i,impulse,sourceLabel){
   else if(impactPower>=.22){behavior="EDGE_LIFT";behaviorJP="角浮き"}
 
   const labRadial=clamp(1-d/Math.max(1,wave.maxRadius),0,1);
-  if(behavior==="STOP"&&(labRadial>.06||(wave.allIn&&i===wave.allInTarget))){behavior="EDGE_LIFT";behaviorJP="edge lift";}
+  const forcedLandingFlip=wave.guaranteedTarget===i&&c.type!=="clone";
+  if(behavior==="STOP"&&(labRadial>.06||forcedLandingFlip||(wave.allIn&&i===wave.allInTarget))){behavior="EDGE_LIFT";behaviorJP="edge lift";}
   wave.processed[i]=true;
   if(behavior==="STOP"){
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
@@ -900,7 +920,9 @@ function beginCardMotion(i,impulse,sourceLabel){
   // POWER is now a straight trade: more output reaches farther and makes each
   // exposed card easier to turn over. The remaining variance is only texture
   // and card layering, not a hidden "correct" point on the bar.
-  let flipChance=labRadial*(.40+.56*wave.gauge);
+  // 着地点からの距離が抽選率の土台。強投ほど広く、外周まで期待値を残す。
+  const distanceChance=Math.pow(labRadial,1.30-.55*wave.gauge);
+  let flipChance=distanceChance*(.36+.60*wave.gauge);
   // ALL-IN直後で相手が息切れ中なら、無防備な隙として少し捲れやすくなる。
   const opponentExhausted=typeof mainStamina!=="undefined"&&mainStamina[oppositeActor(turn)]===0;
   if(opponentExhausted&&c.type!=="clone")flipChance*=1.15;
@@ -928,7 +950,7 @@ function beginCardMotion(i,impulse,sourceLabel){
       appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ALL-IN確定・効果確定`);
     }
   }else{
-    willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
+    willFlip=forcedLandingFlip||forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
   }
   const targetFace=willFlip?1-c.face:c.face;
 
@@ -969,8 +991,9 @@ function beginCardMotion(i,impulse,sourceLabel){
   c.targetFace=targetFace;c.flipChance=flipChance;
   wave.moved[i]=true;
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
+  const landingNote=forcedLandingFlip?`  LANDING       : GUARANTEED FLIP`:null;
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Direct overlap: ${(directOverlap*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Direct overlap: ${(directOverlap*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,landingNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function exposedImpactNow(i,wave){
@@ -1040,6 +1063,7 @@ function hit(x,y,power,gauge,zone){
     c.flip=false;c.settled=true;
   }
   const allIn=!!dropper?.allIn;
+  const guaranteedTarget=landingTopCardIndex(x,y);
   let allInTarget=-1;
   if(allIn){
     let nearest=Infinity;
@@ -1055,7 +1079,7 @@ function hit(x,y,power,gauge,zone){
   }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
-    allIn,allInTarget,
+    allIn,allInTarget,guaranteedTarget,
     efficiency:1,
     processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),cardImpulse:new Array(cards.length).fill(0),
     initialImpact:[],lines:[],complete:false,
@@ -2059,10 +2083,12 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 const mainStamina={player:5,cpu:5},mainWeight={player:"middle",cpu:"middle"};
 const mainAllInExhausted={player:false,cpu:false};
 let mainStaminaTurnToken="";
-// Keep weight neutral during this stamina/output trial. The prior light-weight
-// profile narrowed its impact at high power, contradicting the new rule that
-// every fighter gets more reach as the bar moves right.
-function mainWeightImpact(){return {range:1,power:1};}
+function mainWeightImpact(actor){
+  const weight=mainWeight[actor]||"middle";
+  if(weight==="light")return {range:.78,power:.90,aim:.58};
+  if(weight==="heavy")return {range:1.22,power:1.08,aim:1.48};
+  return {range:1,power:1,aim:1};
+}
 const staminaCostForGauge=g=>g>=.90?5:g>.75?3:g>.50?2:1;
 const staminaGaugeCap=stamina=>stamina>=5?1:stamina>=4?.90:stamina>=3?.75:.50;
 const mainBlankRoundResult=()=>({attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
