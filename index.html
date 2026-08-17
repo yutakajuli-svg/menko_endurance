@@ -1835,6 +1835,8 @@ function progressArea(match){return match<=5?1:match<=10?2:3}
 function randInt(min,max){return Math.floor(Math.random()*(Math.floor(max)-Math.ceil(min)+1))+Math.ceil(min)}
 function generateProgressEnemy(area,stage=4){
   const boss=BOSSES[area*5],prev=area===1?null:BOSSES[(area-1)*5];
+  // 最初の試遊対戦だけは、共通各1＋双方差分各2を確実に確認できる構成にする。
+  if(area===1&&stage===1)return {hp:randInt(10,13),atk:randInt(1,2),atkMenko:3,defMenko:3,isBoss:false};
   const area1Ranges=[[9,12],[10,14],[12,17],[14,20]],area1Range=area1Ranges[clamp(stage,1,4)-1];
   const maxP=area===1?area1Range[1]:progressPoints(boss),minP=area===1?area1Range[0]:progressPoints(prev)+1;
   const area1AtkCaps=[2,2,3,3],area1DefCaps=[1,2,3,3],stageIndex=clamp(stage,1,4)-1;
@@ -1883,7 +1885,7 @@ function startIntegratedRun(){
   clearRunProgress();resumedFromSave=false;runSaveMode="match";pendingRewardOptions=[];
   records.runs++;saveProgressRecords();
   resetPortraitRun();
-  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:2,defMenko:2},playerWeight:null,enemy:null,routes:{}};
+  runState={match:1,wins:0,player:{hp:15,atk:2,atkMenko:3,defMenko:3},playerWeight:null,enemy:null,routes:{}};
   prepareIntegratedMatch();
 }
 function syncIntegratedMatchFromRunState(){
@@ -2155,13 +2157,13 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
-// Board economy trial: every throw has its own board.  The four common cards are
-// always present; each side's growth above that baseline becomes a difference card.
+// Board economy trial: every throw has its own board.  One common card of each
+// type is always present; each side's cards above that baseline are differences.
 deck=function(){
   const d=[];
-  for(let i=0;i<2;i++)d.push({team:"common",type:"attack",isDifference:false});
-  for(let i=0;i<2;i++)d.push({team:"common",type:"defense",isDifference:false});
-  const add=(team,type,n)=>{for(let i=0;i<Math.max(0,n-2);i++)d.push({team,type,isDifference:true})};
+  d.push({team:"common",type:"attack",isDifference:false});
+  d.push({team:"common",type:"defense",isDifference:false});
+  const add=(team,type,n)=>{for(let i=0;i<Math.max(0,n-1);i++)d.push({team,type,isDifference:true})};
   add("player","attack",config.redAttackCards);add("cpu","attack",config.blueAttackCards);
   add("player","defense",config.redDefenseCards);add("cpu","defense",config.blueDefenseCards);
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
