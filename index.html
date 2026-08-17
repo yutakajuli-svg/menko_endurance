@@ -1072,15 +1072,21 @@ function hit(x,y,power,gauge,zone){
   const guaranteedTarget=landingTopCardIndex(x,y);
   let allInTarget=-1;
   if(allIn){
-    let nearest=Infinity;
-    for(let i=0;i<cards.length;i++){
-      const distance=Math.hypot(cards[i].x-x,cards[i].y-y);
-      if(distance<nearest){nearest=distance;allInTarget=i;}
-    }
-    if(allInTarget>=0){
-      const target=cards[allInTarget];
-      const targetLabel=target.type==="clone"?`${target.team==="player"?"RED":"BLUE"} CLONE`:`Card ${allInTarget+1}`;
-      appendLog(`ALL-IN GUARANTEE: ${targetLabel} will flip`);
+    const aimedCloneIndex=dropper?.aimedClone?cards.indexOf(dropper.aimedClone):-1;
+    if(aimedCloneIndex>=0){
+      allInTarget=aimedCloneIndex;
+      appendLog(`ALL-IN GUARANTEE: targeted ${cards[allInTarget].team==="player"?"RED":"BLUE"} CLONE will flip`);
+    }else{
+      let nearest=Infinity;
+      for(let i=0;i<cards.length;i++){
+        const distance=Math.hypot(cards[i].x-x,cards[i].y-y);
+        if(distance<nearest){nearest=distance;allInTarget=i;}
+      }
+      if(allInTarget>=0){
+        const target=cards[allInTarget];
+        const targetLabel=target.type==="clone"?`${target.team==="player"?"RED":"BLUE"} CLONE`:`Card ${allInTarget+1}`;
+        appendLog(`ALL-IN GUARANTEE: ${targetLabel} will flip`);
+      }
     }
   }
   pendingLayerWave={
@@ -2135,11 +2141,14 @@ const mainStaminaThrow=throwMenko;
 throwMenko=function(forcedGauge=null,forcedAim=null){
   if(state!=="aim"||dropper||presentationRunning)return;
   const selected=forcedGauge??gaugeStrength(),staminaBefore=mainStamina[turn],cap=staminaGaugeCap(staminaBefore),used=Math.min(clamp(selected,.01,1),cap),allIn=used>=.90&&staminaBefore===5,cost=staminaCostForGauge(used);
+  // 分身を直接狙ったALL-INは、強投擲の着地点ブレで別札に化けないようにする。
+  // ただし分身の近くを狙っていないALL-INは、従来どおり実着地点で確定札を決める。
+  const aimedClone=allIn&&forcedAim?cards.find(c=>c.type==="clone"&&Math.hypot(c.x-forcedAim.x,c.y-forcedAim.y)<=c.r*1.15):null;
   mainStamina[turn]=Math.max(0,mainStamina[turn]-cost);
   const staminaAfterSpend=mainStamina[turn];
   mainStaminaThrow(used,forcedAim);
   if(allIn)mainAllInExhausted[turn]=true;
-  if(dropper)dropper.allIn=allIn;
+  if(dropper){dropper.allIn=allIn;dropper.aimedClone=aimedClone||null;}
   syncBattleUi();
   appendLog(`STAMINA SPEND: ${actorLabel(turn)} -${cost} / POWER ${Math.round(used*100)}% / ${staminaAfterSpend} of 5${allIn?" / ALL-IN": ""}`);
 };
