@@ -936,7 +936,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   const d=Math.hypot(c.x-wave.x,c.y-wave.y);
   const dx=c.x-wave.x,dy=c.y-wave.y,dirLen=Math.max(1,d),ux=dx/dirLen,uy=dy/dirLen;
   const upperCount=currentUpperCards(i).length;
-  const inf=wave.initialImpact[i];
+  const {inf}=wave.initialImpact[i];
   const physical=impactProfileForCard(c,wave,inf,impactPower);
 
   // 中心は押し込み、半分ずらした直撃は跳ね、少し横は風圧で端を浮かせる。
