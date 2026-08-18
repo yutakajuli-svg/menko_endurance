@@ -155,7 +155,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #testToolsMenu{display:none;align-items:center;gap:5px}
 #testTools.open #testToolsMenu{display:flex}
 #testTools button{position:static;min-height:26px;padding:4px 7px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.72}
-body.terrain-lab #progressFab{display:none}
+body.terrain-lab #progressFab,body.terrain-lab .clone-inline{display:none}
 #testTools button:hover,#testTools button:focus-visible{color:#fff;opacity:1}
 #testToolsToggle{min-width:42px}
 #playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
@@ -745,7 +745,8 @@ function deal(){
   const ts=targets(linkedCount,rad);
   for(let i=0;i<ds.length;i++)cards.push(makeCommonCard(ts[i],ds[i],i,rad));
   // 場に置かれるのは常に相手の分身だけ。投げた側の分身は着地後に残らない。
-  cards.push(makeCloneCard(oppositeActor(turn)));
+  // TERRAIN LABでは分身の例外を切り離し、通常MENKOだけの盤面を見る。
+  if(!TERRAIN_LAB)cards.push(makeCloneCard(oppositeActor(turn)));
   aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……（青色は相手専用）`;
 }
 function pos(e){const r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}}
@@ -1317,20 +1318,21 @@ async function playRoundPresentations(data){
     return;
   }
   for(const actor of order){const heal=rescued.find(r=>r.actor===actor&&r.choice==="heal");if(heal)await playCloneHealEvent(heal)}
-  let attackShown=false;
+  let actionShown=false;
   for(const actor of order){
     if(displayedHP[actor]<=0){
       appendLog(`攻撃演出省略: ${actorLabel(actor)}は先攻側の攻撃演出でHP0`);
       continue;
     }
     const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
+    let actionShownThisTurn=false;
     if(resultData.attackCancelledByKO)continue;
-    if(overrides[actor]!=null){attackShown=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){attackShown=true;if(effectiveLevel>0){await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor)await playDefenseEvent(actor,resultData.attackLevel)}
-    if(counter?.target===actor)await playCounterEvent(counter.actor,counter.damage);
-    if(attackShown)await wait(BETWEEN_BATTLE_EVENTS_HOLD);
+    if(overrides[actor]!=null){actionShownThisTurn=true;await playCloneDamageEvent(actor,damage)}
+    else if(resultData.attackLevel>0){if(effectiveLevel>0){actionShownThisTurn=true;await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
+    if(counter?.target===actor){actionShownThisTurn=true;await playCounterEvent(counter.actor,counter.damage)}
+    if(actionShownThisTurn){actionShown=true;await wait(BETWEEN_BATTLE_EVENTS_HOLD)}
   }
-  if(!attackShown)await playNoAttackEvent(roundStarter);
+  if(!actionShown)await playNoAttackEvent(roundStarter);
   displayedHP={player:redHP,cpu:blueHP};resetPortraitExpressions();syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD;
 }
 function resolveRoundEffects(){
@@ -1372,6 +1374,10 @@ function resolveRoundEffects(){
   blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
   roundRedDamage=cloneExclusive?0:redNormalDamage;
   roundBlueDamage=cloneExclusive?0:blueNormalDamage;
+  // 通常攻撃とカウンターは別の発生源として保持する。
+  // 先攻KOで後攻を中止できるのは、先攻の通常攻撃だけである。
+  const normalDamage={player:roundRedDamage,cpu:roundBlueDamage};
+  const counterDamage={player:0,cpu:0};
 
   // Either attack can be countered once per round. A remaining normal attack always takes priority.
   const openingResult=roundStarter==="player"?red:blue;
@@ -1388,6 +1394,7 @@ function resolveRoundEffects(){
     const eligible=!cloneExclusive&&pair.attackerResult.attackLevel>0&&pair.defenderResult.defenseLevel>pair.attackerResult.attackLevel&&pair.defenderResult.effectiveAttackLevel<=0;
     if(!eligible)continue;
     counter={actor:pair.defender,target:pair.attacker,damage:1};
+    counterDamage[counter.actor]=counter.damage;
     if(counter.actor==="player")roundRedDamage+=counter.damage;
     else roundBlueDamage+=counter.damage;
     appendLog(`COUNTER: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK ${pair.attackerResult.attackLevel} / ${actorLabel(counter.actor)} deals ${counter.damage}`);
@@ -1408,7 +1415,7 @@ function resolveRoundEffects(){
 
   // 攻撃演出順＝先攻順。先攻の一撃が致命傷なら、後攻の攻撃とダメージは発生しない。
   const secondActor=oppositeActor(roundStarter);
-  const firstDamage=roundStarter==="player"?roundRedDamage:roundBlueDamage;
+  const firstDamage=normalDamage[roundStarter];
   const secondHP=secondActor==="player"?redHP:blueHP;
   const firstResult=roundStarter==="player"?red:blue;
   const firstWouldKO=!cloneExclusive&&firstDamage>0&&firstDamage>=secondHP;
@@ -1455,6 +1462,7 @@ function resolveRoundEffects(){
     `BLUE defense used : ${blueDefenseUsed}`,
     `RED effective Lv  : ${redEffectiveAttackLevel}`,
     `RED damage formula: ${redEffectiveAttackLevel>0?`ceil(${config.redAttack} * 0.5) + ${redEffectiveAttackLevel} = ${redNormalDamage}`:"FULL DEFENSE = 0"}`,
+    `RED counter damage: ${counterDamage.player}`,
     `RED clone override: ${redCloneOverride==null?"none":redCloneOverride}`,
     `RED final damage  : ${roundRedDamage}`,
     `RED KO cancelled  : ${red.attackCancelledByKO?"yes":"no"}`,
@@ -1463,6 +1471,7 @@ function resolveRoundEffects(){
     `RED defense used  : ${redDefenseUsed}`,
     `BLUE effective Lv : ${blueEffectiveAttackLevel}`,
     `BLUE damage formula: ${blueEffectiveAttackLevel>0?`ceil(${config.blueAttack} * 0.5) + ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"FULL DEFENSE = 0"}`,
+    `BLUE counter damage: ${counterDamage.cpu}`,
     `BLUE clone override: ${blueCloneOverride==null?"none":blueCloneOverride}`,
     `BLUE final damage : ${roundBlueDamage}`,
     `BLUE KO cancelled : ${blue.attackCancelledByKO?"yes":"no"}`,
@@ -1497,7 +1506,7 @@ function resolveRoundEffects(){
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
   const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(counter?.actor??(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter));
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
-  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
+  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${normalDamage.player} normal + ${counterDamage.player} counter = ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${normalDamage.cpu} normal + ${counterDamage.cpu} counter = ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
   playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD});
@@ -2150,7 +2159,7 @@ prepareThrowPhase=function(){
       appendLog(`STAMINA READY: ${actorLabel(turn)} +1 / ${mainStamina[turn]} of 5`);
       syncBattleUi();
     }
-    if(cloneChargeTurnToken!==token){
+    if(!TERRAIN_LAB&&cloneChargeTurnToken!==token){
       cloneChargeTurnToken=token;
       // 開幕は5から開始。以後は自分の投擲準備ごとに1ずつ分身チャージが貯まる。
       if(!(roundNo===1&&roundThrow===0)){
@@ -2211,8 +2220,10 @@ resolveRoundEffects=function(){
     if(defenseGain){
       mainStamina[actor]=Math.min(5,mainStamina[actor]+defenseGain);
       appendLog(`STAMINA DEFENSE: ${actorLabel(actor)} +${defenseGain} / defense MENKO gained`);
-      cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);
-      appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);
+      if(!TERRAIN_LAB){
+        cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);
+        appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);
+      }
     }
   }
   syncBattleUi();
