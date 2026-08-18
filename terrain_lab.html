@@ -690,6 +690,34 @@ function sampleCardPoints(c,count=24){
   }
   return pts;
 }
+function impactProfileForCard(c,wave,inf,impactPower){
+  // 着地点が札のどこへ入ったか。中心は押さえ込み、中心から半分ほど
+  // 外れた所は回転の支点になりやすい、として扱う。
+  const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),dx=wave.x-c.x,dy=wave.y-c.y;
+  const localX=dx*cs-dy*sn,localY=dx*sn+dy*cs;
+  const contact=pointInPolygon(wave.x,wave.y,cardFootprint(c));
+  const contactOffset=Math.hypot(localX,localY)/Math.max(1,c.r);
+  const centerPress=contact?clamp(1-contactOffset/.36,0,1):0;
+  const offsetHit=contact?Math.exp(-Math.pow((contactOffset-.58)/.23,2)):0;
+
+  // 地面へ叩きつけた札が生む風圧は、札の「衝撃側で露出した端」から
+  // 入りやすい。上に覆われた端は入口として数えない。
+  const edgePoints=sampleCardPoints(c,16).slice(9);
+  let pressureTotal=0,pressureCount=0;
+  for(const p of edgePoints){
+    if(inf.uppers.some(u=>pointCoveredByCard(p,cards[u])))continue;
+    const fromImpactX=p.x-wave.x,fromImpactY=p.y-wave.y,fromImpactLen=Math.max(1,Math.hypot(fromImpactX,fromImpactY));
+    const outwardX=p.x-c.x,outwardY=p.y-c.y,outwardLen=Math.max(1,Math.hypot(outwardX,outwardY));
+    const facing=clamp((1-(outwardX/outwardLen)*(fromImpactX/fromImpactLen)-(outwardY/outwardLen)*(fromImpactY/fromImpactLen))/2,0,1);
+    const distance=clamp(1-fromImpactLen/Math.max(1,wave.maxRadius),0,1);
+    pressureTotal+=Math.pow(distance,.72)*(.22+.78*facing);
+    pressureCount++;
+  }
+  const airEntry=pressureCount?pressureTotal/pressureCount:0;
+  const airLift=airEntry*clamp(impactPower,0,1.2);
+  const liftForce=clamp(airLift*.92+offsetHit*impactPower*.74-centerPress*impactPower*.38,0,1.25);
+  return {contact,contactOffset,centerPress,offsetHit,airEntry,airLift,liftForce};
+}
 function pointCoveredByCard(p,c){
   const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),dx=p.x-c.x,dy=p.y-c.y;
   const x=Math.abs(dx*cs-dy*sn),y=Math.abs(dx*sn+dy*cs),r=c.r,corner=r*.10;
@@ -907,21 +935,20 @@ function beginCardMotion(i,impulse,sourceLabel){
   const impactPower=clamp(impulse/c.weight,0,1.35);
   const d=Math.hypot(c.x-wave.x,c.y-wave.y);
   const dx=c.x-wave.x,dy=c.y-wave.y,dirLen=Math.max(1,d),ux=dx/dirLen,uy=dy/dirLen;
-  const directReach=c.r+(wave.strikerRadius||0);
-  const directOverlap=clamp(1-d/directReach,0,1);
   const upperCount=currentUpperCards(i).length;
+  const inf=wave.initialImpact[i];
+  const physical=impactProfileForCard(c,wave,inf,impactPower);
 
-  // 衝撃値は「めくれる角度」ではなく、まず挙動の種類に変換する。
-  // 動画の特徴（片側から浮く・横へ逃げる・飛ぶ時だけ大きく動く）を、ゲーム向けに誇張する。
+  // 中心は押し込み、半分ずらした直撃は跳ね、少し横は風圧で端を浮かせる。
+  // ここをメンコの主ルールにして、バーの正解探しにはしない。
   let behavior="STOP",behaviorJP="静止";
-  if(directOverlap>.08){behavior="DIRECT_HIT";behaviorJP="直撃"}
-  else if(impactPower>=.70){behavior="HIGH_HOP";behaviorJP="高い飛び"}
-  else if(impactPower>=.40){behavior="SHORT_HOP";behaviorJP="低い飛び"}
-  else if(impactPower>=.22){behavior="EDGE_LIFT";behaviorJP="角浮き"}
+  if(physical.centerPress>.45){behavior="PRESS";behaviorJP="押さえ"}
+  else if(physical.offsetHit>.22&&impactPower>=.24){behavior="OFFSET_HIT";behaviorJP="半ずらし直撃"}
+  else if(physical.airLift>.17){behavior="AIR_LIFT";behaviorJP="風圧浮き"}
+  else if(impactPower>=.18&&inf.exposedImpactFraction>.08){behavior="NUDGE";behaviorJP="ずれ"}
 
-  const labRadial=clamp(1-d/Math.max(1,wave.maxRadius),0,1);
-  const forcedLandingFlip=wave.guaranteedTarget===i&&c.type!=="clone";
-  if(behavior==="STOP"&&(labRadial>.06||forcedLandingFlip||(wave.allIn&&i===wave.allInTarget))){behavior="EDGE_LIFT";behaviorJP="edge lift";}
+  const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
+  if(behavior==="STOP"&&forcedAllInFlip){behavior="AIR_LIFT";behaviorJP="ALL-IN";}
   wave.processed[i]=true;
   if(behavior==="STOP"){
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
@@ -929,38 +956,27 @@ function beginCardMotion(i,impulse,sourceLabel){
     return false;
   }
 
-  // めくれは挙動と別抽選。上に乗っている枚数は成功率を下げ、直撃は上げる。
-  // POWER is now a straight trade: more output reaches farther and makes each
-  // exposed card easier to turn over. The remaining variance is only texture
-  // and card layering, not a hidden "correct" point on the bar.
-  // 着地点からの距離が抽選率の土台。強投ほど広く、外周まで期待値を残す。
-  const distanceChance=Math.pow(labRadial,1.30-.55*wave.gauge);
-  let flipChance=distanceChance*(.36+.60*wave.gauge);
+  // めくれは距離だけでは決めない。風が端へ入った量と、半ずらし直撃の
+  // 回転力が土台になる。中心への直撃は強くても押し込みとして減点する。
+  let flipChance=.025+physical.liftForce*.68;
   // ALL-IN直後で相手が息切れ中なら、無防備な隙として少し捲れやすくなる。
   const opponentExhausted=typeof mainStamina!=="undefined"&&mainStamina[oppositeActor(turn)]===0;
   if(opponentExhausted&&c.type!=="clone")flipChance*=1.15;
   // 分身は通常の物理めくれ率を完成させた後、専用補正を掛けた1回の抽選だけを行う。
   // この抽選でめくれた分身は、追加抽選なしで効果が確定発動する。
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
-  // Range and distance define the baseline. In the terrain lab, a visibly big
-  // hop or a direct hit also carries a minimum physical chance to turn over.
   // One throw has a small shared catch quality.  Clones use the same physical roll.
   flipChance *= wave.texture.stability;
-  // A full-power impact can peel a stack, while a careful low throw still
-  // struggles with cards that are properly covered.
+  // 重なりは風の入口を狭め、さらに上層の重さがめくれを抑える。
   const layerResistance=.16*(1-.50*wave.gauge);
   flipChance *= 1/(1+upperCount*layerResistance);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
-  // 大きく浮いたのに全く表にならない感覚を抑えるため、動きに応じた下限を置く。
-  // 重なり・紙質・裏面の抵抗は下限にもそのまま掛けるので、密集地帯は依然として不確実。
-  const motionFloorBase=behavior==="DIRECT_HIT"?.64+.20*wave.gauge:behavior==="HIGH_HOP"?.32+.35*wave.gauge:0;
-  const motionFloor=motionFloorBase*wave.texture.stability/(1+upperCount*layerResistance)*(c.face===1?.72:1);
-  if(TERRAIN_LAB&&c.type!=="clone")flipChance=Math.max(flipChance,motionFloor);
+  if(behavior==="PRESS")flipChance*=.18;
+  if(behavior==="NUDGE")flipChance*=.42;
   flipChance=clamp(flipChance,.01,.88);
   if(c.type==="clone")flipChance=0; // 分身はALL-INの確定対象になった時だけめくれる。
   const animationPower=["tooWeak","weak","normal","just","strong","tooStrong"][wave.zone.index]||"normal";
   let willFlip=false;
-  const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
   if(c.type==="clone"){
     if(forcedAllInFlip&&wave.cloneAllIn){
       c.cloneRescueRolled=true;
@@ -968,7 +984,7 @@ function beginCardMotion(i,impulse,sourceLabel){
       appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ALL-IN確定・効果確定`);
     }
   }else{
-    willFlip=forcedLandingFlip||forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
+    willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
   }
   const targetFace=willFlip?1-c.face:c.face;
 
@@ -983,23 +999,30 @@ function beginCardMotion(i,impulse,sourceLabel){
     strong:{lift:72.45,travel:43,duration:.58},
     tooStrong:{lift:95,travel:62,duration:.52}
   };
-  const profile=animationProfiles[animationPower],sizeScale=c.r/54,variation=rand(.96,1.04);
+  const resolvedAnimationPower=(behavior==="PRESS"||behavior==="NUDGE")?"weak":animationPower;
+  const profile=animationProfiles[resolvedAnimationPower],sizeScale=c.r/54,variation=rand(.96,1.04);
   let travel=profile.travel*sizeScale*variation*MENKO_ANIMATION_TRAVEL_SCALE;
   let lift=profile.lift*sizeScale*variation*MENKO_ANIMATION_LIFT_SCALE;
   const duration=profile.duration*MENKO_ANIMATION_DURATION_SCALE;
+  if(behavior==="PRESS"){travel=Math.max(2,travel*.35);lift=Math.max(2,lift*.42)}
+  if(behavior==="NUDGE"){travel=Math.max(5,travel*.72);lift=Math.max(3,lift*.55)}
+  if(behavior==="OFFSET_HIT"){travel*=1.18;lift*=1.20}
+  if(behavior==="AIR_LIFT"){travel*=.90;lift*=1.08}
 
   // 波から外へ逃げる成分を主にし、少しだけ横方向を混ぜる。
-  const lateral=behavior==="EDGE_LIFT"?.18:rand(.16,.36);
+  const lateral=behavior==="OFFSET_HIT"?.28:behavior==="PRESS"?.08:rand(.16,.36);
   const moveX=ux*(1-lateral)+tangentX*lateral;
   const moveY=uy*(1-lateral)+tangentY*lateral;
   const mlen=Math.max(.001,Math.hypot(moveX,moveY));
 
   c.flip=true;c.settled=false;c.animStarted=true;c.z=0;c.vz=0;
   c.motionType=behavior;c.motionJP=behaviorJP;c.willFlip=willFlip;
-  c.animationPower=animationPower;c.animationSide=side;c.animRoll=0;
+  c.animationPower=resolvedAnimationPower;c.animationSide=side;c.animRoll=0;
   c.animT=0;c.animDuration=duration;
   c.animStartX=c.x;c.animStartY=c.y;c.animStartTilt=c.tilt;c.animStartRot=c.rot||0;
   c.animEndX=c.x+moveX/mlen*travel;c.animEndY=c.y+moveY/mlen*travel;
+  const board=ring();
+  c.ringOut=c.animEndX-c.r<board.x||c.animEndX+c.r>board.x+board.s||c.animEndY-c.r<board.y||c.animEndY+c.r>board.y+board.s;
   c.animLift=lift;
   c.targetTilt=targetFace?Math.PI:0;
   c.animRotDelta=side*.08;
@@ -1009,10 +1032,9 @@ function beginCardMotion(i,impulse,sourceLabel){
   c.targetFace=targetFace;c.flipChance=flipChance;
   wave.moved[i]=true;
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
-  const landingNote=forcedLandingFlip?`  LANDING       : GUARANTEED FLIP`:null;
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
-  const motionFloorNote=TERRAIN_LAB&&motionFloorBase>0?`  Motion floor : ${(motionFloor*100).toFixed(1)}%`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Direct overlap: ${(directOverlap*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,motionFloorNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,landingNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  const ringOutNote=c.ringOut?`  Ring out     : YES`:null;
+  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function exposedImpactNow(i,wave){
@@ -1082,7 +1104,6 @@ function hit(x,y,power,gauge,zone){
     c.flip=false;c.settled=true;
   }
   const allIn=!!dropper?.allIn;
-  const guaranteedTarget=landingTopCardIndex(x,y);
   let allInTarget=-1;
   if(allIn){
     const aimedCloneIndex=dropper?.cloneAllIn&&dropper?.aimedClone?cards.indexOf(dropper.aimedClone):-1;
@@ -1105,7 +1126,7 @@ function hit(x,y,power,gauge,zone){
   }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
-    allIn,cloneAllIn:!!dropper?.cloneAllIn,allInTarget,guaranteedTarget,
+    allIn,cloneAllIn:!!dropper?.cloneAllIn,allInTarget,
     efficiency:1,
     processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),cardImpulse:new Array(cards.length).fill(0),
     initialImpact:[],lines:[],complete:false,
