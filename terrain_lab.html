@@ -297,11 +297,13 @@ let differenceCardsCountForInitiative=true;
 const CLONE_RESCUE_HP_RATIO=1/4;
 const CLONE_RESCUE_COOLDOWN_ROUNDS=3;
 const CLONE_FLIP_RATE=.45;
-const MENKO_SIZE_SCALE=.90;
+// TERRAIN LAB: 場の広さは維持し、札を大きくして重なりと衝撃の伝わり方を見やすくする。
+const MENKO_SIZE_SCALE=1.12;
 // animation_lab_v5_final.html でFIXした「調整案」の値。
 // 再生速度は等倍のまま、高さ／滞空時間／移動距離／影／縦付近の間を本編へ移植する。
 const MENKO_ANIMATION_LIFT_SCALE=1.25;
-const MENKO_ANIMATION_DURATION_SCALE=1.05;
+// 複数枚が浮く・倒れる過程を目で追えるよう、ラボでは少し長く見せる。
+const MENKO_ANIMATION_DURATION_SCALE=1.35;
 const MENKO_ANIMATION_TRAVEL_SCALE=1;
 const MENKO_ANIMATION_SHADOW_MIN_SCALE=.70;
 const MENKO_ANIMATION_EDGE_FRAMES=1.75;
