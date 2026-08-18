@@ -987,6 +987,26 @@ function beginCardMotion(i,impulse,sourceLabel){
   }else{
     willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
   }
+  let liftTransferNote=null;
+  const immediateUpperIndex=inf.uppers[0];
+  if(willFlip&&!forcedAllInFlip&&immediateUpperIndex!=null){
+    const upper=cards[immediateUpperIndex];
+    // 上札が表のまま場に残るなら、下札だけがすり抜けて裏返ることはない。
+    // 下札の回転力は、まだ動いている直上札へ一部渡す。
+    if(!upper.willFlip&&!upper.ringOut){
+      willFlip=false;
+      const transferChance=clamp(flipChance*.72,.01,.70);
+      let upperLifted=false;
+      if(upper.flip&&upper.type!=="clone"&&Math.random()<transferChance){
+        upper.willFlip=true;
+        upper.targetFace=1-upper.face;
+        upper.targetTilt=upper.targetFace?Math.PI:0;
+        upper.flipChance=Math.max(upper.flipChance||0,transferChance);
+        upperLifted=true;
+      }
+      liftTransferNote=`  Lift transfer : blocked by Card ${immediateUpperIndex+1} -> ${upperLifted?"UPPER FLIP":"NO FLIP"}`;
+    }
+  }
   const targetFace=willFlip?1-c.face:c.face;
 
   // FIX版と同じく、回転方向は投擲側で固定する（REDとBLUEは左右反対）。
@@ -1030,7 +1050,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
   const ringOutNote=c.ringOut?`  Ring out     : YES`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,liftTransferNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function exposedImpactNow(i,wave){
@@ -1052,9 +1072,10 @@ function advanceLayerWave(){
     if(wave.processed[i])continue;
     const {inf,spatial}=wave.initialImpact[i];
     const immediateUpper=inf.uppers[0];
-    if(inf.uppers.length>=2&&immediateUpper!=null){
+    if(immediateUpper!=null){
       const upper=cards[immediateUpper];
-      // 上の札がまだ浮いていない間は、深い層を同時に動かさない。
+      // 上の札が動く場合は、被覆の深さにかかわらず途中まで待つ。
+      // これで上・中・下が同じ瞬間に互いをすり抜けるのを防ぐ。
       if(!wave.processed[immediateUpper]||(!upper.settled&&(upper.animT||0)<.34))continue;
     }
     // 深い層に直接届く風圧は弱く、主な力は直上の札から渡る。
@@ -1146,7 +1167,6 @@ function hit(x,y,power,gauge,zone){
 function resolveStackFaces(){
   // cards配列の後ろほど上。候補面を上から確定する。
   const finalFaces=cards.map(c=>c.provisionalFace==null?c.face:c.provisionalFace);
-  const releaseDistanceFactor=.16;
 
   for(let i=cards.length-1;i>=0;i--){
     const c=cards[i];
@@ -1157,10 +1177,10 @@ function resolveStackFaces(){
     for(let j=i+1;j<cards.length;j++){
       const upper=cards[j];
       if(!stackCardsOverlap(c,upper))continue;
-      const moved=Math.hypot((upper.x-(upper.throwStartX??upper.x)),(upper.y-(upper.throwStartY??upper.y)));
-      const released=moved>upper.r*releaseDistanceFactor;
       const upperReturnedFront=finalFaces[j]===0;
-      if(upperReturnedFront&&!released){
+      // 上札が最終位置でも重なって表のままなら、下札だけが貫通して
+      // 裏返ったことにはしない。移動量ではなく実際の残存被覆で判定する。
+      if(upperReturnedFront){
         finalFaces[i]=c.faceBeforeThrow??c.face;
         c.coverBlocked=true;
         break;
