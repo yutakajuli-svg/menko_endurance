@@ -113,7 +113,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 .status-group.red .hp-fill{background:#f00}.status-group.blue .hp-fill{background:#00f}
 .stat-line{font-size:18px;line-height:1;white-space:nowrap}
 .menko-line{margin-top:6px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
-.stamina-inline{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#aaa;font-size:10px;vertical-align:2px}.stamina-pips{display:inline-flex;gap:3px}.stamina-pip{width:11px;height:7px;border:1px solid #777;background:#252525}.stamina-pip.red.on{background:#f00;border-color:#f66}.stamina-pip.blue.on{background:#00f;border-color:#66f}
+.stamina-inline{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#aaa;font-size:10px;vertical-align:2px}.stamina-pips{display:inline-flex;gap:3px}.stamina-pip{width:11px;height:7px;border:1px solid #777;background:#252525}.stamina-pip.red.on{background:#f00;border-color:#f66}.stamina-pip.blue.on{background:#00f;border-color:#66f}.clone-inline{margin-left:8px;color:#c5b36a;font-size:10px;white-space:nowrap}
 #strengthWrap{position:relative;z-index:6;width:100%;display:grid;gap:4px}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
 #bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
@@ -171,7 +171,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
       <div class="info-window">
         <div class="hp-line">HP <span id="blueHpCurrent">0</span> / <span id="blueHpMax">0</span></div>
         <div class="hp-rail"><div class="hp-fill" id="blueHpFill"></div></div>
-        <div class="stat-line">BASE ATK <span id="blueAtk">0</span><span class="stamina-inline">ST <span class="stamina-pips" id="blueStamina" aria-label="BLUEスタミナ"></span></span></div>
+        <div class="stat-line">BASE ATK <span id="blueAtk">0</span><span class="stamina-inline">ST <span class="stamina-pips" id="blueStamina" aria-label="BLUEスタミナ"></span><span class="clone-inline">CL <span id="blueCloneCharge">5 / 8</span></span></div>
         <div class="menko-line">MENKO　ATK <span id="blueAtkMenko">0</span> / DEF <span id="blueDefTotal">0</span></div>
       </div>
       <div class="portrait-window">
@@ -227,7 +227,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
       <div class="info-window">
         <div class="hp-line">HP <span id="redHpCurrent">0</span> / <span id="redHpMax">0</span></div>
         <div class="hp-rail"><div class="hp-fill" id="redHpFill"></div></div>
-        <div class="stat-line">BASE ATK <span id="redAtk">0</span><span class="stamina-inline">ST <span class="stamina-pips" id="redStamina" aria-label="REDスタミナ"></span></span></div>
+        <div class="stat-line">BASE ATK <span id="redAtk">0</span><span class="stamina-inline">ST <span class="stamina-pips" id="redStamina" aria-label="REDスタミナ"></span><span class="clone-inline">CL <span id="redCloneCharge">5 / 8</span></span></div>
         <div class="menko-line">MENKO　ATK <span id="redAtkMenko">0</span> / DEF <span id="redDefTotal">0</span></div>
       </div>
     </div>
@@ -311,8 +311,8 @@ const PORTRAIT_ROOT="assets/characters";
 const LEGACY_PORTRAIT_ROOT="assets/character_portrait_lab";
 const MOVE_ROOT="assets/moves";
 const ui={
-  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),atkMenko:document.getElementById("redAtkMenko"),defTotal:document.getElementById("redDefTotal"),stamina:document.getElementById("redStamina"),identity:document.getElementById("redIdentity")},
-  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),atkMenko:document.getElementById("blueAtkMenko"),defTotal:document.getElementById("blueDefTotal"),stamina:document.getElementById("blueStamina"),identity:document.getElementById("blueIdentity")}
+  red:{group:document.getElementById("redStatusGroup"),hair:document.getElementById("redHair"),face:document.getElementById("redFace"),hp:document.getElementById("redHpCurrent"),max:document.getElementById("redHpMax"),fill:document.getElementById("redHpFill"),atk:document.getElementById("redAtk"),atkMenko:document.getElementById("redAtkMenko"),defTotal:document.getElementById("redDefTotal"),stamina:document.getElementById("redStamina"),cloneCharge:document.getElementById("redCloneCharge"),identity:document.getElementById("redIdentity")},
+  blue:{group:document.getElementById("blueStatusGroup"),hair:document.getElementById("blueHair"),face:document.getElementById("blueFace"),hp:document.getElementById("blueHpCurrent"),max:document.getElementById("blueHpMax"),fill:document.getElementById("blueHpFill"),atk:document.getElementById("blueAtk"),atkMenko:document.getElementById("blueAtkMenko"),defTotal:document.getElementById("blueDefTotal"),stamina:document.getElementById("blueStamina"),cloneCharge:document.getElementById("blueCloneCharge"),identity:document.getElementById("blueIdentity")}
 };
 const presentationLayer=document.getElementById("presentationLayer"),illustrationWindow=document.getElementById("illustrationWindow"),moveLayers=document.getElementById("moveLayers"),moveLine=document.getElementById("moveLine"),moveRed=document.getElementById("moveRed"),moveBlue=document.getElementById("moveBlue"),frameCounter=document.getElementById("frameCounter"),messageWindow=document.getElementById("messageWindow"),turnCaption=document.getElementById("turnCaption"),strengthWrap=document.getElementById("strengthWrap");
 const playerPortrait="player_characters_001.jpg";
@@ -457,6 +457,8 @@ function syncBattleUi(){
     side.defTotal.textContent=String(def);
     const stamina=typeof mainStamina==="undefined"?5:mainStamina[actor];
     side.stamina.innerHTML=Array.from({length:5},(_,i)=>`<i class="stamina-pip ${actor==="player"?"red":"blue"} ${i<stamina?"on":""}"></i>`).join("");
+    const charge=typeof cloneCharge==="undefined"?5:cloneCharge[actor],threshold=typeof cloneChargeThreshold==="function"?cloneChargeThreshold(actor):8;
+    side.cloneCharge.textContent=`${charge} / ${threshold}`;
     syncPortrait(actor);
   }
   ui.red.identity.textContent="PLAYER";ui.blue.identity.textContent=config.name||"OPPONENT";
@@ -843,7 +845,7 @@ function cpuThrow(){
 function chooseCpuThrow(){
   const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"&&c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
   const enemyClone=cards.find(c=>c.type==="clone"&&c.team!=="cpu");
-  const canCloneAllIn=!!enemyClone&&typeof mainStamina!=="undefined"&&mainStamina.cpu>=5;
+  const canCloneAllIn=!!enemyClone&&typeof mainStamina!=="undefined"&&mainStamina.cpu>=5&&typeof cloneCharge!=="undefined"&&cloneCharge.cpu>=cloneChargeThreshold("cpu");
   const roll=Math.random();
   // CPUも密集度から最適出力を逆算しない。見えている有効札を選び、力加減は別の勘で決める。
   const ownDifference=normalCards.filter(c=>c.isDifference&&c.team==="cpu");
@@ -950,7 +952,7 @@ function beginCardMotion(i,impulse,sourceLabel){
   let willFlip=false;
   const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
   if(c.type==="clone"){
-    if(forcedAllInFlip){
+    if(forcedAllInFlip&&wave.cloneAllIn){
       c.cloneRescueRolled=true;
       willFlip=true;
       appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ALL-IN確定・効果確定`);
@@ -1072,13 +1074,14 @@ function hit(x,y,power,gauge,zone){
   const guaranteedTarget=landingTopCardIndex(x,y);
   let allInTarget=-1;
   if(allIn){
-    const aimedCloneIndex=dropper?.aimedClone?cards.indexOf(dropper.aimedClone):-1;
+    const aimedCloneIndex=dropper?.cloneAllIn&&dropper?.aimedClone?cards.indexOf(dropper.aimedClone):-1;
     if(aimedCloneIndex>=0){
       allInTarget=aimedCloneIndex;
       appendLog(`ALL-IN GUARANTEE: targeted ${cards[allInTarget].team==="player"?"RED":"BLUE"} CLONE will flip`);
     }else{
       let nearest=Infinity;
       for(let i=0;i<cards.length;i++){
+        if(cards[i].type==="clone")continue;
         const distance=Math.hypot(cards[i].x-x,cards[i].y-y);
         if(distance<nearest){nearest=distance;allInTarget=i;}
       }
@@ -1091,7 +1094,7 @@ function hit(x,y,power,gauge,zone){
   }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
-    allIn,allInTarget,guaranteedTarget,
+    allIn,cloneAllIn:!!dropper?.cloneAllIn,allInTarget,guaranteedTarget,
     efficiency:1,
     processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),cardImpulse:new Array(cards.length).fill(0),
     initialImpact:[],lines:[],complete:false,
@@ -1851,12 +1854,12 @@ function generateProgressEnemy(area,stage=4){
   return {hp:randInt(Math.floor(boss.hp*.5),Math.floor(boss.hp*.8)),...chosen,isBoss:false};
 }
 function makeProgressEnemy(match){return BOSSES[match]?{...BOSSES[match],isBoss:true}:generateProgressEnemy(progressArea(match),(match-1)%5+1)}
-const progressTypeNames={attack:"攻撃型",defense:"防御型",hp:"体力型",balance:"万能型"},progressWeightNames={light:"LIGHT",middle:"MIDDLE",heavy:"HEAVY"};
-const playerWeightKeys=["light","middle","heavy"];
+const progressTypeNames={attack:"攻撃型",defense:"防御型",hp:"体力型",balance:"万能型"},progressWeightNames={light:"LIGHT",light_middle:"LIGHT-MIDDLE",middle:"MIDDLE",middle_heavy:"MIDDLE-HEAVY",heavy:"HEAVY"};
+const playerWeightKeys=["light","light_middle","middle","middle_heavy","heavy"];
 function validPlayerWeight(weight){return playerWeightKeys.includes(weight)}
 function describeProgressEnemy(enemy,area){
   if(enemy.isBoss)return {...enemy,weight:"heavy",type:"balance"};
-  const boss=BOSSES[area*5],hpRatio=enemy.hp/boss.hp,weight=hpRatio<.60?"light":hpRatio<.70?"middle":"heavy";
+  const boss=BOSSES[area*5],hpRatio=enemy.hp/boss.hp,weight=hpRatio<.58?"light":hpRatio<.64?"light_middle":hpRatio<.72?"middle":hpRatio<.79?"middle_heavy":"heavy";
   const scores=[{key:"attack",score:enemy.atk*2+enemy.atkMenko*1.4},{key:"defense",score:enemy.defMenko*2},{key:"hp",score:hpRatio*8}].sort((a,b)=>b.score-a.score);
   const type=scores[0].score-scores[1].score<1.5?"balance":scores[0].key;
   return {...enemy,weight,type};
@@ -1999,7 +2002,7 @@ function renderProgressPanel(mode="match"){
     stats.innerHTML=statCard("red","RED FINAL STATUS",p)+(e?statCard("blue",cleared?"LAST OPPONENT":"BLUE / WINNER",e):"");
   }
   footer.innerHTML=mode==="match"?`<span>${choosingWeight?"SELECT RED WEIGHT":e?`<strong>MATCH ${areaMatch}</strong> 対戦相手決定`:`<strong>MATCH ${areaMatch}</strong> の相手を選択`}</span><span style="color:#f00">● 選択ルート</span>`:`<span>AREA PROGRESS　<b>${progressMarks}</b></span><span>${mode==="reward"?"1 / 1 SELECT":mode==="clear"?"ALL CLEAR":`MATCH ${areaMatch} / 5`}</span>`;
-  if(mode==="match")actions.innerHTML=choosingWeight?'<button id="chooseWeightLight">LIGHT<br><small>LOW POWER / LOW COST</small></button><button id="chooseWeightMiddle">MIDDLE<br><small>BALANCED</small></button><button id="chooseWeightHeavy">HEAVY<br><small>HIGH POWER / WIDE RANGE</small></button>':'';
+  if(mode==="match")actions.innerHTML=choosingWeight?'<button id="chooseWeightLight">LIGHT<br><small>PRECISE / CL 7</small></button><button id="chooseWeightLightMiddle">LIGHT-MID<br><small>PRECISE / CL 8</small></button><button id="chooseWeightMiddle">MIDDLE<br><small>BALANCED / CL 8</small></button><button id="chooseWeightMiddleHeavy">MID-HEAVY<br><small>WIDE / CL 9</small></button><button id="chooseWeightHeavy">HEAVY<br><small>WIDEST / CL 10</small></button>':'';
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
     normalizePendingRewardOptions();
@@ -2026,7 +2029,7 @@ function renderProgressPanel(mode="match"){
   };
 
   bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
-  bindTap("chooseWeightLight",()=>selectPlayerWeight("light"));bindTap("chooseWeightMiddle",()=>selectPlayerWeight("middle"));bindTap("chooseWeightHeavy",()=>selectPlayerWeight("heavy"));
+  bindTap("chooseWeightLight",()=>selectPlayerWeight("light"));bindTap("chooseWeightLightMiddle",()=>selectPlayerWeight("light_middle"));bindTap("chooseWeightMiddle",()=>selectPlayerWeight("middle"));bindTap("chooseWeightMiddleHeavy",()=>selectPlayerWeight("middle_heavy"));bindTap("chooseWeightHeavy",()=>selectPlayerWeight("heavy"));
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
   fixedStart.style.display=mode==="match"&&validPlayerWeight(runState?.playerWeight)&&!!runState?.enemy?"block":"none";
   fixedStart.textContent=resumedFromSave?"つづきから":"試合開始";
@@ -2096,11 +2099,17 @@ document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCards
 
 /* Five visible stamina pips pay for output before a MENKO is thrown. */
 const mainStamina={player:5,cpu:5},mainWeight={player:"middle",cpu:"middle"};
+// 分身だけは通常スタミナとは別に、試合中に貯める専用チャージを使う。
+const cloneCharge={player:5,cpu:5};
+const cloneChargeGoals={light:7,light_middle:8,middle:8,middle_heavy:9,heavy:10};
+const cloneChargeThreshold=actor=>cloneChargeGoals[mainWeight[actor]||"middle"]||8;
 const mainAllInExhausted={player:false,cpu:false};
-let mainStaminaTurnToken="";
+let mainStaminaTurnToken="",cloneChargeTurnToken="";
 function mainWeightImpact(actor){
   const weight=mainWeight[actor]||"middle";
   if(weight==="light")return {range:.78,power:.90,aim:.58};
+  if(weight==="light_middle")return {range:.89,power:.95,aim:.79};
+  if(weight==="middle_heavy")return {range:1.11,power:1.04,aim:1.24};
   if(weight==="heavy")return {range:1.22,power:1.08,aim:1.48};
   return {range:1,power:1,aim:1};
 }
@@ -2108,7 +2117,7 @@ const staminaCostForGauge=g=>g>=.90?5:g>.75?3:g>.50?2:1;
 const staminaGaugeCap=stamina=>stamina>=5?1:stamina>=4?.90:stamina>=3?.75:.50;
 const mainBlankRoundResult=()=>({attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
 const mainStaminaNewMatch=newMatch;
-newMatch=function(){mainStamina.player=5;mainStamina.cpu=5;mainAllInExhausted.player=false;mainAllInExhausted.cpu=false;mainStaminaTurnToken="";mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
+newMatch=function(){mainStamina.player=5;mainStamina.cpu=5;cloneCharge.player=5;cloneCharge.cpu=5;mainAllInExhausted.player=false;mainAllInExhausted.cpu=false;mainStaminaTurnToken="";cloneChargeTurnToken="";mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
 const mainAdvanceTurnAfterHold=advanceTurnAfterHold;
 advanceTurnAfterHold=function(){
   const result=roundResults[turn];
@@ -2136,6 +2145,15 @@ prepareThrowPhase=function(){
       appendLog(`STAMINA READY: ${actorLabel(turn)} +1 / ${mainStamina[turn]} of 5`);
       syncBattleUi();
     }
+    if(cloneChargeTurnToken!==token){
+      cloneChargeTurnToken=token;
+      // 開幕は5から開始。以後は自分の投擲準備ごとに1ずつ分身チャージが貯まる。
+      if(!(roundNo===1&&roundThrow===0)){
+        cloneCharge[turn]=Math.min(10,cloneCharge[turn]+1);
+        appendLog(`CLONE CHARGE READY: ${actorLabel(turn)} +1 / ${cloneCharge[turn]} of ${cloneChargeThreshold(turn)}`);
+      }
+      syncBattleUi();
+    }
   }
   mainStaminaPrepareThrowPhase();
 };
@@ -2146,11 +2164,13 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
   // 分身を直接狙ったALL-INは、強投擲の着地点ブレで別札に化けないようにする。
   // ただし分身の近くを狙っていないALL-INは、従来どおり実着地点で確定札を決める。
   const aimedClone=allIn&&forcedAim?cards.find(c=>c.type==="clone"&&Math.hypot(c.x-forcedAim.x,c.y-forcedAim.y)<=c.r*1.15):null;
+  const cloneAllIn=!!aimedClone&&cloneCharge[turn]>=cloneChargeThreshold(turn);
   mainStamina[turn]=Math.max(0,mainStamina[turn]-cost);
   const staminaAfterSpend=mainStamina[turn];
   mainStaminaThrow(used,forcedAim);
   if(allIn)mainAllInExhausted[turn]=true;
-  if(dropper){dropper.allIn=allIn;dropper.aimedClone=aimedClone||null;}
+  if(dropper){dropper.allIn=allIn;dropper.cloneAllIn=cloneAllIn;dropper.aimedClone=cloneAllIn?aimedClone:null;}
+  if(cloneAllIn){cloneCharge[turn]=0;appendLog(`CLONE CHARGE SPEND: ${actorLabel(turn)} -${cloneChargeThreshold(turn)} / 分身MENKO発動`);}
   syncBattleUi();
   appendLog(`STAMINA SPEND: ${actorLabel(turn)} -${cost} / POWER ${Math.round(used*100)}% / ${staminaAfterSpend} of 5${allIn?" / ALL-IN": ""}`);
 };
@@ -2186,6 +2206,8 @@ resolveRoundEffects=function(){
     if(defenseGain){
       mainStamina[actor]=Math.min(5,mainStamina[actor]+defenseGain);
       appendLog(`STAMINA DEFENSE: ${actorLabel(actor)} +${defenseGain} / defense MENKO gained`);
+      cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);
+      appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);
     }
   }
   syncBattleUi();
