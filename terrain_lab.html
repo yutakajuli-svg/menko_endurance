@@ -698,7 +698,8 @@ function impactProfileForCard(c,wave,inf,impactPower){
   const contact=pointInPolygon(wave.x,wave.y,cardFootprint(c));
   const contactOffset=Math.hypot(localX,localY)/Math.max(1,c.r);
   const centerPress=contact?clamp(1-contactOffset/.36,0,1):0;
-  const offsetHit=contact?Math.exp(-Math.pow((contactOffset-.58)/.23,2)):0;
+  // 半ずらし直撃の狙い目は一点ではなく、中心から少し外れた帯として扱う。
+  const offsetHit=contact?Math.exp(-Math.pow((contactOffset-.58)/.30,2)):0;
 
   // 地面へ叩きつけた札が生む風圧は、札の「衝撃側で露出した端」から
   // 入りやすい。上に覆われた端は入口として数えない。
@@ -714,8 +715,8 @@ function impactProfileForCard(c,wave,inf,impactPower){
     pressureCount++;
   }
   const airEntry=pressureCount?pressureTotal/pressureCount:0;
-  const airLift=airEntry*clamp(impactPower,0,1.2);
-  const liftForce=clamp(airLift*.92+offsetHit*impactPower*.74-centerPress*impactPower*.38,0,1.25);
+  const airLift=airEntry*clamp(impactPower*1.25,0,1.35);
+  const liftForce=clamp(airLift*1.03+offsetHit*impactPower*.78-centerPress*impactPower*.38,0,1.25);
   return {contact,contactOffset,centerPress,offsetHit,airEntry,airLift,liftForce};
 }
 function pointCoveredByCard(p,c){
@@ -958,7 +959,7 @@ function beginCardMotion(i,impulse,sourceLabel){
 
   // めくれは距離だけでは決めない。風が端へ入った量と、半ずらし直撃の
   // 回転力が土台になる。中心への直撃は強くても押し込みとして減点する。
-  let flipChance=.025+physical.liftForce*.68;
+  let flipChance=.06+physical.liftForce*.82;
   // ALL-IN直後で相手が息切れ中なら、無防備な隙として少し捲れやすくなる。
   const opponentExhausted=typeof mainStamina!=="undefined"&&mainStamina[oppositeActor(turn)]===0;
   if(opponentExhausted&&c.type!=="clone")flipChance*=1.15;
