@@ -268,7 +268,7 @@ body.terrain-lab #progressFab{display:none}
 <script>
 (()=>{
 const VERSION="MENKO ENDURANCE 01 / v28 / ROUTE RESULT INTEGRATION";
-const TERRAIN_LAB=new URLSearchParams(location.search).has("terrain_lab");
+const TERRAIN_LAB=location.hash==="#terrain_lab";
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
