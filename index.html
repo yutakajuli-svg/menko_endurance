@@ -155,6 +155,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #testToolsMenu{display:none;align-items:center;gap:5px}
 #testTools.open #testToolsMenu{display:flex}
 #testTools button{position:static;min-height:26px;padding:4px 7px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.72}
+body.terrain-lab #progressFab{display:none}
 #testTools button:hover,#testTools button:focus-visible{color:#fff;opacity:1}
 #testToolsToggle{min-width:42px}
 #playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
@@ -267,6 +268,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 <script>
 (()=>{
 const VERSION="MENKO ENDURANCE 01 / v28 / ROUTE RESULT INTEGRATION";
+const TERRAIN_LAB=new URLSearchParams(location.search).has("terrain_lab");
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -1929,6 +1931,7 @@ function startCurrentIntegratedBattle(){
   }
 }
 function handleIntegratedBattleResult(playerWon){
+  if(TERRAIN_LAB){newMatch();return}
   if(!runState)return;
   if(!playerWon){clearRunProgress();runSaveMode="lose";renderProgressPanel("lose");setProgressScreen(true);return}
   runState.wins++;records.wins++;
@@ -2227,7 +2230,18 @@ function loop(now){
 }
 countSelect.addEventListener("change",()=>{});
 window.addEventListener("resize",resize);canvas.addEventListener("click",()=>{});
-try{resize();initializeIntegratedRun();requestAnimationFrame(loop)}catch(err){showProgressError(err)}
+try{
+  resize();
+  if(TERRAIN_LAB){
+    // 進行・報酬・敵生成を切り離した、盤面と投擲感だけを見る固定対戦モード。
+    runState=null;
+    config={...config,name:"TERRAIN LAB",redMaxHP:15,blueMaxHP:15,redAttack:2,blueAttack:2,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3};
+    document.body.classList.add("terrain-lab");
+    setProgressScreen(false);
+    newMatch();
+  }else initializeIntegratedRun();
+  requestAnimationFrame(loop)
+}catch(err){showProgressError(err)}
 })();
 </script>
 </body>
