@@ -992,23 +992,18 @@ function beginCardMotion(i,impulse,sourceLabel){
   // FIX版と同じく、回転方向は投擲側で固定する（REDとBLUEは左右反対）。
   const side=turn==="player"?1:-1;
   const tangentX=-uy*side,tangentY=ux*side;
-  const animationProfiles={
-    tooWeak:{lift:2.75,travel:1.10,duration:.68},
-    weak:{lift:4.40,travel:0,duration:.82},
-    normal:{lift:22,travel:15,duration:.74},
-    just:{lift:48,travel:30,duration:.66},
-    strong:{lift:72.45,travel:43,duration:.58},
-    tooStrong:{lift:95,travel:62,duration:.52}
+  // 動きの大きさはバーの区分ではなく、上で計算した浮きの力そのものから決める。
+  const sizeScale=c.r/54,variation=rand(.96,1.04),force=physical.liftForce;
+  const motionProfiles={
+    PRESS:{travel:1.5+3*impactPower,lift:1.5+2.5*impactPower,duration:.40},
+    NUDGE:{travel:4+11*force,lift:3+9*force,duration:.48},
+    AIR_LIFT:{travel:7+34*force,lift:10+58*force,duration:.62},
+    OFFSET_HIT:{travel:9+39*force,lift:15+76*force,duration:.56}
   };
-  const resolvedAnimationPower=(behavior==="PRESS"||behavior==="NUDGE")?"weak":animationPower;
-  const profile=animationProfiles[resolvedAnimationPower],sizeScale=c.r/54,variation=rand(.96,1.04);
-  let travel=profile.travel*sizeScale*variation*MENKO_ANIMATION_TRAVEL_SCALE;
-  let lift=profile.lift*sizeScale*variation*MENKO_ANIMATION_LIFT_SCALE;
+  const profile=motionProfiles[behavior]||motionProfiles.NUDGE;
+  const travel=profile.travel*sizeScale*variation*MENKO_ANIMATION_TRAVEL_SCALE;
+  const lift=profile.lift*sizeScale*variation*MENKO_ANIMATION_LIFT_SCALE;
   const duration=profile.duration*MENKO_ANIMATION_DURATION_SCALE;
-  if(behavior==="PRESS"){travel=Math.max(2,travel*.35);lift=Math.max(2,lift*.42)}
-  if(behavior==="NUDGE"){travel=Math.max(5,travel*.72);lift=Math.max(3,lift*.55)}
-  if(behavior==="OFFSET_HIT"){travel*=1.18;lift*=1.20}
-  if(behavior==="AIR_LIFT"){travel*=.90;lift*=1.08}
 
   // 波から外へ逃げる成分を主にし、少しだけ横方向を混ぜる。
   const lateral=behavior==="OFFSET_HIT"?.28:behavior==="PRESS"?.08:rand(.16,.36);
@@ -1018,7 +1013,7 @@ function beginCardMotion(i,impulse,sourceLabel){
 
   c.flip=true;c.settled=false;c.animStarted=true;c.z=0;c.vz=0;
   c.motionType=behavior;c.motionJP=behaviorJP;c.willFlip=willFlip;
-  c.animationPower=resolvedAnimationPower;c.animationSide=side;c.animRoll=0;
+  c.animationPower="physical";c.animationSide=side;c.animRoll=0;
   c.animT=0;c.animDuration=duration;
   c.animStartX=c.x;c.animStartY=c.y;c.animStartTilt=c.tilt;c.animStartRot=c.rot||0;
   c.animEndX=c.x+moveX/mlen*travel;c.animEndY=c.y+moveY/mlen*travel;
@@ -1595,7 +1590,20 @@ function updateCards(){
     const power=c.animationPower||"normal",side=c.animationSide||1,ease=q=>q*q*(3-2*q);
     const startTilt=c.animStartTilt??0;
     let relativeTilt=0,z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.62);
-    if(power==="strong"||power==="tooStrong"){
+    if(c.motionType==="PRESS"){
+      // 真上寄りは地面へ押し込むだけ。小さく沈んで戻る。
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),1.45);
+      relativeTilt=Math.PI/22*Math.sin(Math.PI*p);
+    }else if(c.motionType==="NUDGE"){
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),1.15);
+      relativeTilt=c.willFlip?Math.PI*ease(p):Math.PI*.14*Math.sin(Math.PI*p);
+    }else if(c.motionType==="AIR_LIFT"){
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.72);
+      relativeTilt=c.willFlip?Math.PI*ease(p):Math.PI*.58*Math.sin(Math.PI*p);
+    }else if(c.motionType==="OFFSET_HIT"){
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.56);
+      relativeTilt=c.willFlip?Math.PI*ease(Math.pow(p,.82)):Math.PI*.76*Math.sin(Math.PI*p);
+    }else if(power==="strong"||power==="tooStrong"){
       const contactP=power==="strong"?.72:.66;
       if(p<contactP){
         const q=p/contactP;relativeTilt=Math.PI*1.5*ease(q);
@@ -1632,8 +1640,9 @@ function updateCards(){
     // FIX版では3Dの立ち上がり方向は両者共通。RED/BLUEの違いは
     // 横移動と画面面内の回転だけに持たせる。
     c.z=z;c.tilt=startTilt+relativeTilt;
-    const rollTarget=c.willFlip?({just:0,strong:Math.PI/7.2,tooStrong:Math.PI/3.3}[power]||0):0;
-    c.animRoll=side*rollTarget*ease(Math.pow(p,power==="strong"?.86:power==="tooStrong"?.78:1));
+    const motionRoll={OFFSET_HIT:Math.PI/5.4,AIR_LIFT:Math.PI/10.5,NUDGE:Math.PI/18};
+    const rollTarget=c.willFlip?(motionRoll[c.motionType]??({just:0,strong:Math.PI/7.2,tooStrong:Math.PI/3.3}[power]||0)):0;
+    c.animRoll=side*rollTarget*ease(Math.pow(p,c.motionType==="OFFSET_HIT"?.82:1));
     c.rot=(c.animStartRot??c.rot)+(c.animRotDelta||0)*Math.sin(Math.PI*p);
 
     if(p>=1){
