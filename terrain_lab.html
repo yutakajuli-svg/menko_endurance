@@ -1047,17 +1047,27 @@ function advanceLayerWave(){
   const wave=pendingLayerWave;if(!wave||wave.complete)return;
   updateStackDepths();
 
-  // 衝撃は投擲時の一度だけで確定する。上層の着地後に下層を再起動しない。
+  // 衝撃は一度だけ。ただし3層目以降は、直上の札が浮いてから順に伝わる。
   for(let i=cards.length-1;i>=0;i--){
     if(wave.processed[i])continue;
     const {inf,spatial}=wave.initialImpact[i];
-    // Covered cards only receive relayed force from upper cards that moved.
-    const directImpulse=wave.power*wave.efficiency*spatial;
+    const immediateUpper=inf.uppers[0];
+    if(inf.uppers.length>=2&&immediateUpper!=null){
+      const upper=cards[immediateUpper];
+      // 上の札がまだ浮いていない間は、深い層を同時に動かさない。
+      if(!wave.processed[immediateUpper]||(!upper.settled&&(upper.animT||0)<.34))continue;
+    }
+    // 深い層に直接届く風圧は弱く、主な力は直上の札から渡る。
+    const depthDamping=inf.uppers.length>=2?.42:1;
+    const directImpulse=wave.power*wave.efficiency*spatial*depthDamping;
     let relayed=0;
-    for(const u of inf.uppers)if(wave.moved[u])relayed+=(wave.cardImpulse[u]||0)*overlapAmount(cards[i],cards[u])*.46;
+    // 多層の札を一度に合算しない。隣り合う1枚だけが次段へ押し出す。
+    if(immediateUpper!=null&&wave.moved[immediateUpper]){
+      relayed=(wave.cardImpulse[immediateUpper]||0)*overlapAmount(cards[i],cards[immediateUpper])*.46;
+    }
     const relayedImpulse=directImpulse+relayed;
     if(relayedImpulse>.02){
-      const moved=beginCardMotion(i,relayedImpulse,relayed>directImpulse?"relayed upper layer":"initial exposed layer");
+      const moved=beginCardMotion(i,relayedImpulse,relayed>directImpulse?"staged upper layer":"initial exposed layer");
       if(moved)wave.cardImpulse[i]=relayedImpulse;
     }else{
       wave.processed[i]=true;
@@ -1083,7 +1093,7 @@ function advanceLayerWave(){
 
   if(wave.processed.every(Boolean)){
     wave.complete=true;
-    const entry=["===== THROW LOG =====",`Round     : ${roundNo} / ${roundThrow===0?"FIRST":"SECOND"}`,`Actor     : ${wave.actor}`,`Zone      : ${wave.zoneName}`,`Gauge     : ${(wave.gauge*100).toFixed(1)}`,`Texture   : range ${(wave.texture.range*100).toFixed(0)}% / force ${(wave.texture.power*100).toFixed(0)}% / stability ${(wave.texture.stability*100).toFixed(0)}%`,"Rule      : SINGLE IMPACT -> EXPOSED CARDS MOVE TOGETHER -> RESULT",...wave.lines,"====================="].join("\n");
+    const entry=["===== THROW LOG =====",`Round     : ${roundNo} / ${roundThrow===0?"FIRST":"SECOND"}`,`Actor     : ${wave.actor}`,`Zone      : ${wave.zoneName}`,`Gauge     : ${(wave.gauge*100).toFixed(1)}`,`Texture   : range ${(wave.texture.range*100).toFixed(0)}% / force ${(wave.texture.power*100).toFixed(0)}% / stability ${(wave.texture.stability*100).toFixed(0)}%`,"Rule      : IMPACT -> EXPOSED LAYER -> STAGED STACK RELAY -> RESULT",...wave.lines,"====================="].join("\n");
     appendLog(entry);
   }
 }
