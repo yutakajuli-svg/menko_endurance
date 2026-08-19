@@ -934,6 +934,22 @@ function overlapAmount(a,b){
   const support=(c,dirX,dirY)=>{const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),x=Math.abs(dirX*cs-dirY*sn),y=Math.abs(dirX*sn+dirY*cs),corner=c.r*.10;return c.r*(x+y)-corner*Math.min(x,y)};
   return clamp(1-d/(support(a,ux,uy)+support(b,-ux,-uy)),0,1);
 }
+function debugBoardZone(x,y){
+  const R=ring(),cx=R.x+R.s/2,cy=R.y+R.s/2,band=R.s*.16;
+  const horizontal=x<cx-band?"LEFT":x>cx+band?"RIGHT":"CENTER";
+  const vertical=y<cy-band?"TOP":y>cy+band?"BOTTOM":"MIDDLE";
+  return `${horizontal}-${vertical}`;
+}
+function debugCardIdentity(i,c){
+  const owner=c.isDifference?(c.team==="player"?"RED DIFF":"BLUE DIFF"):"COMMON";
+  const kind=c.type==="attack"?"ATTACK":c.type==="defense"?"DEFENSE":"CLONE";
+  return `Card ${i+1} / ${owner} ${kind}${c.cardId?` / ID ${c.cardId}`:""}`;
+}
+function debugStackLinks(i,wave){
+  const links=wave?.overlapLinks?.[i]||[];
+  if(!links.length)return "none";
+  return links.map(link=>`Card ${link.index+1} ${link.index>i?"ABOVE":"BELOW"} ${(link.coupling*100).toFixed(0)}%`).join(", ");
+}
 function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,motionScale=1,startDelay=0,coupling=0,relayHops=0){
   const wave=pendingLayerWave,c=cards[i],zone=wave.zone;
   const impactPower=clamp(impulse/c.weight,0,1.35);
@@ -1016,8 +1032,8 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   if(behavior==="STOP"&&forcedAllInFlip){behavior="AIR_LIFT";behaviorJP="ALL-IN";}
   wave.processed[i]=true;
   if(behavior==="STOP"){
-    const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
-    wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : STOP`,`  State         : STOPPED`].join("\n"));
+    const cardLabel=debugCardIdentity(i,c);
+    wave.lines.push([cardLabel,`  Start position: (${c.x.toFixed(1)}, ${c.y.toFixed(1)}) / ${debugBoardZone(c.x,c.y)}`,`  Start face    : ${c.face?"BACK":"FRONT"}`,`  Stack links   : ${debugStackLinks(i,wave)}`,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : STOP`,`  State         : STOPPED`].join("\n"));
     return false;
   }
 
@@ -1111,10 +1127,10 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   c.motionTravel=travel;
   c.targetFace=targetFace;c.flipChance=flipChance;
   wave.moved[i]=true;
-  const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
+  const cardLabel=debugCardIdentity(i,c);
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
   const ringOutNote=c.ringOut?`  Ring out     : YES`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Cover pivot   : ${coverSide}${overlapPivotStrength?` / ${(overlapPivotStrength*100).toFixed(0)}%`:""}`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  wave.lines.push([cardLabel,`  Start position: (${c.animStartX.toFixed(1)}, ${c.animStartY.toFixed(1)}) / ${debugBoardZone(c.animStartX,c.animStartY)}`,`  Planned end  : (${c.animEndX.toFixed(1)}, ${c.animEndY.toFixed(1)}) / ${debugBoardZone(c.animEndX,c.animEndY)}`,`  Start face    : ${c.face?"BACK":"FRONT"}`,`  Stack links   : ${debugStackLinks(i,wave)}`,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Cover pivot   : ${coverSide}${overlapPivotStrength?` / ${(overlapPivotStrength*100).toFixed(0)}% / local (${overlapPivotX.toFixed(1)}, ${overlapPivotY.toFixed(1)})`:""}`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Duration      : ${(duration*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function applyStackMotionConstraints(wave){
@@ -1159,6 +1175,11 @@ function applyStackMotionConstraints(wave){
       wave.lines.push(`Card ${upperIndex+1} stack ride: above Card ${lowerIndex+1} / clearance ${upper.stackClearance.toFixed(1)} px / follow ${(follow*100).toFixed(0)}%`);
     }
   }
+  wave.lines.push(["---- FINAL MOTION POSITIONS ----",...cards.map((c,i)=>{
+    const sx=c.animStartX??c.x,sy=c.animStartY??c.y,ex=c.animEndX??c.x,ey=c.animEndY??c.y;
+    const carrier=c.stackCarrier>=0?` / rides Card ${c.stackCarrier+1}`:"";
+    return `${debugCardIdentity(i,c)}: (${sx.toFixed(1)}, ${sy.toFixed(1)}) ${debugBoardZone(sx,sy)} -> (${ex.toFixed(1)}, ${ey.toFixed(1)}) ${debugBoardZone(ex,ey)} / move ${(ex-sx).toFixed(1)}, ${(ey-sy).toFixed(1)}${carrier}`;
+  }),"--------------------------------"].join("\n"));
 }
 function exposedImpactNow(i,wave){
   const inf=layerImpactInfo(i,wave.x,wave.y,wave.maxRadius);
@@ -1240,7 +1261,8 @@ function advanceLayerWave(){
       if(moved)wave.cardImpulse[i]=impulse;
     }else{
       wave.processed[i]=true;
-      wave.lines.push(`Card ${i+1}: STOPPED / no impact or connected overlap propagation`);
+      const c=cards[i];
+      wave.lines.push([debugCardIdentity(i,c),`  Start position: (${c.x.toFixed(1)}, ${c.y.toFixed(1)}) / ${debugBoardZone(c.x,c.y)}`,`  Start face    : ${c.face?"BACK":"FRONT"}`,`  Stack links   : ${debugStackLinks(i,wave)}`,`  Dynamic layer : ${c.coverDepth||0}`,`  Motion        : STOP`,`  State         : no impact or connected overlap propagation`].join("\n"));
     }
   }
   applyStackMotionConstraints(wave);
