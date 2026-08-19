@@ -1757,7 +1757,7 @@ function resolveRoundEffects(){
 function finishMatch(){
   appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} guarded=${matchStats.guarded} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
-  appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,`Clone effects: ${cloneRescueActivations} / ${CLONE_RESCUE_MAX_ACTIVATIONS}`,"========================="].join("\n"));
+  appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,`Clone rescue : ${cloneRescueActivations} / ${CLONE_RESCUE_MAX_ACTIVATIONS}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
   pendingIntegratedResult=winner==="RED";
   clearPlayerLog();presentationLayer.classList.add("show");illustrationWindow.style.display="none";messageWindow.textContent=`${winner} WIN!\nタップで結果へ`;messageWindow.classList.add("show");
@@ -2494,15 +2494,16 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
-// Board economy trial: every throw has its own board.  One common card of each
-// type is always present; each side's cards above that baseline are differences.
+// Board economy trial: every throw has its own fixed ten-card board.
+// Six common cards keep flips productive; four difference cards remain physical obstacles.
 deck=function(){
   const d=[];
-  d.push({team:"common",type:"attack",isDifference:false});
-  d.push({team:"common",type:"defense",isDifference:false});
-  const add=(team,type,n)=>{for(let i=0;i<Math.max(0,n-1);i++)d.push({team,type,isDifference:true})};
-  add("player","attack",config.redAttackCards);add("cpu","attack",config.blueAttackCards);
-  add("player","defense",config.redDefenseCards);add("cpu","defense",config.blueDefenseCards);
+  for(let i=0;i<3;i++)d.push({team:"common",type:"attack",isDifference:false});
+  for(let i=0;i<3;i++)d.push({team:"common",type:"defense",isDifference:false});
+  for(const team of ["player","cpu"]){
+    d.push({team,type:"attack",isDifference:true});
+    d.push({team,type:"defense",isDifference:true});
+  }
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
   return d;
 };
