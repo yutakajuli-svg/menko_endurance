@@ -645,12 +645,15 @@ function landingTopCardIndex(x,y){
   for(let i=cards.length-1;i>=0;i--)if(cards[i].type!=="clone"&&pointInPolygon(x,y,cardFootprint(cards[i])))return i;
   return -1;
 }
-const MIN_STACK_OVERLAP=.08;
-const MIN_RELAY_OVERLAP=.22;
+const MIN_STACK_OVERLAP=.015;
+const MIN_RELAY_OVERLAP=MIN_STACK_OVERLAP;
 function stackCardsOverlap(a,b){return cardsOverlap(a,b)&&overlapAmount(a,b)>=MIN_STACK_OVERLAP}
 function stackCoupling(a,b){
-  const q=clamp((overlapAmount(a,b)-MIN_STACK_OVERLAP)/.72,0,1);
-  return q*q*(3-2*q);
+  const overlap=overlapAmount(a,b);
+  if(overlap<MIN_STACK_OVERLAP)return 0;
+  const q=clamp((overlap-MIN_STACK_OVERLAP)/(1-MIN_STACK_OVERLAP),0,1);
+  // わずかな重なりも接触ゼロにはせず、最低8%の重し・連動として扱う。
+  return .08+.92*q*q*(3-2*q);
 }
 function updateStackDepths(){
   // cards配列の後ろほど後から場に置かれた＝上にある。
@@ -965,6 +968,7 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   }
   const upperCount=currentUpperCards(i).length;
   const {inf}=wave.initialImpact[i];
+  const coverLoad=inf.uppers.reduce((sum,u)=>sum+stackCoupling(c,cards[u]),0);
   let physical=impactProfileForCard(c,wave,inf,impactPower);
   if(sourceIndex>=0){
     // 衝撃範囲外でも、重なった札から受けた持ち上げは運動として残す。
@@ -1003,7 +1007,7 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   flipChance *= wave.texture.stability;
   // 重なりは風の入口を狭め、さらに上層の重さがめくれを抑える。
   const layerResistance=.16*(1-.50*wave.gauge);
-  flipChance *= 1/(1+upperCount*layerResistance);
+  flipChance *= 1/(1+coverLoad*layerResistance);
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   if(behavior==="PRESS")flipChance*=.18;
   if(behavior==="NUDGE")flipChance*=.42;
@@ -1019,6 +1023,22 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
     }
   }else{
     willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
+  }
+  let coverConstraintNote=null;
+  if(willFlip&&!forcedAllInFlip&&inf.uppers.length){
+    // 上札を押し退ける予定の力が足りない場合、下札だけの貫通回転を
+    // 最後に戻すのではなく、アニメーション開始前から抑止する。
+    const blockingUpper=inf.uppers.find(u=>{
+      const overlap=stackCoupling(c,cards[u]);
+      if(overlap<=0)return false;
+      const upperPower=(wave.plannedImpulse?.[u]||0)/Math.max(.01,cards[u].weight||1);
+      const required=Math.max(.18,impactPower*(.50+.35*overlap));
+      return upperPower<required;
+    });
+    if(blockingUpper!=null){
+      willFlip=false;
+      coverConstraintNote=`  Cover weight  : Card ${blockingUpper+1} blocks pass-through flip`;
+    }
   }
   const targetFace=willFlip?1-c.face:c.face;
 
@@ -1066,7 +1086,7 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
   const ringOutNote=c.ringOut?`  Ring out     : YES`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function exposedImpactNow(i,wave){
@@ -1088,13 +1108,13 @@ function advanceLayerWave(){
   const planned=direct.slice(),bestRelay=new Array(count).fill(0),source=new Array(count).fill(-1),sourceCoupling=new Array(count).fill(0);
   const hops=direct.map(v=>v>.02?0:Infinity);
 
-  // 衝撃範囲内の札を起点に、重なりグラフ全体へ最大5接触まで減衰伝播する。
+  // 衝撃範囲内の札を起点に、重なりグラフが続く限り場の全体へ減衰伝播する。
   // 距離ではなく実際の重なりを通るため、範囲外でも接触していれば動ける。
-  for(let pass=0;pass<Math.min(5,count);pass++){
+  for(let pass=0;pass<Math.max(1,count-1);pass++){
     const prev=planned.slice(),prevHops=hops.slice();
     let changed=false;
     for(let from=0;from<count;from++){
-      if(prev[from]<=.02||!Number.isFinite(prevHops[from])||prevHops[from]>=5)continue;
+      if(prev[from]<=.02||!Number.isFinite(prevHops[from])||prevHops[from]>=count-1)continue;
       for(const link of wave.overlapLinks[from]){
         const to=link.index;
         const candidate=prev[from]*(.18+.52*link.coupling);
@@ -1107,6 +1127,8 @@ function advanceLayerWave(){
     }
     if(!changed)break;
   }
+
+  wave.plannedImpulse=planned.slice();
 
   wave.planDirection=cards.map(c=>{
     const dx=c.x-wave.x,dy=c.y-wave.y,len=Math.max(1,Math.hypot(dx,dy));
@@ -1935,7 +1957,8 @@ function render(){
   // 上の層を越えて画面手前へ飛び出したように見せる。
   const originalOrder=new Map(cards.map((c,i)=>[c,i]));
   const ordered=[...cards].sort((a,b)=>{
-    const aAir=a.flip&&(a.z||0)>4,bAir=b.flip&&(b.z||0)>4;
+    // 下層・中層は上札と重なっている間、飛翔高さだけで前後を追い越さない。
+    const aAir=a.flip&&(a.z||0)>4&&(a.coverDepth||0)===0,bAir=b.flip&&(b.z||0)>4&&(b.coverDepth||0)===0;
     if(aAir!==bAir)return aAir?1:-1;
     if(aAir&&bAir){const heightDiff=(a.z||0)-(b.z||0);if(Math.abs(heightDiff)>.5)return heightDiff;}
     return originalOrder.get(a)-originalOrder.get(b);
