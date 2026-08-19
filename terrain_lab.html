@@ -892,7 +892,7 @@ function chooseCpuThrow(){
   const target=intent==="clone_all_in"?enemyClone:(visibleChoices[Math.floor(Math.random()*visibleChoices.length)]||center);
   // 正確な重なり率や捲れ確率は参照せず、見えている札の大きさを基準に
   // 中心・半ずらし・近くの地面を大まかに選ぶ。
-  const aimRoll=Math.random(),aimStyle=intent==="clone_all_in"?"clone":aimRoll<.58?"offset":aimRoll<.82?"center":"nearby";
+  const aimRoll=Math.random(),aimStyle=intent==="clone_all_in"?"clone":aimRoll<.65?"offset":aimRoll<.85?"center":"nearby";
   const aimAngle=Math.random()*Math.PI*2,targetRadius=target.r||Math.min(R.s*.08,30);
   const aimOffset=aimStyle==="clone"?0:aimStyle==="offset"?targetRadius*rand(.42,.72):aimStyle==="center"?targetRadius*rand(0,.22):targetRadius*rand(1.05,1.42);
   const idealAim={x:target.x+Math.cos(aimAngle)*aimOffset,y:target.y+Math.sin(aimAngle)*aimOffset};
@@ -1059,6 +1059,9 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   // 重なりは風の入口を狭め、さらに上層の重さがめくれを抑える。
   const layerResistance=.16*(1-.50*wave.gauge);
   flipChance *= 1/(1+coverLoad*layerResistance);
+  // 強投擲は巻き込み範囲だけでなく、実際に大きく浮いた札の期待値も僅かに上げる。
+  // PRESS／NUDGEには掛けず、強さだけで捲れ枚数が決まる状態にはしない。
+  if(behavior==="AIR_LIFT"||behavior==="OFFSET_HIT")flipChance+=Math.max(0,wave.gauge-.50)*.12;
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   if(behavior==="PRESS")flipChance*=.18;
   if(behavior==="NUDGE")flipChance*=.42;
@@ -1355,15 +1358,18 @@ function hit(x,y,power,gauge,zone){
 }
 function resolveStackFaces(){
   // cards配列の後ろほど上。候補面を上から確定する。
-  const finalFaces=cards.map(c=>c.provisionalFace==null?c.face:c.provisionalFace);
+  const candidateFaces=cards.map(c=>c.provisionalFace==null?c.face:c.provisionalFace),finalFaces=candidateFaces.slice(),resolutionNotes=[];
 
   for(let i=cards.length-1;i>=0;i--){
     const c=cards[i];
-    c.coverBlocked=false;
+    c.coverBlocked=false;c.coverBlockedBy=-1;
     // 表から裏へ行く候補だけ「上蓋」を確認する。
     if(finalFaces[i]!==1 || c.faceBeforeThrow===1)continue;
 
-    for(let j=i+1;j<cards.length;j++){
+    // 貫通防止に使うのは投擲開始時から上に載っていた札だけ。
+    // 飛翔後に新しく近づいた札で、成立済みのめくれを後から取り消さない。
+    const initialUppers=pendingLayerWave?.initialImpact?.[i]?.inf?.uppers||[];
+    for(const j of initialUppers){
       const upper=cards[j];
       if(!stackCardsOverlap(c,upper)||overlapAmount(c,upper)<MIN_RELAY_OVERLAP)continue;
       // 投擲中に上札を持ち上げて通り道を作れた組は、元の上下順を保ったまま
@@ -1374,7 +1380,7 @@ function resolveStackFaces(){
       // 裏返ったことにはしない。移動量ではなく実際の残存被覆で判定する。
       if(upperReturnedFront){
         finalFaces[i]=c.faceBeforeThrow??c.face;
-        c.coverBlocked=true;
+        c.coverBlocked=true;c.coverBlockedBy=j;
         break;
       }
     }
@@ -1382,10 +1388,14 @@ function resolveStackFaces(){
 
   for(let i=0;i<cards.length;i++){
     const c=cards[i];
+    if(candidateFaces[i]===1&&c.faceBeforeThrow!==1){
+      resolutionNotes.push(`Card ${i+1} final face: ${finalFaces[i]===1?"BACK / COUNTED":`FRONT / CANCELLED BY INITIAL UPPER Card ${c.coverBlockedBy+1}`}`);
+    }
     c.face=finalFaces[i];
     c.tilt=c.face?Math.PI:0;
     c.provisionalFace=null;
   }
+  return resolutionNotes;
 }
 function appendLog(entry){
   logEntries.unshift(entry);
@@ -1426,7 +1436,7 @@ function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
 function result(){
   // 投擲中にグローバルの手番が変化しても効果対象を取り違えないよう、衝撃開始時の投擲者を使う。
   const resultActor=pendingLayerWave?.actorKey||turn;
-  resolveStackFaces();
+  const faceResolutionNotes=resolveStackFaces();
   let attackLevel=0,defenseLevel=0,rawAttackLevel=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
   for(const c of cards){
     c.z=0;c.vz=0;c.flip=false;c.settled=true;c.tilt=c.face?Math.PI:0;c.tv=0;c.spin=0;
@@ -1465,7 +1475,7 @@ function result(){
   lastAttackLevel=attackLevel;lastDefenseLevel=defenseLevel;lastDamage=0;
   resultT=1.05;state="result";
   msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃Lv ${attackLevel} / 防御Lv ${defenseLevel} を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
-  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
+  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FINAL FACE RESOLUTION ---",...(faceResolutionNotes.length?faceResolutionNotes:["No flip candidates"]),"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
 }
 function beginExpel(){
   // 通常メンコの裏向きだけ排出。分身は場に残る。
