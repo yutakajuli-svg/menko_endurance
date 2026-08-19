@@ -969,6 +969,33 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   const upperCount=currentUpperCards(i).length;
   const {inf}=wave.initialImpact[i];
   const coverLoad=inf.uppers.reduce((sum,u)=>sum+stackCoupling(c,cards[u]),0);
+  // 上札との重なり中心を「押さえられている側」として求める。
+  // 中心回転ではなく、重なった側を支点に露出側から持ち上げるために使う。
+  let overlapPivotX=0,overlapPivotY=0,overlapPivotStrength=0,coverSide="-";
+  if(coverLoad>0){
+    let anchorDx=0,anchorDy=0,total=0;
+    for(const u of inf.uppers){
+      const link=stackCoupling(c,cards[u]);if(link<=0)continue;
+      anchorDx+=(cards[u].x-c.x)*link;anchorDy+=(cards[u].y-c.y)*link;total+=link;
+    }
+    const anchorLen=Math.hypot(anchorDx,anchorDy);
+    if(total>0&&anchorLen>.01){
+      const globalNx=anchorDx/anchorLen,globalNy=anchorDy/anchorLen;
+      const cr=Math.cos(-(c.rot||0)),sr=Math.sin(-(c.rot||0));
+      const localNx=globalNx*cr-globalNy*sr,localNy=globalNx*sr+globalNy*cr;
+      const pivotDistance=c.r*clamp(.46+.24*Math.min(1,coverLoad),.46,.70);
+      overlapPivotX=localNx*pivotDistance;overlapPivotY=localNy*pivotDistance;
+      overlapPivotStrength=clamp(.30+.70*Math.min(1,coverLoad),.30,1);
+      coverSide=Math.abs(localNx)>Math.abs(localNy)?(localNx>0?"RIGHT":"LEFT"):(localNy>0?"BOTTOM":"TOP");
+      // 重しの真下へ進まず、押さえられていない側へ動き出す。
+      const escapeShare=clamp(.24+.38*Math.min(1,coverLoad),.24,.62);
+      const escapeX=-globalNx,escapeY=-globalNy;
+      const escapedX=ux*(1-escapeShare)+escapeX*escapeShare;
+      const escapedY=uy*(1-escapeShare)+escapeY*escapeShare;
+      const escapedLen=Math.max(.001,Math.hypot(escapedX,escapedY));
+      ux=escapedX/escapedLen;uy=escapedY/escapedLen;
+    }
+  }
   let physical=impactProfileForCard(c,wave,inf,impactPower);
   if(sourceIndex>=0){
     // 衝撃範囲外でも、重なった札から受けた持ち上げは運動として残す。
@@ -1069,6 +1096,7 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
 
   c.flip=true;c.settled=false;c.animStarted=true;c.z=0;c.vz=0;
   c.motionType=behavior;c.motionJP=behaviorJP;c.willFlip=willFlip;c.coupledFlight=coupledFlight;
+  c.overlapPivotX=overlapPivotX;c.overlapPivotY=overlapPivotY;c.overlapPivotStrength=overlapPivotStrength;
   c.animationPower="physical";c.animationSide=side;c.animRoll=0;
   c.animT=0;c.animDuration=duration;c.animDelay=startDelay;
   c.animStartX=c.x;c.animStartY=c.y;c.animStartTilt=c.tilt;c.animStartRot=c.rot||0;
@@ -1086,7 +1114,7 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
   const ringOutNote=c.ringOut?`  Ring out     : YES`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Cover pivot   : ${coverSide}${overlapPivotStrength?` / ${(overlapPivotStrength*100).toFixed(0)}%`:""}`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
 function applyStackMotionConstraints(wave){
@@ -1233,6 +1261,7 @@ function hit(x,y,power,gauge,zone){
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
     c.faceBeforeThrow=c.face;c.throwStartX=c.x;c.throwStartY=c.y;c.provisionalFace=null;
+    c.overlapPivotX=0;c.overlapPivotY=0;c.overlapPivotStrength=0;
     c.flip=false;c.settled=true;
   }
   const allIn=!!dropper?.allIn;
@@ -1802,6 +1831,7 @@ function updateCards(){
       c.targetFace=null;c.targetTilt=null;c.motionTravel=0;c.animT=0;c.animDuration=0;c.animDelay=0;
       c.animStartX=null;c.animStartY=null;c.animEndX=null;c.animEndY=null;c.animStartTilt=null;c.animStartRot=null;c.animLift=0;c.animRotDelta=0;c.animPeakTilt=0;
       c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;c.animationPower=null;c.animationSide=0;c.animRoll=0;c.coupledFlight=0;
+      c.overlapPivotX=0;c.overlapPivotY=0;c.overlapPivotStrength=0;
     }
   }
   // 個々の放物線を計算した後、重なりグループ内の高さだけを拘束する。
@@ -1968,15 +1998,25 @@ function drawCardShadow(c){
   ctx.save();ctx.globalAlpha=1;ctx.translate(c.x+8+height*10,c.y+7+height*7);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(scale,scale*(.18+.82*Math.abs(Math.cos(c.tilt||0))));ctx.fillStyle="#4a4a4a";roundedShadowPath(r*1.56,r*1.16,r*.10);ctx.fill();ctx.restore();
 }
 function drawCard(c,isDrop=false){
-  const r=c.r,z=c.z||0,spec=menkoSpec(c),tilt=isDrop?0:(c.tilt||0),cos=Math.cos(tilt),sin=Math.sin(tilt),back=cos<0;
+  const r=c.r,z=c.z||0,spec=menkoSpec(c),tilt=isDrop?0:(c.tilt||0),cos=Math.cos(tilt),back=cos<0;
   const height=clamp(z/Math.max(1,48*MENKO_ANIMATION_LIFT_SCALE*(r/54)),0,1),layerScale=(c.coverDepth||0)>0?Math.max(.45,c.layerFactor||1):1,coupledFront=clamp(c.coupledFlight||0,0,1),airScale=1+height*(.30+.24*coupledFront)*layerScale,depth=Math.max(.8,2.25*(r/54)),corner=r*.10,camera=Math.max(160,420*(r/54));
   ctx.save();if(c.exiting)ctx.globalAlpha=1-(c.exitT||0);ctx.translate(c.x,c.y-z);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(airScale,airScale);ctx.lineJoin="bevel";ctx.miterLimit=1;
-  const weakPivot=!isDrop&&c.animationPower==="weak",pivotY=weakPivot?-r:0;
-  // 既に裏向きの札から始まる場合も、アニメ開始時の位置を変えずに
-  // 同じ一辺を固定できるよう、開始姿勢ぶんの中心移動を差し引く。
-  const baseTilt=weakPivot?(c.animStartTilt??0):0,baseCenterY=weakPivot?(-pivotY)*Math.cos(baseTilt)+pivotY:0,baseCenterZ=weakPivot?(-pivotY)*Math.sin(baseTilt):0;
+  const weakPivot=!isDrop&&c.animationPower==="weak";
+  // 重なり支点は持ち上がり前半だけ固定し、札が十分に抜けた後は解放する。
+  // 最後まで固定すると着地時に中心が跳ぶため、回転後半で滑らかに中央へ戻す。
+  const animP=clamp(c.animT||0,0,1),release=1-clamp((animP-.46)/.42,0,1),pivotStrength=!isDrop?(c.overlapPivotStrength||0)*release:0;
+  const pivotX=weakPivot?0:(c.overlapPivotX||0)*pivotStrength,pivotY=weakPivot?-r:(c.overlapPivotY||0)*pivotStrength;
+  const pivotLen=Math.hypot(pivotX,pivotY),normalX=pivotLen>.01?pivotX/pivotLen:0,normalY=pivotLen>.01?pivotY/pivotLen:1,tangentX=-normalY,tangentY=normalX;
+  // 任意方向の重なりを支点にできるよう、支点からの法線成分だけを3D回転する。
+  const rawProject=(px,py,pz,angle)=>{
+    const rx=px-pivotX,ry=py-pivotY,tangent=rx*tangentX+ry*tangentY,normal=rx*normalX+ry*normalY;
+    const ca=Math.cos(angle),sa=Math.sin(angle),rotatedNormal=normal*ca-pz*sa,rz=normal*sa+pz*ca;
+    return{x:pivotX+tangent*tangentX+rotatedNormal*normalX,y:pivotY+tangent*tangentY+rotatedNormal*normalY,z:rz};
+  };
+  // 既に裏向きから始まる場合も、開始姿勢ぶんの中心移動を相殺する。
+  const baseTilt=(weakPivot||pivotStrength>0)?(c.animStartTilt??0):0,baseCenter=rawProject(0,0,0,baseTilt);
   const outline=[[-r+corner,-r],[r-corner,-r],[r,-r+corner],[r,r-corner],[r-corner,r],[-r+corner,r],[-r,r-corner],[-r,-r+corner]];
-  const project=(px,py,pz)=>{const ly=py-pivotY,ry=ly*cos-pz*sin+pivotY-baseCenterY,rz=ly*sin+pz*cos-baseCenterZ,k=camera/(camera-rz);return{x:px*k,y:ry*k,z:rz,k}};
+  const project=(px,py,pz)=>{const rotated=rawProject(px,py,pz,tilt),rx=rotated.x-baseCenter.x,ry=rotated.y-baseCenter.y,rz=rotated.z-baseCenter.z,k=camera/(camera-rz);return{x:rx*k,y:ry*k,z:rz,k}};
   const plane=pz=>outline.map(([px,py])=>project(px,py,pz)),front=plane(depth),rear=plane(-depth),polygon=pts=>{ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.closePath()};
   outline.map((_,i)=>{const j=(i+1)%outline.length,pts=[front[i],front[j],rear[j],rear[i]];return{pts,z:pts.reduce((s,p)=>s+p.z,0)/4,index:i}}).sort((a,b)=>a.z-b.z).forEach(side=>{polygon(side.pts);const shade=Math.round(255*Math.min(.92,.68+(side.index%4)*.055));ctx.fillStyle=`rgb(${shade},${shade},${shade})`;ctx.strokeStyle="#777";ctx.lineWidth=.8;ctx.fill();ctx.stroke()});
   const face=back?rear:front,visibleZ=back?-depth:depth;polygon(face);ctx.fillStyle=spec.color;ctx.strokeStyle="#fff";ctx.lineWidth=1.5+2.5*Math.min(1,Math.abs(cos)*3);ctx.fill();ctx.stroke();
