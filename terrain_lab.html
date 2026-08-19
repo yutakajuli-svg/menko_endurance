@@ -1073,7 +1073,7 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   flipChance *= 1/(1+coverLoad*layerResistance);
   // 強投擲は巻き込み範囲だけでなく、実際に大きく浮いた札の期待値も僅かに上げる。
   // PRESS／NUDGEには掛けず、強さだけで捲れ枚数が決まる状態にはしない。
-  if(behavior==="AIR_LIFT"||behavior==="OFFSET_HIT")flipChance+=Math.max(0,wave.gauge-.50)*.12;
+  if(behavior==="AIR_LIFT"||behavior==="OFFSET_HIT")flipChance+=Math.max(0,wave.gauge-.50)*.18;
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   if(behavior==="PRESS")flipChance*=.18;
   if(behavior==="NUDGE")flipChance*=.42;
