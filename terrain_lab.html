@@ -264,7 +264,7 @@ body.terrain-lab #progressFab,body.terrain-lab .clone-inline{display:none}
   <details id="progressUtility"><summary>設定・通算戦績</summary><h3>差分MENKO設定</h3><label class="ruleRow"><span>差分MENKOを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label><p>カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p><h3>通算戦績</h3><div id="careerRecords"></div></details>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">TERRAIN LAB新攻防：場は攻撃6枚／防御4枚。攻撃MENKOは見えるLvを持ち、通常ダメージは「基礎ダメージ＋めくった攻撃札Lv合計－相手の防御枚数」です。攻撃札を1枚以上めくった攻撃は最低1ダメージを与えます。防御同士の相殺はなく、防御は取得ラウンドだけ有効です。相手が攻撃札をめくり、自分の防御枚数が相手の攻撃札枚数と自分の攻撃札枚数の両方を上回ると、固定1ダメージのカウンターが発生します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用できます。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">TERRAIN LAB新攻防：場は攻撃6枚／防御4枚。攻撃MENKOは見えるLvを持ち、通常ダメージは「基礎ダメージ＋めくった攻撃札Lv合計－相手の防御枚数」です。攻撃札を1枚以上めくった攻撃は最低1ダメージを与えます。防御同士の相殺はなく、防御は取得ラウンドだけ有効です。相手が攻撃札をめくり、自分の防御枚数が相手の攻撃札枚数と自分の攻撃札枚数の両方を上回るとカウンターが成立し、双方の通常攻撃をキャンセルして固定1ダメージだけを返します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用できます。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
@@ -1591,7 +1591,7 @@ async function playRoundPresentations(data){
     let actionShownThisTurn=false;
     if(resultData.attackCancelledByKO)continue;
     if(overrides[actor]!=null){actionShownThisTurn=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){if(normalDamage>0){actionShownThisTurn=true;await playNormalAttackEvent(actor,normalDamage,results[oppositeActor(actor)].defenseUsed||0,Math.max(1,effectiveLevel),resultData.moveType||1);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
+    else if(resultData.attackLevel>0){if(normalDamage>0){actionShownThisTurn=true;await playNormalAttackEvent(actor,normalDamage,results[oppositeActor(actor)].defenseUsed||0,Math.max(1,effectiveLevel),resultData.moveType||1);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(!counter){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
     if(counter?.target===actor){actionShownThisTurn=true;await playCounterEvent(counter.actor,counter.damage)}
     if(actionShownThisTurn){actionShown=true;await wait(BETWEEN_BATTLE_EVENTS_HOLD)}
   }
@@ -1666,9 +1666,12 @@ function resolveRoundEffects(){
     if(!eligible)continue;
     counter={actor:pair.defender,target:pair.attacker,damage:1};
     counterDamage[counter.actor]=counter.damage;
-    if(counter.actor==="player")roundRedDamage+=counter.damage;
-    else roundBlueDamage+=counter.damage;
-    appendLog(`COUNTER: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK cards ${attackerCards} and own ATK cards ${defenderAttackCards} / ${actorLabel(counter.actor)} deals ${counter.damage}`);
+    // カウンター成立ラウンドは双方の通常攻撃を止め、反撃1ダメージだけを解決する。
+    normalDamage[pair.attacker]=0;
+    normalDamage[pair.defender]=0;
+    roundRedDamage=counter.actor==="player"?counter.damage:0;
+    roundBlueDamage=counter.actor==="cpu"?counter.damage:0;
+    appendLog(`COUNTER EXCLUSIVE: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK cards ${attackerCards} and own ATK cards ${defenderAttackCards} / both normal attacks cancelled / ${actorLabel(counter.actor)} deals ${counter.damage}`);
     break;
   }
 
@@ -1768,8 +1771,8 @@ function resolveRoundEffects(){
   else if(roundRedDamage>0)matchStats.flow.playerOnly++;
   else if(roundBlueDamage>0)matchStats.flow.cpuOnly++;
   else matchStats.flow.none++;
-  if(redAttackCards>0)matchStats.attacks.player++;
-  if(blueAttackCards>0)matchStats.attacks.cpu++;
+  if(normalDamage.player>0)matchStats.attacks.player++;
+  if(normalDamage.cpu>0)matchStats.attacks.cpu++;
   if(redDefenseUsed>0||blueDefenseUsed>0)matchStats.guarded++;
   if(counter)matchStats.counters++;
   if(secondAttackCancelled)matchStats.firstKoCancels++;
