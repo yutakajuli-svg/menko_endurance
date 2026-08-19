@@ -881,22 +881,37 @@ function cpuThrow(){
   throwMenko(gauge,a);
 }
 function chooseCpuThrow(){
-  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"&&c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
+  const R=ring(),boardCards=cards.filter(c=>c.type!=="clone"),normalCards=boardCards.filter(c=>c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
   const enemyClone=cards.find(c=>c.type==="clone"&&c.team!=="cpu");
   const canCloneAllIn=!!enemyClone&&typeof mainStamina!=="undefined"&&mainStamina.cpu>=5&&typeof cloneCharge!=="undefined"&&cloneCharge.cpu>=cloneChargeThreshold("cpu");
   const roll=Math.random();
-  // CPUも密集度から最適出力を逆算しない。見えている有効札を選び、力加減は別の勘で決める。
-  const ownDifference=normalCards.filter(c=>c.isDifference&&c.team==="cpu");
-  const visibleChoices=ownDifference.length&&roll<.55?ownDifference:normalCards;
-  const intent=canCloneAllIn&&roll<.18?"clone_all_in":ownDifference.length&&visibleChoices===ownDifference?"own_difference":"visible_card";
-  const target=intent==="clone_all_in"?enemyClone:(visibleChoices[Math.floor(Math.random()*visibleChoices.length)]||center);
+  // CPUは見えている攻撃／防御を判別するが、盤面全体の最適密集地点までは計算しない。
+  // まず目的を決め、その種類から1枚を選ぶ。低スタミナ時は防御をやや意識する。
+  const stamina=mainStamina.cpu,intentRoll=Math.random();
+  let intent="random";
+  if(canCloneAllIn&&roll<.18)intent="clone_all_in";
+  else if(stamina<=2)intent=intentRoll<.40?"attack":intentRoll<.85?"defense":"random";
+  else intent=intentRoll<.60?"attack":intentRoll<.85?"defense":"random";
+  const intendedCards=intent==="attack"||intent==="defense"?normalCards.filter(c=>c.type===intent):normalCards;
+  const target=intent==="clone_all_in"?enemyClone:((intendedCards.length?intendedCards:normalCards)[Math.floor(Math.random()*Math.max(1,(intendedCards.length?intendedCards:normalCards).length))]||center);
+  // 35%だけ、選んだ札のすぐ近くにある1枚へ気づく。正確な重なり率や将来の捲れ率は使わず、
+  // 2枚の間へ少し寄せるだけなので「上手い時もある」程度に留める。
+  let localNeighbor=null,localAwareness="single";
+  if(intent!=="clone_all_in"&&target!==center&&Math.random()<.35){
+    const nearby=boardCards.filter(c=>c!==target&&Math.hypot(c.x-target.x,c.y-target.y)<=(target.r+(c.r||target.r))*1.35);
+    if(nearby.length){
+      localNeighbor=nearby[Math.floor(Math.random()*nearby.length)];
+      localAwareness="pair";
+    }
+  }
+  const localBlend=localNeighbor?rand(.24,.44):0;
+  const noticedAim=localNeighbor?{x:target.x+(localNeighbor.x-target.x)*localBlend,y:target.y+(localNeighbor.y-target.y)*localBlend}:target;
   // 正確な重なり率や捲れ確率は参照せず、見えている札の大きさを基準に
   // 中心・半ずらし・近くの地面を大まかに選ぶ。
   const aimRoll=Math.random(),aimStyle=intent==="clone_all_in"?"clone":aimRoll<.65?"offset":aimRoll<.85?"center":"nearby";
   const aimAngle=Math.random()*Math.PI*2,targetRadius=target.r||Math.min(R.s*.08,30);
   const aimOffset=aimStyle==="clone"?0:aimStyle==="offset"?targetRadius*rand(.42,.72):aimStyle==="center"?targetRadius*rand(0,.22):targetRadius*rand(1.05,1.42);
-  const idealAim={x:target.x+Math.cos(aimAngle)*aimOffset,y:target.y+Math.sin(aimAngle)*aimOffset};
-  const stamina=mainStamina.cpu;
+  const idealAim={x:noticedAim.x+Math.cos(aimAngle)*aimOffset,y:noticedAim.y+Math.sin(aimAngle)*aimOffset};
   const powerRoll=Math.random();
   const powerBand=stamina<=2
     ? (powerRoll<.55?"precision":"stable")
@@ -918,7 +933,7 @@ function chooseCpuThrow(){
   let gauge=clamp(idealPower+powerError,0,powerCap);
   // 分身は通常投擲で捲れない。狙うならALL-IN圏を必ず維持する。
   if(intent==="clone_all_in")gauge=Math.max(.90,gauge);
-  appendLog(`CPU THROW: intent=${intent.toUpperCase()} aim=${aimStyle.toUpperCase()} target=${powerBand.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} cap=${powerCap.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
+  appendLog(`CPU THROW: intent=${intent.toUpperCase()} awareness=${localAwareness.toUpperCase()}${localNeighbor?`(Card ${localNeighbor.cardId})`:""} aim=${aimStyle.toUpperCase()} target=${powerBand.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} cap=${powerCap.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
   return {aim,gauge};
 }
 function cpuThrow(){
