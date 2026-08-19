@@ -1089,6 +1089,49 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
 }
+function applyStackMotionConstraints(wave){
+  // 抽選後の札を個別に飛ばしたままにせず、初期状態で重なっていた上下札を
+  // 一つの運動として整える。中層が回転する間は上札が必ず先に退き、後から着地する。
+  for(const c of cards){
+    c.stackCarrier=-1;c.stackClearance=0;c.stackClearedUpperIndices=[];
+  }
+  for(let lowerIndex=0;lowerIndex<cards.length;lowerIndex++){
+    const lower=cards[lowerIndex];
+    if(!lower.flip||!lower.willFlip)continue;
+    const uppers=wave.initialImpact[lowerIndex]?.inf?.uppers||[];
+    for(const upperIndex of uppers){
+      const upper=cards[upperIndex],coupling=stackCoupling(lower,upper);
+      if(coupling<=0)continue;
+      // 上札が静止したままなら、その下を中層だけが回転して抜けることはできない。
+      if(!upper.flip){
+        lower.willFlip=false;
+        lower.targetFace=lower.face;
+        lower.targetTilt=lower.face?Math.PI:0;
+        wave.lines.push(`Card ${lowerIndex+1} stack constraint: Card ${upperIndex+1} stayed down / flip cancelled before animation`);
+        break;
+      }
+
+      lower.stackClearedUpperIndices.push(upperIndex);
+      // 深い重なりほど同じ方向へ運び、浅い重なりでも最低限は引きずられる。
+      const follow=.30+.52*coupling;
+      const lowerDx=(lower.animEndX??lower.x)-(lower.animStartX??lower.x);
+      const lowerDy=(lower.animEndY??lower.y)-(lower.animStartY??lower.y);
+      const upperDx=(upper.animEndX??upper.x)-(upper.animStartX??upper.x);
+      const upperDy=(upper.animEndY??upper.y)-(upper.animStartY??upper.y);
+      upper.animEndX=(upper.animStartX??upper.x)+upperDx*(1-follow)+lowerDx*follow;
+      upper.animEndY=(upper.animStartY??upper.y)+upperDy*(1-follow)+lowerDy*follow;
+      upper.animDelay=Math.min(upper.animDelay||0,lower.animDelay||0);
+      upper.animDuration=Math.max(upper.animDuration||.5,(lower.animDuration||.5)+.055+.035*coupling);
+      upper.animLift=Math.max(upper.animLift||0,(lower.animLift||0)+lower.r*(.08+.16*coupling));
+      // 3層時は上から設定された制約を優先し、最も高い支持札を保持する。
+      if((upper.stackClearance||0)<lower.r*(.08+.16*coupling)){
+        upper.stackCarrier=lowerIndex;
+        upper.stackClearance=lower.r*(.08+.16*coupling);
+      }
+      wave.lines.push(`Card ${upperIndex+1} stack ride: above Card ${lowerIndex+1} / clearance ${upper.stackClearance.toFixed(1)} px / follow ${(follow*100).toFixed(0)}%`);
+    }
+  }
+}
 function exposedImpactNow(i,wave){
   const inf=layerImpactInfo(i,wave.x,wave.y,wave.maxRadius);
   const c=cards[i],d=Math.hypot(c.x-wave.x,c.y-wave.y);
@@ -1172,6 +1215,7 @@ function advanceLayerWave(){
       wave.lines.push(`Card ${i+1}: STOPPED / no impact or connected overlap propagation`);
     }
   }
+  applyStackMotionConstraints(wave);
 
   if(wave.processed.every(Boolean)){
     wave.complete=true;
@@ -1238,6 +1282,9 @@ function resolveStackFaces(){
     for(let j=i+1;j<cards.length;j++){
       const upper=cards[j];
       if(!stackCardsOverlap(c,upper)||overlapAmount(c,upper)<MIN_RELAY_OVERLAP)continue;
+      // 投擲中に上札を持ち上げて通り道を作れた組は、元の上下順を保ったまま
+      // 下札が裏返ってよい。静止した上札だけを最終的な蓋として扱う。
+      if(c.stackClearedUpperIndices?.includes(j))continue;
       const upperReturnedFront=finalFaces[j]===0;
       // 上札が最終位置でも重なって表のままなら、下札だけが貫通して
       // 裏返ったことにはしない。移動量ではなく実際の残存被覆で判定する。
@@ -1295,7 +1342,7 @@ function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
 function result(){
   // 投擲中にグローバルの手番が変化しても効果対象を取り違えないよう、衝撃開始時の投擲者を使う。
   const resultActor=pendingLayerWave?.actorKey||turn;
-  for(const c of cards){if(c.provisionalFace!=null)c.face=c.provisionalFace;c.provisionalFace=null;}
+  resolveStackFaces();
   let attackLevel=0,defenseLevel=0,rawAttackLevel=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
   for(const c of cards){
     c.z=0;c.vz=0;c.flip=false;c.settled=true;c.tilt=c.face?Math.PI:0;c.tv=0;c.spin=0;
@@ -1756,6 +1803,17 @@ function updateCards(){
       c.animStartX=null;c.animStartY=null;c.animEndX=null;c.animEndY=null;c.animStartTilt=null;c.animStartRot=null;c.animLift=0;c.animRotDelta=0;c.animPeakTilt=0;
       c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;c.animationPower=null;c.animationSide=0;c.animRoll=0;c.coupledFlight=0;
     }
+  }
+  // 個々の放物線を計算した後、重なりグループ内の高さだけを拘束する。
+  // これにより中層の回転面を上層が横切らず、3層でも下から順に空間が開く。
+  for(let i=0;i<cards.length;i++){
+    const upper=cards[i],carrierIndex=upper.stackCarrier;
+    if(carrierIndex==null||carrierIndex<0||!upper.flip)continue;
+    const lower=cards[carrierIndex];
+    if(!lower?.flip)continue;
+    const lowerP=clamp(lower.animT||0,0,1);
+    const clearance=(upper.stackClearance||0)*Math.pow(Math.max(0,Math.sin(Math.PI*lowerP)),.70);
+    upper.z=Math.max(upper.z||0,(lower.z||0)+clearance);
   }
   if(pendingLayerWave&&!pendingLayerWave.complete)advanceLayerWave();
   moving=cards.some(c=>!c.settled||c.flip);
