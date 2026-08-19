@@ -1135,44 +1135,69 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
 }
 function applyStackMotionConstraints(wave){
   // 抽選後の札を個別に飛ばしたままにせず、初期状態で重なっていた上下札を
-  // 一つの運動として整える。中層が回転する間は上札が必ず先に退き、後から着地する。
+  // 一つの運動として整える。裏返らない横滑りでも、重なりが解ける前に
+  // 下札だけが上札より高く抜けたり、上札が先に着地したりしないようにする。
   for(const c of cards){
     c.stackCarrier=-1;c.stackClearance=0;c.stackClearedUpperIndices=[];
   }
+  const startPassiveRider=(upper,lower,coupling)=>{
+    // 衝撃が弱く静止予定だった上札にも、下札から受ける最小限の視覚運動を与える。
+    // 面や効果は変えず、積層の通り抜け防止だけに使う。
+    upper.flip=true;upper.settled=false;upper.animStarted=true;upper.z=0;upper.vz=0;
+    upper.motionType="NUDGE";upper.motionJP="重なり追従";upper.willFlip=false;upper.coupledFlight=clamp(.12+coupling*.55,0,1);
+    upper.animationPower="physical";upper.animationSide=lower.animationSide||1;upper.animRoll=0;
+    upper.animT=0;upper.animDuration=lower.animDuration||.5;upper.animDelay=lower.animDelay||0;
+    upper.animStartX=upper.x;upper.animStartY=upper.y;upper.animStartTilt=upper.tilt;upper.animStartRot=upper.rot||0;
+    upper.animEndX=upper.x;upper.animEndY=upper.y;upper.animLift=Math.max(3,lower.animLift*(.28+.30*coupling));
+    upper.targetTilt=upper.face?Math.PI:0;upper.targetFace=upper.face;upper.animRotDelta=(lower.animRotDelta||0)*.35;
+    upper.pivotUx=0;upper.pivotUy=0;upper.motionTravel=0;upper.flipChance=0;
+  };
   for(let lowerIndex=0;lowerIndex<cards.length;lowerIndex++){
     const lower=cards[lowerIndex];
-    if(!lower.flip||!lower.willFlip)continue;
+    if(!lower.flip)continue;
+    const lowerDx=(lower.animEndX??lower.x)-(lower.animStartX??lower.x);
+    const lowerDy=(lower.animEndY??lower.y)-(lower.animStartY??lower.y);
+    const lowerTravel=Math.hypot(lowerDx,lowerDy),lowerLift=lower.animLift||0;
+    const significantMotion=lower.willFlip||lowerTravel>lower.r*.075||lowerLift>lower.r*.11;
+    if(!significantMotion)continue;
     const uppers=wave.initialImpact[lowerIndex]?.inf?.uppers||[];
     for(const upperIndex of uppers){
       const upper=cards[upperIndex],coupling=stackCoupling(lower,upper);
       if(coupling<=0)continue;
       // 上札が静止したままなら、その下を中層だけが回転して抜けることはできない。
       if(!upper.flip){
-        lower.willFlip=false;
-        lower.targetFace=lower.face;
-        lower.targetTilt=lower.face?Math.PI:0;
-        wave.lines.push(`Card ${lowerIndex+1} stack constraint: Card ${upperIndex+1} stayed down / flip cancelled before animation`);
-        break;
+        if(lower.willFlip){
+          lower.willFlip=false;
+          lower.targetFace=lower.face;
+          lower.targetTilt=lower.face?Math.PI:0;
+          wave.lines.push(`Card ${lowerIndex+1} stack constraint: Card ${upperIndex+1} stayed down / flip cancelled before animation`);
+          break;
+        }
+        startPassiveRider(upper,lower,coupling);
+        wave.lines.push(`Card ${upperIndex+1} passive stack ride: moved by Card ${lowerIndex+1}`);
       }
 
-      lower.stackClearedUpperIndices.push(upperIndex);
-      // 深い重なりほど同じ方向へ運び、浅い重なりでも最低限は引きずられる。
-      const follow=.30+.52*coupling;
-      const lowerDx=(lower.animEndX??lower.x)-(lower.animStartX??lower.x);
-      const lowerDy=(lower.animEndY??lower.y)-(lower.animStartY??lower.y);
+      if(lower.willFlip)lower.stackClearedUpperIndices.push(upperIndex);
       const upperDx=(upper.animEndX??upper.x)-(upper.animStartX??upper.x);
       const upperDy=(upper.animEndY??upper.y)-(upper.animStartY??upper.y);
+      const initialDx=upper.x-lower.x,initialDy=upper.y-lower.y,initialDistance=Math.hypot(initialDx,initialDy);
+      const finalDx=initialDx+upperDx-lowerDx,finalDy=initialDy+upperDy-lowerDy,finalDistance=Math.hypot(finalDx,finalDy);
+      const closing=clamp((initialDistance-finalDistance)/Math.max(1,lower.r*.28),0,1);
+      // 離れて重なりを解く時は横追従を弱く、上札側へ潜り込む時は強く追従させる。
+      const follow=lower.willFlip ? .30+.52*coupling : clamp(.20+.42*coupling+.30*closing,.20,.70);
       upper.animEndX=(upper.animStartX??upper.x)+upperDx*(1-follow)+lowerDx*follow;
       upper.animEndY=(upper.animStartY??upper.y)+upperDy*(1-follow)+lowerDy*follow;
       upper.animDelay=Math.min(upper.animDelay||0,lower.animDelay||0);
-      upper.animDuration=Math.max(upper.animDuration||.5,(lower.animDuration||.5)+.055+.035*coupling);
-      upper.animLift=Math.max(upper.animLift||0,(lower.animLift||0)+lower.r*(.08+.16*coupling));
+      const landingLag=lower.willFlip ? .055+.035*coupling : .025+.025*coupling;
+      upper.animDuration=Math.max(upper.animDuration||.5,(lower.animDuration||.5)+landingLag);
+      const clearance=lower.r*(lower.willFlip ? .08+.16*coupling : .025+.075*coupling);
+      upper.animLift=Math.max(upper.animLift||0,lowerLift+clearance);
       // 3層時は上から設定された制約を優先し、最も高い支持札を保持する。
-      if((upper.stackClearance||0)<lower.r*(.08+.16*coupling)){
+      if((upper.stackClearance||0)<clearance){
         upper.stackCarrier=lowerIndex;
-        upper.stackClearance=lower.r*(.08+.16*coupling);
+        upper.stackClearance=clearance;
       }
-      wave.lines.push(`Card ${upperIndex+1} stack ride: above Card ${lowerIndex+1} / clearance ${upper.stackClearance.toFixed(1)} px / follow ${(follow*100).toFixed(0)}%`);
+      wave.lines.push(`Card ${upperIndex+1} stack ride: above Card ${lowerIndex+1} / ${lower.willFlip?"flip":"slide"} / clearance ${upper.stackClearance.toFixed(1)} px / follow ${(follow*100).toFixed(0)}% / closing ${(closing*100).toFixed(0)}%`);
     }
   }
   wave.lines.push(["---- FINAL MOTION POSITIONS ----",...cards.map((c,i)=>{
