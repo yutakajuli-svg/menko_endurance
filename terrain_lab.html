@@ -264,7 +264,7 @@ body.terrain-lab #progressFab,body.terrain-lab .clone-inline{display:none}
   <details id="progressUtility"><summary>設定・通算戦績</summary><h3>差分MENKO設定</h3><label class="ruleRow"><span>差分MENKOを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label><p>カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p><h3>通算戦績</h3><div id="careerRecords"></div></details>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃MENKO枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。両者に攻撃がある場合は先攻順で解決し、先攻の攻撃で後攻がHP0になった場合、後攻の攻撃とダメージは無効です。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用でき、相手所有の差分MENKOをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃MENKO総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">TERRAIN LAB新攻防：場は攻撃6枚／防御4枚。攻撃MENKOは見えるLvを持ち、通常ダメージは「基礎ダメージ＋めくった攻撃札Lv合計－相手の防御枚数」です。攻撃札を1枚以上めくった攻撃は最低1ダメージを与えます。防御同士の相殺はなく、防御は取得ラウンドだけ有効です。相手が攻撃札をめくり、自分の防御枚数が相手の攻撃札枚数と自分の攻撃札枚数の両方を上回ると、固定1ダメージのカウンターが発生します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用できます。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
@@ -761,7 +761,7 @@ function targets(n,rad){
 }
 function makeCommonCard(t,d,i,rad){
   d=d||{team:"common",type:"attack",isDifference:false};
-  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
+  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?(d.attackLevel||1):0,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
     z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25),bias:rand(-.35,.35)};
 }
 function makeCloneCard(team){
@@ -1421,22 +1421,18 @@ function clearPlayerLog(){
 function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
   const redFormula=red.attackCancelledByKO
     ? `先攻側のKOにより攻撃中止 → 0ダメージ`
-    : red.attackLevel===0
-    ? `攻撃Lv 0 → 0ダメージ`
-    : red.effectiveAttackLevel<=0
-      ? `攻撃Lv ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ 完全防御・0ダメージ`
-      : `基礎攻撃力 ${config.redAttack} × 0.5（${scaledBaseAttack(config.redAttack)}）＋ 有効攻撃Lv ${red.effectiveAttackLevel} ＝ ${redDamage}ダメージ`;
+    : (red.attackCardCount??red.attackLevel)===0
+    ? `攻撃札 0枚 → 0ダメージ`
+    : `基礎 ${scaledBaseAttack(config.redAttack)} ＋ 攻撃札Lv合計 ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ ${redDamage}ダメージ（最低1）`;
   const blueFormula=blue.attackCancelledByKO
     ? `先攻側のKOにより攻撃中止 → 0ダメージ`
-    : blue.attackLevel===0
-    ? `攻撃Lv 0 → 0ダメージ`
-    : blue.effectiveAttackLevel<=0
-      ? `攻撃Lv ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ 完全防御・0ダメージ`
-      : `基礎攻撃力 ${config.blueAttack} × 0.5（${scaledBaseAttack(config.blueAttack)}）＋ 有効攻撃Lv ${blue.effectiveAttackLevel} ＝ ${blueDamage}ダメージ`;
+    : (blue.attackCardCount??blue.attackLevel)===0
+    ? `攻撃札 0枚 → 0ダメージ`
+    : `基礎 ${scaledBaseAttack(config.blueAttack)} ＋ 攻撃札Lv合計 ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ ${blueDamage}ダメージ（最低1）`;
   const redDefDetail=`赤防御：取得 ${red.defenseLevel} ／ 使用 ${red.defenseUsed??0} ／ 未使用 ${red.defenseUnused??red.defenseLevel}（ラウンド終了で消滅）${red.disabledDefense?` ／ 相手所有カードで無効 ${red.disabledDefense}`:""}`;
   const blueDefDetail=`青防御：取得 ${blue.defenseLevel} ／ 使用 ${blue.defenseUsed??0} ／ 未使用 ${blue.defenseUnused??blue.defenseLevel}（ラウンド終了で消滅）${blue.disabledDefense?` ／ 相手所有カードで無効 ${blue.disabledDefense}`:""}`;
-  const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
-  const blueFlipDetail=`青めくり：${blue.physicalFlippedCount??blue.flippedCount}枚 ／ 有効 ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} ／ 無効 ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)}`;
+  const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??((red.attackCardCount??red.attackLevel)+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
+  const blueFlipDetail=`青めくり：${blue.physicalFlippedCount??blue.flippedCount}枚 ／ 有効 ${blue.effectiveFlippedCount??((blue.attackCardCount??blue.attackLevel)+blue.defenseLevel+blue.cloneFlips)} ／ 無効 ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)}`;
   playerLog.innerHTML=`<div class="detail">${redFlipDetail}<br>${blueFlipDetail}</div><div class="red">赤：${redFormula}</div><div class="blue">青：${blueFormula}</div><div class="detail">${redDefDetail}<br>${blueDefDetail}</div><div class="total">合計ダメージ　赤→青 ${redDamage} ／ 青→赤 ${blueDamage} ／ 両者合計 ${redDamage+blueDamage}</div><div class="actions"><button id="copyRoundLogBtn" type="button">このログをコピー</button>${isFinal?'<button id="showResultBtn" type="button">リザルトへ</button>':''}</div>`;
   playerLog.style.display="block";
   playerLogVisible=true;
@@ -1449,7 +1445,7 @@ function result(){
   // 投擲中にグローバルの手番が変化しても効果対象を取り違えないよう、衝撃開始時の投擲者を使う。
   const resultActor=pendingLayerWave?.actorKey||turn;
   const faceResolutionNotes=resolveStackFaces();
-  let attackLevel=0,defenseLevel=0,rawAttackLevel=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
+  let attackLevel=0,attackCardCount=0,defenseLevel=0,rawAttackLevel=0,rawAttackCardCount=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
   for(const c of cards){
     c.z=0;c.vz=0;c.flip=false;c.settled=true;c.tilt=c.face?Math.PI:0;c.tv=0;c.spin=0;
     const newlyFlippedToBack=c.face===1&&c.faceBeforeThrow!==1;
@@ -1462,7 +1458,7 @@ function result(){
     const ownerLabel=c.isDifference?(c.team==="player"?"RED差分":"BLUE差分"):"共用";
     const typeLabel=c.type==="attack"?"攻撃":c.type==="defense"?"防御":"分身";
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"}分身`:`Card ${c.cardId||"?"}`;
-    if(c.type==="attack")rawAttackLevel++;
+    if(c.type==="attack"){rawAttackLevel+=c.attackLevel||1;rawAttackCardCount++}
     else if(c.type==="defense")rawDefenseLevel++;
     if(!effectEnabled){
       invalidFlippedCount++;
@@ -1472,8 +1468,8 @@ function result(){
       continue;
     }
     effectiveFlippedCount++;
-    effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} → 有効`);
-    if(c.type==="attack")attackLevel++;
+    effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel}${c.type==="attack"?` Lv${c.attackLevel||1}`:""} → 有効`);
+    if(c.type==="attack"){attackLevel+=c.attackLevel||1;attackCardCount++}
     else if(c.type==="defense")defenseLevel++;
     else if(c.type==="clone"){
       cloneFlips++;
@@ -1482,12 +1478,12 @@ function result(){
     }
   }
   updateStackDepths();
-  roundResults[resultActor]={attackLevel,defenseLevel,rawAttackLevel,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
+  roundResults[resultActor]={attackLevel,attackCardCount,defenseLevel,rawAttackLevel,rawAttackCardCount,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
   matchStats.throws[resultActor]++;
   lastAttackLevel=attackLevel;lastDefenseLevel=defenseLevel;lastDamage=0;
   resultT=1.05;state="result";
-  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃Lv ${attackLevel} / 防御Lv ${defenseLevel} を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
-  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FINAL FACE RESOLUTION ---",...(faceResolutionNotes.length?faceResolutionNotes:["No flip candidates"]),"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
+  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃 ${attackCardCount}枚・Lv合計${attackLevel} / 防御 ${defenseLevel}枚 を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
+  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack cards: ${attackCardCount}`,`Attack Lv   : ${attackLevel}`,`Defense     : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FINAL FACE RESOLUTION ---",...(faceResolutionNotes.length?faceResolutionNotes:["No flip candidates"]),"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
 }
 function beginExpel(){
   // 通常メンコの裏向きだけ排出。分身は場に残る。
@@ -1604,8 +1600,8 @@ async function playRoundPresentations(data){
 }
 function resolveRoundEffects(){
   const roundStartRedHP=displayedHP.player,roundStartBlueHP=displayedHP.cpu;
-  const red=roundResults.player||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
-  const blue=roundResults.cpu||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
+  const red=roundResults.player||{attackLevel:0,attackCardCount:0,defenseLevel:0,rawAttackLevel:0,rawAttackCardCount:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
+  const blue=roundResults.cpu||{attackLevel:0,attackCardCount:0,defenseLevel:0,rawAttackLevel:0,rawAttackCardCount:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
   if(cloneRescueCooldown>0)cloneRescueCooldown--;
   const rescued=[];
   let cloneEvents=[...(red.cloneEvents||[]),...(blue.cloneEvents||[])];
@@ -1624,25 +1620,26 @@ function resolveRoundEffects(){
   }
   const cloneExclusive=rescued.length>0;
   if(cloneExclusive)appendLog(`分身専用ラウンド: ${actorLabel(rescued[0].actor)}の分身効果だけを発動し、両者の通常攻撃・通常防御をキャンセル`);
-  // 防御はこのラウンドだけ有効。攻撃メンコと1対1で相殺し、残った攻撃Lvが技Lvと追加ダメージになる。
-  // まず防御MENKO同士で相殺する。残った防御だけが攻撃を軽減できる。
-  const defenseClash=Math.min(red.defenseLevel,blue.defenseLevel);
-  const redDefenseAvailable=Math.max(0,red.defenseLevel-defenseClash);
-  const blueDefenseAvailable=Math.max(0,blue.defenseLevel-defenseClash);
-  const blueDefenseUsed=Math.min(blueDefenseAvailable,red.attackLevel);
-  const redDefenseUsed=Math.min(redDefenseAvailable,blue.attackLevel);
-  const redEffectiveAttackLevel=Math.max(0,red.attackLevel-blueDefenseUsed);
-  const blueEffectiveAttackLevel=Math.max(0,blue.attackLevel-redDefenseUsed);
-  // TERRAIN LAB: 攻撃MENKOを取れたら基礎ダメージは残る。
-  // 防御は追加ダメージを抑える役に絞り、成功した投擲が0で終わりすぎないようにする。
-  const redNormalDamage=red.attackLevel>0?scaledBaseAttack(config.redAttack)+redEffectiveAttackLevel:0;
-  const blueNormalDamage=blue.attackLevel>0?scaledBaseAttack(config.blueAttack)+blueEffectiveAttackLevel:0;
+  // 新防御ルール：防御同士は相殺しない。防御1枚につき最終ダメージを1軽減する。
+  // 攻撃札を1枚以上取れた攻撃は最低1ダメージを残す。
+  const redDefenseAvailable=red.defenseLevel;
+  const blueDefenseAvailable=blue.defenseLevel;
+  const redAttackCards=red.attackCardCount??red.attackLevel;
+  const blueAttackCards=blue.attackCardCount??blue.attackLevel;
+  const redDamageBeforeDefense=redAttackCards>0?scaledBaseAttack(config.redAttack)+red.attackLevel:0;
+  const blueDamageBeforeDefense=blueAttackCards>0?scaledBaseAttack(config.blueAttack)+blue.attackLevel:0;
+  const blueDefenseUsed=redDamageBeforeDefense>0?Math.min(blueDefenseAvailable,Math.max(0,redDamageBeforeDefense-1)):0;
+  const redDefenseUsed=blueDamageBeforeDefense>0?Math.min(redDefenseAvailable,Math.max(0,blueDamageBeforeDefense-1)):0;
+  const redEffectiveAttackLevel=redAttackCards>0?Math.max(0,red.attackLevel-blueDefenseUsed):0;
+  const blueEffectiveAttackLevel=blueAttackCards>0?Math.max(0,blue.attackLevel-redDefenseUsed):0;
+  const redNormalDamage=redDamageBeforeDefense>0?Math.max(1,redDamageBeforeDefense-blueDefenseAvailable):0;
+  const blueNormalDamage=blueDamageBeforeDefense>0?Math.max(1,blueDamageBeforeDefense-redDefenseAvailable):0;
   // Type 003 is a submission.  Only types 001/002 can lead into a pinfall.
-  red.moveType=red.attackLevel>0?randInt(1,3):null;
-  blue.moveType=blue.attackLevel>0?randInt(1,3):null;
+  red.moveType=redAttackCards>0?randInt(1,3):null;
+  blue.moveType=blueAttackCards>0?randInt(1,3):null;
 
-  red.effectiveAttackLevel=redEffectiveAttackLevel;red.defenseClash=defenseClash;red.defenseAvailable=redDefenseAvailable;red.defenseUsed=redDefenseUsed;red.defenseUnused=Math.max(0,redDefenseAvailable-redDefenseUsed);
-  blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseClash=defenseClash;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
+  red.effectiveAttackLevel=redEffectiveAttackLevel;red.defenseAvailable=redDefenseAvailable;red.defenseUsed=redDefenseUsed;red.defenseUnused=Math.max(0,redDefenseAvailable-redDefenseUsed);
+  blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
   roundRedDamage=cloneExclusive?0:redNormalDamage;
   roundBlueDamage=cloneExclusive?0:blueNormalDamage;
   // 通常攻撃とカウンターは別の発生源として保持する。
@@ -1650,7 +1647,8 @@ function resolveRoundEffects(){
   const normalDamage={player:roundRedDamage,cpu:roundBlueDamage};
   const counterDamage={player:0,cpu:0};
 
-  // Either attack can be countered once per round. A remaining normal attack always takes priority.
+  // 防御優勢カウンター：相手に攻撃札があり、自分の防御枚数が
+  // 「相手の攻撃札枚数」と「自分の攻撃札枚数」の両方を上回った時だけ固定1ダメージ。
   const openingResult=roundStarter==="player"?red:blue;
   const respondingActor=oppositeActor(roundStarter);
   const respondingResult=respondingActor==="player"?red:blue;
@@ -1662,13 +1660,15 @@ function resolveRoundEffects(){
   for(let pairIndex=0;pairIndex<counterPairs.length;pairIndex++){
     if(pairIndex===1&&openingWouldKO)continue;
     const pair=counterPairs[pairIndex];
-    const eligible=!cloneExclusive&&pair.attackerResult.attackLevel>0&&pair.defenderResult.defenseAvailable>pair.attackerResult.attackLevel&&pair.defenderResult.effectiveAttackLevel<=0;
+    const attackerCards=pair.attackerResult.attackCardCount??pair.attackerResult.attackLevel;
+    const defenderAttackCards=pair.defenderResult.attackCardCount??pair.defenderResult.attackLevel;
+    const eligible=!cloneExclusive&&attackerCards>0&&pair.defenderResult.defenseLevel>attackerCards&&pair.defenderResult.defenseLevel>defenderAttackCards;
     if(!eligible)continue;
     counter={actor:pair.defender,target:pair.attacker,damage:1};
     counterDamage[counter.actor]=counter.damage;
     if(counter.actor==="player")roundRedDamage+=counter.damage;
     else roundBlueDamage+=counter.damage;
-    appendLog(`COUNTER: ${actorLabel(counter.actor)} guard ${pair.defenderResult.defenseAvailable} > ${actorLabel(counter.target)} ATK ${pair.attackerResult.attackLevel} / ${actorLabel(counter.actor)} deals ${counter.damage}`);
+    appendLog(`COUNTER: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK cards ${attackerCards} and own ATK cards ${defenderAttackCards} / ${actorLabel(counter.actor)} deals ${counter.damage}`);
     break;
   }
 
@@ -1728,23 +1728,20 @@ function resolveRoundEffects(){
     `Round             : ${roundNo}`,
     `Config RED ATK    : ${config.redAttack}`,
     `Config BLUE ATK   : ${config.blueAttack}`,
-    `RED attack raw Lv : ${red.attackLevel}`,
+    `RED attack cards  : ${redAttackCards}`,
+    `RED attack Lv sum : ${red.attackLevel}`,
     `BLUE defense got  : ${blue.defenseLevel}`,
-    `DEFENSE CLASH     : ${defenseClash} each`,
-    `BLUE guard left   : ${blueDefenseAvailable}`,
     `BLUE defense used : ${blueDefenseUsed}`,
-    `RED effective Lv  : ${redEffectiveAttackLevel}`,
-    `RED damage formula: ${red.attackLevel>0?`ceil(${config.redAttack} * 0.5) + extra ${redEffectiveAttackLevel} = ${redNormalDamage}`:"NO ATTACK = 0"}`,
+    `RED damage formula: ${redAttackCards>0?`max(1, ${scaledBaseAttack(config.redAttack)} base + ${red.attackLevel} ATK Lv - ${blueDefenseAvailable} DEF) = ${redNormalDamage}`:"NO ATTACK = 0"}`,
     `RED counter damage: ${counterDamage.player}`,
     `RED clone override: ${redCloneOverride==null?"none":redCloneOverride}`,
     `RED final damage  : ${roundRedDamage}`,
     `RED KO cancelled  : ${red.attackCancelledByKO?"yes":"no"}`,
-    `BLUE attack raw Lv: ${blue.attackLevel}`,
+    `BLUE attack cards : ${blueAttackCards}`,
+    `BLUE attack Lv sum: ${blue.attackLevel}`,
     `RED defense got   : ${red.defenseLevel}`,
-    `RED guard left    : ${redDefenseAvailable}`,
     `RED defense used  : ${redDefenseUsed}`,
-    `BLUE effective Lv : ${blueEffectiveAttackLevel}`,
-    `BLUE damage formula: ${blue.attackLevel>0?`ceil(${config.blueAttack} * 0.5) + extra ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"NO ATTACK = 0"}`,
+    `BLUE damage formula: ${blueAttackCards>0?`max(1, ${scaledBaseAttack(config.blueAttack)} base + ${blue.attackLevel} ATK Lv - ${redDefenseAvailable} DEF) = ${blueNormalDamage}`:"NO ATTACK = 0"}`,
     `BLUE counter damage: ${counterDamage.cpu}`,
     `BLUE clone override: ${blueCloneOverride==null?"none":blueCloneOverride}`,
     `BLUE final damage : ${roundBlueDamage}`,
@@ -1771,22 +1768,22 @@ function resolveRoundEffects(){
   else if(roundRedDamage>0)matchStats.flow.playerOnly++;
   else if(roundBlueDamage>0)matchStats.flow.cpuOnly++;
   else matchStats.flow.none++;
-  if(redEffectiveAttackLevel>0)matchStats.attacks.player++;
-  if(blueEffectiveAttackLevel>0)matchStats.attacks.cpu++;
-  if((red.attackLevel>0&&redEffectiveAttackLevel===0)||(blue.attackLevel>0&&blueEffectiveAttackLevel===0))matchStats.guarded++;
+  if(redAttackCards>0)matchStats.attacks.player++;
+  if(blueAttackCards>0)matchStats.attacks.cpu++;
+  if(redDefenseUsed>0||blueDefenseUsed>0)matchStats.guarded++;
   if(counter)matchStats.counters++;
   if(secondAttackCancelled)matchStats.firstKoCancels++;
   applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
   const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(counter?.actor??(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter));
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
-  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`DEFENSE CLASH : ${defenseClash} each`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE guard ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${normalDamage.player} normal + ${counterDamage.player} counter = ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED guard ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${normalDamage.cpu} normal + ${counterDamage.cpu} counter = ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
+  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(redAttackCards+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blueAttackCards+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`DEFENSE RULE : -1 damage each / attack minimum 1`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED ATK ${redAttackCards} cards / Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} => ${normalDamage.player} normal + ${counterDamage.player} counter = ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK ${blueAttackCards} cards / Lv ${blue.attackLevel} - RED DEF ${redDefenseUsed} => ${normalDamage.cpu} normal + ${counterDamage.cpu} counter = ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
   playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,normalDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD});
 }
 function finishMatch(){
-  appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} guarded=${matchStats.guarded} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
+  appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} reducedRounds=${matchStats.guarded} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
   appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,`Clone rescue : ${cloneRescueActivations} / ${CLONE_RESCUE_MAX_ACTIVATIONS}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
@@ -2060,11 +2057,11 @@ function createBalanceIcon(){
   const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");ic.fillStyle="#fff";[[8,0,2,4],[6,4,6,2],[4,6,10,2],[0,8,18,2],[4,10,10,2],[6,12,6,2],[8,14,2,4]].forEach(r=>ic.fillRect(...r));ic.fillStyle="#969696";ic.fillRect(4,8,5,2);ic.fillRect(6,10,3,2);ic.fillRect(8,12,1,2);return icon;
 }
 const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon(),heartIcon=createHeartIcon(),balanceIcon=createBalanceIcon();
-function menkoSpec(c){return {kind:c.type,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
+function menkoSpec(c){return {kind:c.type,level:c.type==="attack"?(c.attackLevel||1):0,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
 function drawCloneFace(r){
   const scale=r/62;ctx.save();ctx.scale(scale,scale);ctx.translate(-90,-90);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();ctx.fillStyle="#000";ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));ctx.restore();ctx.restore();
 }
-function drawFaceDesign(r,spec,back){const show=spec.kind==="clone"?back:!back;if(!show)return;if(spec.kind==="clone"){drawCloneFace(r);return}const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size)}
+function drawFaceDesign(r,spec,back){const show=spec.kind==="clone"?back:!back;if(!show)return;if(spec.kind==="clone"){drawCloneFace(r);return}const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size);if(spec.kind==="attack"){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";ctx.font=`900 ${Math.floor(r*.25)}px system-ui`;ctx.lineWidth=Math.max(2,r*.055);ctx.strokeStyle="#fff";ctx.fillStyle="#111";ctx.strokeText(`Lv${spec.level||1}`,0,r*.51);ctx.fillText(`Lv${spec.level||1}`,0,r*.51);ctx.restore()}}
 function roundedShadowPath(w,h,r){ctx.beginPath();ctx.moveTo(-w/2+r,-h/2);ctx.lineTo(w/2-r,-h/2);ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);ctx.lineTo(w/2,h/2-r);ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);ctx.lineTo(-w/2+r,h/2);ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);ctx.lineTo(-w/2,-h/2+r);ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);ctx.closePath()}
 function drawCardShadow(c,idleStackShadow=false){
   if(c.exiting)return;const r=c.r;
@@ -2468,7 +2465,7 @@ function mainWeightImpact(actor){
 const staminaCostForGauge=g=>g>=.90?5:g>.75?3:g>.50?2:1;
 // ST4は表示上90%まで使えるが、ALL-IN判定（90%以上・ST5限定）へ入らないよう僅かに手前で止める。
 const staminaGaugeCap=stamina=>stamina>=5?1:stamina>=4?.899:stamina>=3?.75:.50;
-const mainBlankRoundResult=()=>({attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
+const mainBlankRoundResult=()=>({attackLevel:0,attackCardCount:0,defenseLevel:0,rawAttackLevel:0,rawAttackCardCount:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
 const mainStaminaNewMatch=newMatch;
 newMatch=function(){mainStamina.player=5;mainStamina.cpu=5;cloneCharge.player=5;cloneCharge.cpu=5;mainAllInExhausted.player=false;mainAllInExhausted.cpu=false;mainStaminaTurnToken="";cloneChargeTurnToken="";mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
 const mainAdvanceTurnAfterHold=advanceTurnAfterHold;
@@ -2534,10 +2531,10 @@ applyRoundConcentration=()=>{};
 // Six common cards keep flips productive; four difference cards remain physical obstacles.
 deck=function(){
   const d=[];
-  for(let i=0;i<3;i++)d.push({team:"common",type:"attack",isDifference:false});
-  for(let i=0;i<3;i++)d.push({team:"common",type:"defense",isDifference:false});
+  for(let i=0;i<4;i++)d.push({team:"common",type:"attack",attackLevel:1,isDifference:false});
+  for(let i=0;i<2;i++)d.push({team:"common",type:"defense",isDifference:false});
   for(const team of ["player","cpu"]){
-    d.push({team,type:"attack",isDifference:true});
+    d.push({team,type:"attack",attackLevel:1,isDifference:true});
     d.push({team,type:"defense",isDifference:true});
   }
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
