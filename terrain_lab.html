@@ -1072,8 +1072,11 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
   const layerResistance=.16*(1-.50*wave.gauge);
   flipChance *= 1/(1+coverLoad*layerResistance);
   // 強投擲は巻き込み範囲だけでなく、実際に大きく浮いた札の期待値も僅かに上げる。
+  // 50%で急に性質が変わらないよう、低〜中出力にもごく薄い助走を持たせる。
   // PRESS／NUDGEには掛けず、強さだけで捲れ枚数が決まる状態にはしない。
-  if(behavior==="AIR_LIFT"||behavior==="OFFSET_HIT")flipChance+=Math.max(0,wave.gauge-.50)*.18;
+  if(behavior==="AIR_LIFT"||behavior==="OFFSET_HIT"){
+    flipChance+=Math.max(0,wave.gauge-.25)*.05+Math.max(0,wave.gauge-.50)*.13;
+  }
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
   if(behavior==="PRESS")flipChance*=.18;
   if(behavior==="NUDGE")flipChance*=.42;
@@ -1325,8 +1328,9 @@ function hit(x,y,power,gauge,zone){
   // A subtle shared texture makes each throw land a little differently without
   // letting randomness overpower strength, aim, exposure, or card layering.
   const texture={range:rand(.94,1.06),power:rand(.95,1.05),direction:rand(0,Math.PI*2),bias:rand(.05,.12),stability:rand(.94,1.06)};
-  // Restore the lab-sized reach; distance now determines how much force survives at the edge.
-  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),impactRadius=R.s*(.18+.78*gauge)*(288/390)*weightProfile.range*texture.range;power*=weightProfile.power*texture.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  // 低〜中出力にも狙った近傍へ届く最低限の衝撃を残す。100%時の最大範囲は従来と同じ。
+  // 距離で力が減衰するため、弱投げが複数枚確定になるわけではない。
+  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),impactRadius=R.s*(.20+.76*gauge)*(288/390)*weightProfile.range*texture.range;power*=weightProfile.power*texture.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
