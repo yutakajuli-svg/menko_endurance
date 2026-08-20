@@ -4,13 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>MENKO ENDURANCE</title>
-<script>
-// 通常URLはスマホ試遊用のTERRAIN LABへ。現在の本編コードはこのファイルに残し、
-// index.html?main=1 の時だけ従来どおり起動する。
-if(new URLSearchParams(location.search).get("main")!=="1"){
-  location.replace(new URL("terrain_lab.html",location.href).href);
-}
-</script>
 <style>
 :root{--ink:#111;--paper:#f8f8f3;--red:#b00020;--blue:#0057b8}
 *{box-sizing:border-box}
