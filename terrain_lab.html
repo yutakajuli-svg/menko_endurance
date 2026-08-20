@@ -1329,8 +1329,9 @@ function hit(x,y,power,gauge,zone){
   // letting randomness overpower strength, aim, exposure, or card layering.
   const texture={range:rand(.94,1.06),power:rand(.95,1.05),direction:rand(0,Math.PI*2),bias:rand(.05,.12),stability:rand(.94,1.06)};
   // 低〜中出力にも狙った近傍へ届く最低限の衝撃を残す。100%時の最大範囲は従来と同じ。
+  // 0〜70%だけ少し丸みを持たせ、50%前後で「近くの札に届かない」感を減らす。
   // 距離で力が減衰するため、弱投げが複数枚確定になるわけではない。
-  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),impactRadius=R.s*(.20+.76*gauge)*(288/390)*weightProfile.range*texture.range;power*=weightProfile.power*texture.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),lowMidReach=.035*Math.sin(Math.PI*clamp(gauge/.70,0,1)),impactRadius=R.s*(.20+.76*gauge+lowMidReach)*(288/390)*weightProfile.range*texture.range;power*=weightProfile.power*texture.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
