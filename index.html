@@ -120,7 +120,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 .status-group.red .hp-fill{background:#f00}.status-group.blue .hp-fill{background:#00f}
 .stat-line{font-size:18px;line-height:1;white-space:nowrap}
 .menko-line{margin-top:6px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
-.stamina-inline{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#aaa;font-size:10px;vertical-align:2px}.stamina-pips{display:inline-flex;gap:3px}.stamina-pip{width:11px;height:7px;border:1px solid #777;background:#252525}.stamina-pip.red.on{background:#f00;border-color:#f66}.stamina-pip.blue.on{background:#00f;border-color:#66f}.clone-inline{margin-left:8px;color:#c5b36a;font-size:10px;white-space:nowrap}
+.stamina-inline{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#aaa;font-size:10px;vertical-align:2px}.stamina-pips{display:inline-flex;gap:3px}.stamina-pip{width:11px;height:7px;border:1px solid #777;background:#252525}.stamina-pip.red.on{background:#f00;border-color:#f66}.stamina-pip.blue.on{background:#00f;border-color:#66f}.clone-inline{display:none}
 #strengthWrap{position:relative;z-index:6;width:100%;display:grid;gap:4px}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
 #bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
@@ -734,8 +734,9 @@ function targets(n,rad){
 }
 function makeCommonCard(t,d,i,rad){
   d=d||{team:"common",type:"attack",isDifference:false};
-  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
-    z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25),bias:rand(-.35,.35)};
+  const level=d.type==="attack"?(d.attackLevel||1):(d.defenseLevel||1),isLv2=level===2;
+  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?level:0,defenseLevel:d.type==="defense"?level:0,pairColor:d.pairColor||null,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
+    z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25)*(isLv2?1.16:1),bias:rand(-.35,.35)};
 }
 function makeCloneCard(team){
   const R=ring(),r=Math.min(R.s*.105,36)*MENKO_SIZE_SCALE;
@@ -749,9 +750,8 @@ function deal(){
   linkedCount=ds.length;
   const ts=targets(linkedCount,rad);
   for(let i=0;i<ds.length;i++)cards.push(makeCommonCard(ts[i],ds[i],i,rad));
-  // 場に置かれるのは常に相手の分身だけ。投げた側の分身は着地後に残らない。
-  cards.push(makeCloneCard(oppositeActor(turn)));
-  aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……（青色は相手専用）`;
+  // 分身は盤面から外し、通常MENKOだけを読む10枚盤面にする。
+  aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……`;
 }
 function pos(e){const r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}}
 function nearestSelectableCard(p){
@@ -852,23 +852,25 @@ function cpuThrow(){
   throwMenko(gauge,a);
 }
 function chooseCpuThrow(){
-  const R=ring(),normalCards=cards.filter(c=>c.type!=="clone"&&c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
-  const enemyClone=cards.find(c=>c.type==="clone"&&c.team!=="cpu");
-  const canCloneAllIn=!!enemyClone&&typeof mainStamina!=="undefined"&&mainStamina.cpu>=5&&typeof cloneCharge!=="undefined"&&cloneCharge.cpu>=cloneChargeThreshold("cpu");
-  const roll=Math.random();
-  // CPUも密集度から最適出力を逆算しない。見えている有効札を選び、力加減は別の勘で決める。
-  const ownDifference=normalCards.filter(c=>c.isDifference&&c.team==="cpu");
-  const visibleChoices=ownDifference.length&&roll<.55?ownDifference:normalCards;
-  const intent=canCloneAllIn&&roll<.18?"clone_all_in":ownDifference.length&&visibleChoices===ownDifference?"own_difference":"visible_card";
-  const target=intent==="clone_all_in"?enemyClone:(visibleChoices[Math.floor(Math.random()*visibleChoices.length)]||center);
-  const idealAim={x:target.x,y:target.y};
+  const R=ring(),boardCards=cards.filter(c=>c.type!=="clone"),center={x:R.x+R.s*.5,y:R.y+R.s*.5},scanRadius=R.s*.24;
+  // CPU sees only current positions, density, and visible color marks.  It
+  // receives no flip probabilities or outcome information.
+  const choices=boardCards.map(anchor=>{
+    const members=boardCards.filter(c=>Math.hypot(c.x-anchor.x,c.y-anchor.y)<=scanRadius);
+    let x=0,y=0,weight=0;
+    for(const c of members){const d=Math.hypot(c.x-anchor.x,c.y-anchor.y),w=d<R.s*.10?1:d<R.s*.17?.72:.42;weight+=w;x+=c.x*w;y+=c.y*w}
+    const pairBonus=["red","blue","yellow"].reduce((sum,color)=>sum+(members.filter(c=>c.pairColor===color).length>=2?.55:0),0);
+    return {x:weight?x/weight:anchor.x,y:weight?y/weight:anchor.y,members,score:weight+pairBonus+rand(-.18,.18)};
+  }).sort((a,b)=>b.score-a.score);
+  const best=choices[0]?.score??0,top=choices.filter((c,i)=>i<3&&c.score>=best*.76);
+  const target=top[Math.floor(Math.random()*Math.max(1,top.length))]||center,idealAim={x:target.x,y:target.y};
   const stamina=mainStamina.cpu;
   const powerRoll=Math.random();
   const powerBand=stamina<=2
     ? (powerRoll<.46?"precision":powerRoll<.84?"stable":"spread")
     : (powerRoll<.24?"precision":powerRoll<.58?"stable":powerRoll<.86?"spread":"force");
   const bandRange={precision:[.26,.40],stable:[.46,.60],spread:[.64,.78],force:[.81,.89]};
-  const [bandLo,bandHi]=intent==="clone_all_in"?[.92,.98]:bandRange[powerBand];
+  const [bandLo,bandHi]=bandRange[powerBand];
   const idealPower=rand(bandLo,bandHi);
   const fatigue=1-(concentration.cpu??100)/100,missRoll=Math.random();
   const errorType=missRoll<.58-fatigue*.12?"NORMAL":missRoll<.76?"UNDERPOWER":missRoll<.91?"OVERPOWER":missRoll<.98?"AIM_MISS":"BIG_MISS";
@@ -881,8 +883,7 @@ function chooseCpuThrow(){
   const aim={x:clamp(idealAim.x+Math.cos(angle)*positionError,R.x+R.s*.10,R.x+R.s*.90),y:clamp(idealAim.y+Math.sin(angle)*positionError,R.y+R.s*.10,R.y+R.s*.90)};
   let gauge=clamp(idealPower+powerError,0,1);
   // 分身は通常投擲で捲れない。狙うならALL-IN圏を必ず維持する。
-  if(intent==="clone_all_in")gauge=Math.max(.90,gauge);
-  appendLog(`CPU THROW: intent=${intent.toUpperCase()} target=${powerBand.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
+  appendLog(`CPU THROW: visible cluster=${target.members?.length||0} / candidates=${top.length||0} target=${powerBand.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
   return {aim,gauge};
 }
 function cpuThrow(){
@@ -1186,7 +1187,8 @@ function result(){
   // 投擲中にグローバルの手番が変化しても効果対象を取り違えないよう、衝撃開始時の投擲者を使う。
   const resultActor=pendingLayerWave?.actorKey||turn;
   for(const c of cards){if(c.provisionalFace!=null)c.face=c.provisionalFace;c.provisionalFace=null;}
-  let attackLevel=0,defenseLevel=0,rawAttackLevel=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
+  let attackLevel=0,attackCardCount=0,defenseLevel=0,rawAttackLevel=0,rawAttackCardCount=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
+  const pairCounts={red:0,blue:0,yellow:0};
   for(const c of cards){
     c.z=0;c.vz=0;c.flip=false;c.settled=true;c.tilt=c.face?Math.PI:0;c.tv=0;c.spin=0;
     const newlyFlippedToBack=c.face===1&&c.faceBeforeThrow!==1;
@@ -1199,8 +1201,8 @@ function result(){
     const ownerLabel=c.isDifference?(c.team==="player"?"RED差分":"BLUE差分"):"共用";
     const typeLabel=c.type==="attack"?"攻撃":c.type==="defense"?"防御":"分身";
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"}分身`:`Card ${c.cardId||"?"}`;
-    if(c.type==="attack")rawAttackLevel++;
-    else if(c.type==="defense")rawDefenseLevel++;
+    if(c.type==="attack"){rawAttackLevel+=c.attackLevel||1;rawAttackCardCount++}
+    else if(c.type==="defense")rawDefenseLevel+=c.defenseLevel||1;
     if(!effectEnabled){
       invalidFlippedCount++;
       effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} → 無効（相手所有カード）`);
@@ -1209,21 +1211,26 @@ function result(){
       continue;
     }
     effectiveFlippedCount++;
-    effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} → 有効`);
-    if(c.type==="attack")attackLevel++;
-    else if(c.type==="defense")defenseLevel++;
+    effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} Lv${c.type==="attack"?(c.attackLevel||1):(c.defenseLevel||1)}${c.pairColor?` / ${c.pairColor.toUpperCase()}`:""} → 有効`);
+    if(c.type==="attack"){attackLevel+=c.attackLevel||1;attackCardCount++}
+    else if(c.type==="defense")defenseLevel+=c.defenseLevel||1;
+    if(c.pairColor)pairCounts[c.pairColor]++;
     else if(c.type==="clone"){
       cloneFlips++;
       cloneOwners.push(c.team);
       cloneEvents.push({owner:c.team,actor:resultActor,round:roundNo,throwIndex:roundThrow});
     }
   }
+  attackLevel=Math.min(3,attackLevel);defenseLevel=Math.min(3,defenseLevel);
+  const pairEffects={red:pairCounts.red>=2,blue:pairCounts.blue>=2,yellow:pairCounts.yellow>=2};
+  for(const color of Object.keys(pairEffects))if(pairEffects[color])effectDetails.push(`${color.toUpperCase()} PAIR : 成立`);
   updateStackDepths();
-  roundResults[resultActor]={attackLevel,defenseLevel,rawAttackLevel,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
+  roundResults[resultActor]={attackLevel,attackCardCount,defenseLevel,rawAttackLevel,rawAttackCardCount,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,pairCounts,pairEffects,zone:zoneResult};
   matchStats.throws[resultActor]++;
   lastAttackLevel=attackLevel;lastDefenseLevel=defenseLevel;lastDamage=0;
   resultT=1.05;state="result";
-  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃Lv ${attackLevel} / 防御Lv ${defenseLevel} を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
+  const pairText=Object.entries(pairEffects).filter(([,on])=>on).map(([color])=>`${color.toUpperCase()} PAIR`).join(" / ");
+  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃Lv ${attackLevel} / 防御Lv ${defenseLevel}${pairText?` / ${pairText}`:""} を保留`;
   appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
 }
 function beginExpel(){
@@ -1311,6 +1318,14 @@ async function playCloneHealEvent(rescue){
   const actor=rescue.actor,label=actorLabel(actor);
   await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,colorSwap:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
+async function playBluePairHealEvent(actor){
+  const label=actorLabel(actor);
+  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,colorSwap:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +3`],tall:true,alt:`${label}の青ペア回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+3,520)}});
+}
+async function playYellowPairDefenseEvent(actor){
+  const defender=oppositeActor(actor),label=actorLabel(defender);
+  await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:defender==="player"?redEventMirrored.ex_move_no_attack:!redEventMirrored.ex_move_no_attack,colorSwap:defender==="cpu",lines:[`${label} YELLOW PAIR！`,`${label}は完全防御！`,`ダメージ 0`],tall:true,alt:`${label}の完全防御`,feedback:()=>{restartStatusFeedback(defender,"feedback-white-double",440);return wait(440)}});
+}
 async function playRoundPresentations(data){
   const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,pinfall,counter}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
   const order=[roundStarter,oppositeActor(roundStarter)];
@@ -1328,11 +1343,13 @@ async function playRoundPresentations(data){
       appendLog(`攻撃演出省略: ${actorLabel(actor)}は先攻側の攻撃演出でHP0`);
       continue;
     }
-    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
+    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel,defenderData=results[oppositeActor(actor)];
     let actionShownThisTurn=false;
     if(resultData.attackCancelledByKO)continue;
-    if(overrides[actor]!=null){actionShownThisTurn=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){if(effectiveLevel>0){actionShownThisTurn=true;await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
+    if(resultData.pairEffects?.blue){actionShownThisTurn=true;await playBluePairHealEvent(actor)}
+    else if(defenderData.pairEffects?.yellow&&resultData.attackLevel>0){actionShownThisTurn=true;await playYellowPairDefenseEvent(actor)}
+    else if(overrides[actor]!=null){actionShownThisTurn=true;await playCloneDamageEvent(actor,damage)}
+    else if(resultData.attackLevel>0){if(effectiveLevel>0&&damage>0){actionShownThisTurn=true;if(resultData.pairEffects?.red)await playCloneDamageEvent(actor,damage);else await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
     if(counter?.target===actor){actionShownThisTurn=true;await playCounterEvent(counter.actor,counter.damage)}
     if(actionShownThisTurn){actionShown=true;await wait(BETWEEN_BATTLE_EVENTS_HOLD)}
   }
@@ -1361,18 +1378,30 @@ function resolveRoundEffects(){
   }
   const cloneExclusive=rescued.length>0;
   if(cloneExclusive)appendLog(`分身専用ラウンド: ${actorLabel(rescued[0].actor)}の分身効果だけを発動し、両者の通常攻撃・通常防御をキャンセル`);
-  // 防御はこのラウンドだけ有効。攻撃メンコと1対1で相殺し、残った攻撃Lvが技Lvと追加ダメージになる。
+  // 防御はダメージだけを減らす。攻撃Lvは技Lv・フォール判定でもそのまま残す。
   const redDefenseAvailable=red.defenseLevel;
   const blueDefenseAvailable=blue.defenseLevel;
-  const blueDefenseUsed=Math.min(blueDefenseAvailable,red.attackLevel);
-  const redDefenseUsed=Math.min(redDefenseAvailable,blue.attackLevel);
-  const redEffectiveAttackLevel=Math.max(0,red.attackLevel-blueDefenseUsed);
-  const blueEffectiveAttackLevel=Math.max(0,blue.attackLevel-redDefenseUsed);
-  const redNormalDamage=redEffectiveAttackLevel>0?scaledBaseAttack(config.redAttack)+redEffectiveAttackLevel:0;
-  const blueNormalDamage=blueEffectiveAttackLevel>0?scaledBaseAttack(config.blueAttack)+blueEffectiveAttackLevel:0;
+  const redAttackCards=red.attackCardCount??red.attackLevel,blueAttackCards=blue.attackCardCount??blue.attackLevel;
+  const redDamageBeforeDefense=redAttackCards>0?scaledBaseAttack(config.redAttack)+red.attackLevel:0;
+  const blueDamageBeforeDefense=blueAttackCards>0?scaledBaseAttack(config.blueAttack)+blue.attackLevel:0;
+  const blueDefenseUsed=redDamageBeforeDefense>0?Math.min(blueDefenseAvailable,Math.max(0,redDamageBeforeDefense-1)):0;
+  const redDefenseUsed=blueDamageBeforeDefense>0?Math.min(redDefenseAvailable,Math.max(0,blueDamageBeforeDefense-1)):0;
+  const redEffectiveAttackLevel=redAttackCards>0?red.attackLevel:0;
+  const blueEffectiveAttackLevel=blueAttackCards>0?blue.attackLevel:0;
+  let redNormalDamage=redDamageBeforeDefense>0?Math.max(1,redDamageBeforeDefense-blueDefenseAvailable):0;
+  let blueNormalDamage=blueDamageBeforeDefense>0?Math.max(1,blueDamageBeforeDefense-redDefenseAvailable):0;
+  const redPairs=red.pairEffects||{},bluePairs=blue.pairEffects||{};
+  // Red ignores defense, yellow blocks only the opponent's normal damage, and
+  // blue trades its own normal attack for its later recovery presentation.
+  if(redPairs.red&&redDamageBeforeDefense>0)redNormalDamage=redDamageBeforeDefense;
+  if(bluePairs.red&&blueDamageBeforeDefense>0)blueNormalDamage=blueDamageBeforeDefense;
+  if(bluePairs.yellow)redNormalDamage=0;
+  if(redPairs.yellow)blueNormalDamage=0;
+  if(redPairs.blue)redNormalDamage=0;
+  if(bluePairs.blue)blueNormalDamage=0;
   // Type 003 is a submission.  Only types 001/002 can lead into a pinfall.
-  red.moveType=redEffectiveAttackLevel>0?randInt(1,3):null;
-  blue.moveType=blueEffectiveAttackLevel>0?randInt(1,3):null;
+  red.moveType=redAttackCards>0?randInt(1,3):null;
+  blue.moveType=blueAttackCards>0?randInt(1,3):null;
 
   red.effectiveAttackLevel=redEffectiveAttackLevel;red.defenseAvailable=redDefenseAvailable;red.defenseUsed=redDefenseUsed;red.defenseUnused=Math.max(0,redDefenseAvailable-redDefenseUsed);
   blue.effectiveAttackLevel=blueEffectiveAttackLevel;blue.defenseAvailable=blueDefenseAvailable;blue.defenseUsed=blueDefenseUsed;blue.defenseUnused=Math.max(0,blueDefenseAvailable-blueDefenseUsed);
@@ -1489,6 +1518,10 @@ function resolveRoundEffects(){
   const beforeRed=roundStartRedHP,beforeBlue=roundStartBlueHP;
   redHP=clamp(redHP-roundBlueDamage,0,config.redMaxHP);
   blueHP=clamp(blueHP-roundRedDamage,0,config.blueMaxHP);
+  // Blue pair heals at its owner's turn in the presentation order.  It cannot
+  // revive a player already reduced to zero by an earlier attack.
+  if(redPairs.blue&&redHP>0)redHP=Math.min(config.redMaxHP,redHP+3);
+  if(bluePairs.blue&&blueHP>0)blueHP=Math.min(config.blueMaxHP,blueHP+3);
   if(pinfall?.kickoutSuccess){
     if(pinfall.defender==="player")redHP=1;
     else blueHP=1;
@@ -1518,7 +1551,7 @@ function resolveRoundEffects(){
 function finishMatch(){
   appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} fullDefense=${matchStats.fullDefense} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
-  appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,`Clone effects: ${cloneRescueActivations} / ${CLONE_RESCUE_MAX_ACTIVATIONS}`,"========================="].join("\n"));
+  appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
   pendingIntegratedResult=winner==="RED";
   clearPlayerLog();presentationLayer.classList.add("show");illustrationWindow.style.display="none";messageWindow.textContent=`${winner} WIN!\nタップで結果へ`;messageWindow.classList.add("show");
@@ -1759,11 +1792,21 @@ function createBalanceIcon(){
   const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");ic.fillStyle="#fff";[[8,0,2,4],[6,4,6,2],[4,6,10,2],[0,8,18,2],[4,10,10,2],[6,12,6,2],[8,14,2,4]].forEach(r=>ic.fillRect(...r));ic.fillStyle="#969696";ic.fillRect(4,8,5,2);ic.fillRect(6,10,3,2);ic.fillRect(8,12,1,2);return icon;
 }
 const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon(),heartIcon=createHeartIcon(),balanceIcon=createBalanceIcon();
-function menkoSpec(c){return {kind:c.type,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
+function menkoSpec(c){return {kind:c.type,level:c.type==="attack"?(c.attackLevel||1):(c.defenseLevel||1),pairColor:c.pairColor||null,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
 function drawCloneFace(r){
   const scale=r/62;ctx.save();ctx.scale(scale,scale);ctx.translate(-90,-90);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();ctx.fillStyle="#000";ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));ctx.restore();ctx.restore();
 }
-function drawFaceDesign(r,spec,back){const show=spec.kind==="clone"?back:!back;if(!show)return;if(spec.kind==="clone"){drawCloneFace(r);return}const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size)}
+function drawFaceDesign(r,spec,back){
+  const show=spec.kind==="clone"?back:!back;if(!show)return;
+  if(spec.kind==="clone"){drawCloneFace(r);return}
+  const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size);
+  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
+  const marks={red:"●",blue:"◆",yellow:"▲"},colors={red:"#f04444",blue:"#3f8cff",yellow:"#f2c94c"};
+  if(spec.pairColor){ctx.font=`900 ${Math.floor(r*.28)}px system-ui`;ctx.lineWidth=Math.max(2,r*.05);ctx.strokeStyle="#111";ctx.fillStyle=colors[spec.pairColor];const mark=marks[spec.pairColor].repeat(spec.level||1);ctx.strokeText(mark,0,-r*.59);ctx.fillText(mark,0,-r*.59)}
+  ctx.font=`900 ${Math.floor(r*.19)}px system-ui`;ctx.lineWidth=Math.max(2,r*.045);ctx.strokeStyle="#fff";ctx.fillStyle="#111";ctx.strokeText(`Lv${spec.level||1}`,0,r*.52);ctx.fillText(`Lv${spec.level||1}`,0,r*.52);ctx.restore();
+  if(spec.pairColor&&spec.level===2){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=`900 ${Math.floor(r*.12)}px system-ui`;ctx.fillStyle="#222";ctx.fillText("HEAVY",0,-r*.80);ctx.restore()}
+}
 function roundedShadowPath(w,h,r){ctx.beginPath();ctx.moveTo(-w/2+r,-h/2);ctx.lineTo(w/2-r,-h/2);ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);ctx.lineTo(w/2,h/2-r);ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);ctx.lineTo(-w/2+r,h/2);ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);ctx.lineTo(-w/2,-h/2+r);ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);ctx.closePath()}
 function drawCardShadow(c){
   if(c.exiting)return;const r=c.r;
@@ -1881,7 +1924,7 @@ function describeProgressEnemy(enemy,area){
   const type=scores[0].score-scores[1].score<1.5?"balance":scores[0].key;
   return {...enemy,weight,type};
 }
-function routeRewardKeys(enemy){return enemy.isBoss?rewardDefs.map(x=>x.key):shuffled(rewardDefs).slice(0,2).map(x=>x.key)}
+function routeRewardKeys(enemy){return rewardDefs.map(x=>x.key)}
 function withRouteRewards(enemy,area){const data=describeProgressEnemy(enemy,area);return {...data,rewardOptions:routeRewardKeys(data)}}
 function normalizeRouteRewards(route,area){for(const row of route.rounds||[])for(const enemy of row)if(enemy&&!Array.isArray(enemy.rewardOptions))enemy.rewardOptions=routeRewardKeys(enemy);if(route.boss&&!Array.isArray(route.boss.rewardOptions))route.boss.rewardOptions=routeRewardKeys(route.boss);return route}
 function createAreaRoute(area){
@@ -1954,15 +1997,13 @@ function handleIntegratedBattleResult(playerWon){
   if(runState.match===15){records.clears++;saveProgressRecords();clearRunProgress();runSaveMode="clear";renderProgressPanel("clear");setProgressScreen(true);return}
   saveProgressRecords();pendingRewardOptions=createPendingRewardOptions();saveRunProgress("reward");renderProgressPanel("reward");setProgressScreen(true);
 }
-const rewardDefs=[{key:"atkMenko",label:"攻撃MENKO",value:"+1"},{key:"defMenko",label:"防御MENKO",value:"+1"},{key:"hp",label:"最大HP",value:"+2"}];
+const rewardDefs=[{key:"hp",label:"最大HP",value:"+2"},{key:"lighter",label:"重量を軽くする",value:"-1 STEP"},{key:"heavier",label:"重量を重くする",value:"+1 STEP"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
-function createPendingRewardOptions(){
-  return Array.isArray(runState.enemy?.rewardOptions)?[...runState.enemy.rewardOptions]:(runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
-}
+function createPendingRewardOptions(){const saved=runState.enemy?.rewardOptions;return Array.isArray(saved)&&saved.length===rewardDefs.length?[...saved]:rewardDefs.map(x=>x.key)}
 function normalizePendingRewardOptions(){
   const validKeys=new Set(rewardDefs.map(x=>x.key));
   pendingRewardOptions=[...new Set((Array.isArray(pendingRewardOptions)?pendingRewardOptions:[]).filter(k=>validKeys.has(k)))];
-  const expected=runState.enemy.isBoss?rewardDefs.length:2;
+  const expected=rewardDefs.length;
   if(pendingRewardOptions.length!==expected)pendingRewardOptions=createPendingRewardOptions();
 }
 function progressRouteIconUrl(type){return type==="attack"?attackIcon.toDataURL():type==="defense"?defenseIcon.toDataURL():type==="hp"?heartIcon.toDataURL():balanceIcon.toDataURL()}
@@ -1970,7 +2011,7 @@ function progressRouteNodeMarkup(data,row,side,status){
   const boss=!!data.isBoss,tag=!boss&&status==="current"?"button":"div",stage=boss?"BOSS":`M${row+1}-${side===0?"A":"B"}`;
   const mini=boss?"":`<span class="progress-mini ${data.weight}" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="leg left"></i><i class="leg right"></i></span>`;
   const icon=`<span class="progress-type-icon"><img src="${progressRouteIconUrl(data.type)}" alt=""></span>`;
-  const rewardNames={atkMenko:"ATK",defMenko:"DEF",hp:"HP"},rewardPreview=(data.rewardOptions||[]).map(key=>rewardNames[key]).filter(Boolean).join(" / ");
+  const rewardNames={hp:"HP",lighter:"LIGHT",heavier:"HEAVY"},rewardPreview=(data.rewardOptions||[]).map(key=>rewardNames[key]).filter(Boolean).join(" / ");
   const copy=boss?`<span class="progress-boss-name"><span>AREA</span><span>BOSS</span></span><span class="progress-boss-sub"><span>${progressWeightNames[data.weight]}</span><span>${progressTypeNames[data.type]}</span><span>REWARD ALL</span></span>`:`<span class="progress-weight">${progressWeightNames[data.weight]}</span><span class="progress-type-name">${progressTypeNames[data.type]}</span><span class="progress-reward-preview">REWARD ${rewardPreview}</span>`;
   const aria=tag==="button"?` aria-label="MATCH ${row+1} ${progressWeightNames[data.weight]} ${progressTypeNames[data.type]}を選択"`:"";
   return `<${tag}${tag==="button"?' type="button"':''} class="progress-route-node ${status}${boss?" boss":""}" data-row="${row}" data-side="${side}"${aria}><span class="progress-node-stage">${stage}</span>${mini}${icon}<span class="progress-node-copy">${copy}</span></${tag}>`;
@@ -2009,7 +2050,7 @@ function renderProgressPanel(mode="match"){
     title.textContent="RESULT";subhead.textContent=`AREA ${area} / ${isBoss?"BOSS MATCH":`MATCH ${areaMatch}`}`;record.innerHTML=`${runState.wins} WIN<br><span>NEXT MATCH ${match+1}</span>`;
     sum.innerHTML=`<strong>RED WIN!</strong><span>${isBoss?"エリアボス撃破ボーナス":"成長を1つ選択してください"}</span>`;
     stats.innerHTML=statCard("red","RED STATUS",p)+statCard("blue","BLUE / DEFEATED",e);
-    growthRule.textContent=isBoss?"3種からさらに1つ":"抽選された2種から1つ";
+    growthRule.textContent=isBoss?"ボス撃破：ATK +1 ＋ 3種から1つ":"3種から成長を1つ選択";
   }else if(mode==="match"){
     title.textContent=choosingWeight?"CHOOSE WEIGHT":`AREA ${area}`;subhead.textContent=choosingWeight?"SELECT RED STYLE FOR THIS RUN":isBoss?"AREA BOSS BATTLE":"ROAD TO AREA BOSS";record.innerHTML=choosingWeight?"RUN START<br><span>WEIGHT LOCKED FOR RUN</span>":`${runState?.wins||0} WIN<br><span>${isBoss?"NEXT AREA BOSS":`NEXT MATCH ${match}`}</span>`;
     if(choosingWeight){sum.style.display="block";sum.innerHTML="<strong>RED WEIGHT</strong><span>LIGHT: low-power precision / MIDDLE: balanced / HEAVY: high-power range</span>";}
@@ -2024,8 +2065,8 @@ function renderProgressPanel(mode="match"){
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
     normalizePendingRewardOptions();
-    selectedRewards=new Set();const need=1,opts=pendingRewardOptions.map(k=>rewardDefs.find(x=>x.key===k)).filter(Boolean);
-    const iconUrl=k=>k==="atkMenko"?attackIcon.toDataURL():k==="defMenko"?defenseIcon.toDataURL():heartIcon.toDataURL();
+    selectedRewards=new Set();const need=1,weightAt=playerWeightKeys.indexOf(runState.playerWeight||"middle"),opts=pendingRewardOptions.map(k=>rewardDefs.find(x=>x.key===k)).filter(x=>x&&(x.key!=="lighter"||weightAt>0)&&(x.key!=="heavier"||weightAt<playerWeightKeys.length-1));
+    const iconUrl=k=>k==="hp"?heartIcon.toDataURL():k==="lighter"?attackIcon.toDataURL():defenseIcon.toDataURL();
     choices.innerHTML=opts.map(x=>`<button class="reward-choice" type="button" data-reward="${x.key}" aria-pressed="false"><img src="${iconUrl(x.key)}" alt=""><span class="reward-choice-name">${x.label}</span><span class="reward-choice-value">${x.value}</span></button>`).join("");
     actions.innerHTML='<button class="progress-confirm" id="confirmGrowthBtn" disabled>成長を決定</button>';
     choices.querySelectorAll("[data-reward]").forEach(b=>b.onclick=()=>{const k=b.dataset.reward;if(selectedRewards.has(k))selectedRewards.delete(k);else{selectedRewards.clear();selectedRewards.add(k)}choices.querySelectorAll("[data-reward]").forEach(x=>{const selected=selectedRewards.has(x.dataset.reward);x.classList.toggle("selected",selected);x.setAttribute("aria-pressed",String(selected))});document.getElementById("confirmGrowthBtn").disabled=selectedRewards.size!==need});
@@ -2046,7 +2087,7 @@ function renderProgressPanel(mode="match"){
     el.addEventListener("touchend",run,{passive:false});
   };
 
-  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
+  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>{if(k==="hp")runState.player.hp+=2;else{const at=Math.max(0,playerWeightKeys.indexOf(runState.playerWeight||"middle")),step=k==="lighter"?-1:1;runState.playerWeight=playerWeightKeys[clamp(at+step,0,playerWeightKeys.length-1)]}});pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
   bindTap("chooseWeightLight",()=>selectPlayerWeight("light"));bindTap("chooseWeightLightMiddle",()=>selectPlayerWeight("light_middle"));bindTap("chooseWeightMiddle",()=>selectPlayerWeight("middle"));bindTap("chooseWeightMiddleHeavy",()=>selectPlayerWeight("middle_heavy"));bindTap("chooseWeightHeavy",()=>selectPlayerWeight("heavy"));
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
   fixedStart.style.display=mode==="match"&&validPlayerWeight(runState?.playerWeight)&&!!runState?.enemy?"block":"none";
@@ -2116,6 +2157,7 @@ testToolsMenu.addEventListener("click",e=>{if(e.target.closest("button"))setTest
 document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCardsCountForInitiative=e.target.value==="on";saveRunProgress(runSaveMode)};
 
 /* Five visible stamina pips pay for output before a MENKO is thrown. */
+const PAIR_BOARD=true;
 const mainStamina={player:5,cpu:5},mainWeight={player:"middle",cpu:"middle"};
 // 分身だけは通常スタミナとは別に、試合中に貯める専用チャージを使う。
 const cloneCharge={player:5,cpu:5};
@@ -2163,7 +2205,7 @@ prepareThrowPhase=function(){
       appendLog(`STAMINA READY: ${actorLabel(turn)} +1 / ${mainStamina[turn]} of 5`);
       syncBattleUi();
     }
-    if(cloneChargeTurnToken!==token){
+    if(!PAIR_BOARD&&cloneChargeTurnToken!==token){
       cloneChargeTurnToken=token;
       // 開幕は5から開始。以後は自分の投擲準備ごとに1ずつ分身チャージが貯まる。
       if(!(roundNo===1&&roundThrow===0)){
@@ -2195,15 +2237,17 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
-// Board economy trial: every throw has its own board.  One common card of each
-// type is always present; each side's cards above that baseline are differences.
+// Fixed shared ten-card board: red attacks, blue/yellow defend, and four
+// neutral Lv1 attacks preserve the former six-attack/four-defense balance.
 deck=function(){
   const d=[];
-  d.push({team:"common",type:"attack",isDifference:false});
-  d.push({team:"common",type:"defense",isDifference:false});
-  const add=(team,type,n)=>{for(let i=0;i<Math.max(0,n-1);i++)d.push({team,type,isDifference:true})};
-  add("player","attack",config.redAttackCards);add("cpu","attack",config.blueAttackCards);
-  add("player","defense",config.redDefenseCards);add("cpu","defense",config.blueDefenseCards);
+  d.push({team:"common",type:"attack",attackLevel:1,pairColor:"red",isDifference:false});
+  d.push({team:"common",type:"attack",attackLevel:2,pairColor:"red",isDifference:false});
+  d.push({team:"common",type:"defense",defenseLevel:1,pairColor:"blue",isDifference:false});
+  d.push({team:"common",type:"defense",defenseLevel:2,pairColor:"blue",isDifference:false});
+  d.push({team:"common",type:"defense",defenseLevel:1,pairColor:"yellow",isDifference:false});
+  d.push({team:"common",type:"defense",defenseLevel:2,pairColor:"yellow",isDifference:false});
+  for(let i=0;i<4;i++)d.push({team:"common",type:"attack",attackLevel:1,isDifference:false});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
   return d;
 };
@@ -2224,8 +2268,7 @@ resolveRoundEffects=function(){
     if(defenseGain){
       mainStamina[actor]=Math.min(5,mainStamina[actor]+defenseGain);
       appendLog(`STAMINA DEFENSE: ${actorLabel(actor)} +${defenseGain} / defense MENKO gained`);
-      cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);
-      appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);
+      if(!PAIR_BOARD){cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);}
     }
   }
   syncBattleUi();
