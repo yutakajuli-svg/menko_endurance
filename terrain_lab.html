@@ -761,8 +761,9 @@ function targets(n,rad){
 }
 function makeCommonCard(t,d,i,rad){
   d=d||{team:"common",type:"attack",isDifference:false};
-  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?(d.attackLevel||1):0,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
-    z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25),bias:rand(-.35,.35)};
+  const level=d.type==="attack"?(d.attackLevel||1):(d.defenseLevel||1),isLv2=level===2;
+  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?level:0,defenseLevel:d.type==="defense"?level:0,pairColor:d.pairColor||null,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
+    z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25)*(isLv2?1.16:1),bias:rand(-.35,.35)};
 }
 function makeCloneCard(team){
   const R=ring(),r=Math.min(R.s*.105,36)*MENKO_SIZE_SCALE;
@@ -1446,7 +1447,8 @@ function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
   const blueDefDetail=`青防御：取得 ${blue.defenseLevel} ／ 使用 ${blue.defenseUsed??0} ／ 未使用 ${blue.defenseUnused??blue.defenseLevel}（ラウンド終了で消滅）${blue.disabledDefense?` ／ 相手所有カードで無効 ${blue.disabledDefense}`:""}`;
   const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??((red.attackCardCount??red.attackLevel)+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
   const blueFlipDetail=`青めくり：${blue.physicalFlippedCount??blue.flippedCount}枚 ／ 有効 ${blue.effectiveFlippedCount??((blue.attackCardCount??blue.attackLevel)+blue.defenseLevel+blue.cloneFlips)} ／ 無効 ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)}`;
-  playerLog.innerHTML=`<div class="detail">${redFlipDetail}<br>${blueFlipDetail}</div><div class="red">赤：${redFormula}</div><div class="blue">青：${blueFormula}</div><div class="detail">${redDefDetail}<br>${blueDefDetail}</div><div class="total">合計ダメージ　赤→青 ${redDamage} ／ 青→赤 ${blueDamage} ／ 両者合計 ${redDamage+blueDamage}</div><div class="actions"><button id="copyRoundLogBtn" type="button">このログをコピー</button>${isFinal?'<button id="showResultBtn" type="button">リザルトへ</button>':''}</div>`;
+  const pairLabels=x=>Object.entries(x?.pairEffects||{}).filter(([,on])=>on).map(([color])=>color==="red"?"赤:クリティカル×1.5":color==="blue"?"青:HP+2":"黄:完全防御").join(" ／ ")||"ペア不成立";
+  playerLog.innerHTML=`<div class="detail">${redFlipDetail}<br>${blueFlipDetail}</div><div class="red">赤：${redFormula}</div><div class="blue">青：${blueFormula}</div><div class="detail">${redDefDetail}<br>${blueDefDetail}<br>赤ペア：${pairLabels(red)}<br>青ペア：${pairLabels(blue)}</div><div class="total">合計ダメージ　赤→青 ${redDamage} ／ 青→赤 ${blueDamage} ／ 両者合計 ${redDamage+blueDamage}</div><div class="actions"><button id="copyRoundLogBtn" type="button">このログをコピー</button>${isFinal?'<button id="showResultBtn" type="button">リザルトへ</button>':''}</div>`;
   playerLog.style.display="block";
   playerLogVisible=true;
   const copyBtn=document.getElementById("copyRoundLogBtn");
@@ -1459,6 +1461,7 @@ function result(){
   const resultActor=pendingLayerWave?.actorKey||turn;
   const faceResolutionNotes=resolveStackFaces();
   let attackLevel=0,attackCardCount=0,defenseLevel=0,rawAttackLevel=0,rawAttackCardCount=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
+  const pairCounts={red:0,blue:0,yellow:0};
   for(const c of cards){
     c.z=0;c.vz=0;c.flip=false;c.settled=true;c.tilt=c.face?Math.PI:0;c.tv=0;c.spin=0;
     const newlyFlippedToBack=c.face===1&&c.faceBeforeThrow!==1;
@@ -1472,7 +1475,7 @@ function result(){
     const typeLabel=c.type==="attack"?"攻撃":c.type==="defense"?"防御":"分身";
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"}分身`:`Card ${c.cardId||"?"}`;
     if(c.type==="attack"){rawAttackLevel+=c.attackLevel||1;rawAttackCardCount++}
-    else if(c.type==="defense")rawDefenseLevel++;
+    else if(c.type==="defense")rawDefenseLevel+=c.defenseLevel||1;
     if(!effectEnabled){
       invalidFlippedCount++;
       effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} → 無効（相手所有カード）`);
@@ -1483,19 +1486,24 @@ function result(){
     effectiveFlippedCount++;
     effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel}${c.type==="attack"?` Lv${c.attackLevel||1}`:""} → 有効`);
     if(c.type==="attack"){attackLevel+=c.attackLevel||1;attackCardCount++}
-    else if(c.type==="defense")defenseLevel++;
+    else if(c.type==="defense")defenseLevel+=c.defenseLevel||1;
+    if(c.pairColor)pairCounts[c.pairColor]++;
     else if(c.type==="clone"){
       cloneFlips++;
       cloneOwners.push(c.team);
       cloneEvents.push({owner:c.team,actor:resultActor,round:roundNo,throwIndex:roundThrow});
     }
   }
+  attackLevel=Math.min(3,attackLevel);defenseLevel=Math.min(3,defenseLevel);
+  const pairEffects={red:pairCounts.red>=2,blue:pairCounts.blue>=2,yellow:pairCounts.yellow>=2};
+  for(const color of Object.keys(pairEffects))if(pairEffects[color])effectDetails.push(`${color.toUpperCase()} PAIR : 成立`);
   updateStackDepths();
-  roundResults[resultActor]={attackLevel,attackCardCount,defenseLevel,rawAttackLevel,rawAttackCardCount,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
+  roundResults[resultActor]={attackLevel,attackCardCount,defenseLevel,rawAttackLevel,rawAttackCardCount,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,pairCounts,pairEffects,zone:zoneResult};
   matchStats.throws[resultActor]++;
   lastAttackLevel=attackLevel;lastDefenseLevel=defenseLevel;lastDamage=0;
   resultT=1.05;state="result";
-  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃 ${attackCardCount}枚・Lv合計${attackLevel} / 防御 ${defenseLevel}枚 を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
+  const pairText=Object.entries(pairEffects).filter(([,active])=>active).map(([color])=>`${color.toUpperCase()} PAIR`).join(" / ");
+  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃 ${attackCardCount}枚・Lv合計${attackLevel} / 防御 Lv${defenseLevel}${pairText?` / ${pairText}`:""} を保留`;
   appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack cards: ${attackCardCount}`,`Attack Lv   : ${attackLevel}`,`Defense     : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FINAL FACE RESOLUTION ---",...(faceResolutionNotes.length?faceResolutionNotes:["No flip candidates"]),"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
 }
 function beginExpel(){
@@ -1583,6 +1591,10 @@ async function playCloneHealEvent(rescue){
   const actor=rescue.actor,label=actorLabel(actor);
   await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,colorSwap:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
+async function playPairEffectEvent(actor,color){
+  const label=actorLabel(actor),data={red:{title:"RED PAIR",line:"クリティカル ×1.5！"},blue:{title:"BLUE PAIR",line:"HP を 2 回復！"},yellow:{title:"YELLOW PAIR",line:"防御札で完全防御！"}}[color];
+  await playIllustration({files:[],lines:[`${label} ${data.title}！`,data.line],tall:false,alt:data.title,feedback:()=>{restartStatusFeedback(actor,color==="red"?"feedback-red-double":"feedback-white-double",430);return Promise.resolve()}});
+}
 async function playRoundPresentations(data){
   const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,pinfall,counter}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},normalDamages=data.normalDamage||damages,overrides={player:redCloneOverride,cpu:blueCloneOverride};
   const order=[roundStarter,oppositeActor(roundStarter)];
@@ -1594,6 +1606,7 @@ async function playRoundPresentations(data){
     return;
   }
   for(const actor of order){const heal=rescued.find(r=>r.actor===actor&&r.choice==="heal");if(heal)await playCloneHealEvent(heal)}
+  for(const actor of order)for(const color of ["red","blue","yellow"])if(results[actor].pairEffects?.[color])await playPairEffectEvent(actor,color);
   let actionShown=false;
   for(const actor of order){
     if(displayedHP[actor]<=0){
@@ -1645,8 +1658,17 @@ function resolveRoundEffects(){
   const redDefenseUsed=blueDamageBeforeDefense>0?Math.min(redDefenseAvailable,Math.max(0,blueDamageBeforeDefense-1)):0;
   const redEffectiveAttackLevel=redAttackCards>0?Math.max(0,red.attackLevel-blueDefenseUsed):0;
   const blueEffectiveAttackLevel=blueAttackCards>0?Math.max(0,blue.attackLevel-redDefenseUsed):0;
-  const redNormalDamage=redDamageBeforeDefense>0?Math.max(1,redDamageBeforeDefense-blueDefenseAvailable):0;
-  const blueNormalDamage=blueDamageBeforeDefense>0?Math.max(1,blueDamageBeforeDefense-redDefenseAvailable):0;
+  let redNormalDamage=redDamageBeforeDefense>0?Math.max(1,redDamageBeforeDefense-blueDefenseAvailable):0;
+  let blueNormalDamage=blueDamageBeforeDefense>0?Math.max(1,blueDamageBeforeDefense-redDefenseAvailable):0;
+  const redPairs=red.pairEffects||{},bluePairs=blue.pairEffects||{};
+  // RED PAIR is a readable critical multiplier; YELLOW PAIR turns its own
+  // acquired defense into a complete block for this round.
+  if(redPairs.red&&redNormalDamage>0)redNormalDamage=Math.ceil(redNormalDamage*1.5);
+  if(bluePairs.red&&blueNormalDamage>0)blueNormalDamage=Math.ceil(blueNormalDamage*1.5);
+  if(bluePairs.yellow&&blue.defenseLevel>0)redNormalDamage=0;
+  if(redPairs.yellow&&red.defenseLevel>0)blueNormalDamage=0;
+  if(redPairs.red||redPairs.blue||redPairs.yellow)appendLog(`RED PAIR: ${redPairs.red?"CRITICAL x1.5 ":""}${redPairs.blue?"HP +2 ":""}${redPairs.yellow?"FULL DEFENSE ":""}`.trim());
+  if(bluePairs.red||bluePairs.blue||bluePairs.yellow)appendLog(`BLUE PAIR: ${bluePairs.red?"CRITICAL x1.5 ":""}${bluePairs.blue?"HP +2 ":""}${bluePairs.yellow?"FULL DEFENSE ":""}`.trim());
   // Type 003 is a submission.  Only types 001/002 can lead into a pinfall.
   red.moveType=redAttackCards>0?randInt(1,3):null;
   blue.moveType=blueAttackCards>0?randInt(1,3):null;
@@ -1772,6 +1794,9 @@ function resolveRoundEffects(){
   const beforeRed=roundStartRedHP,beforeBlue=roundStartBlueHP;
   redHP=clamp(redHP-roundBlueDamage,0,config.redMaxHP);
   blueHP=clamp(blueHP-roundRedDamage,0,config.blueMaxHP);
+  // Blue pair recovery is intentionally small and cannot revive a KO.
+  if(redPairs.blue&&redHP>0)redHP=Math.min(config.redMaxHP,redHP+2);
+  if(bluePairs.blue&&blueHP>0)blueHP=Math.min(config.blueMaxHP,blueHP+2);
   if(pinfall?.kickoutSuccess){
     if(pinfall.defender==="player")redHP=1;
     else blueHP=1;
@@ -2073,11 +2098,22 @@ function createBalanceIcon(){
   const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");ic.fillStyle="#fff";[[8,0,2,4],[6,4,6,2],[4,6,10,2],[0,8,18,2],[4,10,10,2],[6,12,6,2],[8,14,2,4]].forEach(r=>ic.fillRect(...r));ic.fillStyle="#969696";ic.fillRect(4,8,5,2);ic.fillRect(6,10,3,2);ic.fillRect(8,12,1,2);return icon;
 }
 const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon(),heartIcon=createHeartIcon(),balanceIcon=createBalanceIcon();
-function menkoSpec(c){return {kind:c.type,level:c.type==="attack"?(c.attackLevel||1):0,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
+function menkoSpec(c){return {kind:c.type,level:c.type==="attack"?(c.attackLevel||1):(c.defenseLevel||1),pairColor:c.pairColor||null,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
 function drawCloneFace(r){
   const scale=r/62;ctx.save();ctx.scale(scale,scale);ctx.translate(-90,-90);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();ctx.fillStyle="#000";ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));ctx.restore();ctx.restore();
 }
-function drawFaceDesign(r,spec,back){const show=spec.kind==="clone"?back:!back;if(!show)return;if(spec.kind==="clone"){drawCloneFace(r);return}const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size);if(spec.kind==="attack"){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";ctx.font=`900 ${Math.floor(r*.25)}px system-ui`;ctx.lineWidth=Math.max(2,r*.055);ctx.strokeStyle="#fff";ctx.fillStyle="#111";ctx.strokeText(`Lv${spec.level||1}`,0,r*.51);ctx.fillText(`Lv${spec.level||1}`,0,r*.51);ctx.restore()}}
+function drawFaceDesign(r,spec,back){
+  const show=spec.kind==="clone"?back:!back;if(!show)return;
+  if(spec.kind==="clone"){drawCloneFace(r);return}
+  const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;
+  ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size);
+  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
+  ctx.font=`900 ${Math.floor(r*.23)}px system-ui`;ctx.lineWidth=Math.max(2,r*.05);ctx.strokeStyle="#fff";ctx.fillStyle="#111";
+  ctx.strokeText(`Lv${spec.level||1}`,0,r*.51);ctx.fillText(`Lv${spec.level||1}`,0,r*.51);
+  if(spec.pairColor){const colors={red:"#f04444",blue:"#3f8cff",yellow:"#f2c94c"},marks={red:"●",blue:"◆",yellow:"▲"};ctx.font=`900 ${Math.floor(r*.31)}px system-ui`;ctx.strokeStyle="#111";ctx.fillStyle=colors[spec.pairColor];ctx.strokeText(marks[spec.pairColor],r*.52,-r*.52);ctx.fillText(marks[spec.pairColor],r*.52,-r*.52)}
+  ctx.restore();
+  if(spec.pairColor){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=`900 ${Math.floor(r*.13)}px system-ui`;ctx.fillStyle="#222";ctx.fillText(spec.level===2?"HEAVY":"LIGHT",0,-r*.70);ctx.restore()}
+}
 function roundedShadowPath(w,h,r){ctx.beginPath();ctx.moveTo(-w/2+r,-h/2);ctx.lineTo(w/2-r,-h/2);ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);ctx.lineTo(w/2,h/2-r);ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);ctx.lineTo(-w/2+r,h/2);ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);ctx.lineTo(-w/2,-h/2+r);ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);ctx.closePath()}
 function drawCardShadow(c,idleStackShadow=false){
   if(c.exiting)return;const r=c.r;
@@ -2543,16 +2579,20 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
-// Board economy trial: every throw has its own fixed ten-card board.
-// Six common cards keep flips productive; four difference cards remain physical obstacles.
+// Terrain pair trial: every throw has the same ten-card board.
+// Colored pairs are common cards: both marks must flip in one throw to trigger.
 deck=function(){
   const d=[];
-  for(let i=0;i<4;i++)d.push({team:"common",type:"attack",attackLevel:1,isDifference:false});
-  for(let i=0;i<2;i++)d.push({team:"common",type:"defense",isDifference:false});
-  for(const team of ["player","cpu"]){
-    d.push({team,type:"attack",attackLevel:1,isDifference:true});
-    d.push({team,type:"defense",isDifference:true});
-  }
+  // Red and blue are attack pairs; yellow is a defense pair.  Lv2 is heavier
+  // but each pair can still contribute no more than the existing Lv3 ceiling.
+  d.push({team:"common",type:"attack",attackLevel:1,pairColor:"red",isDifference:false});
+  d.push({team:"common",type:"attack",attackLevel:2,pairColor:"red",isDifference:false});
+  d.push({team:"common",type:"attack",attackLevel:1,pairColor:"blue",isDifference:false});
+  d.push({team:"common",type:"attack",attackLevel:2,pairColor:"blue",isDifference:false});
+  d.push({team:"common",type:"defense",defenseLevel:1,pairColor:"yellow",isDifference:false});
+  d.push({team:"common",type:"defense",defenseLevel:2,pairColor:"yellow",isDifference:false});
+  for(let i=0;i<2;i++)d.push({team:"common",type:"attack",attackLevel:1,isDifference:false});
+  for(let i=0;i<2;i++)d.push({team:"common",type:"defense",defenseLevel:1,isDifference:false});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
   return d;
 };
