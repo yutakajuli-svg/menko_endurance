@@ -1039,12 +1039,20 @@ function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,m
     physical={...physical,airLift:Math.max(physical.airLift,coupledLift*.78),liftForce:Math.max(physical.liftForce,coupledLift)};
   }
 
+  // 50%前後は「狙った周辺が少し浮く」投げ。中心への直撃は押さえ込みのまま、
+  // 端へ入った風圧だけを僅かに増やして、NUDGEだけで終わり続けるのを防ぐ。
+  const lowMidAssist=clamp(1-Math.abs(wave.gauge-.48)/.27,0,1);
+  if(!physical.contact&&sourceIndex<0&&lowMidAssist>0&&physical.airEntry>.10){
+    const assistedAirLift=physical.airLift*(1+.32*lowMidAssist);
+    physical={...physical,airLift:assistedAirLift,liftForce:clamp(physical.liftForce+(assistedAirLift-physical.airLift)*1.03,0,1.25)};
+  }
+
   // 中心は押し込み、半分ずらした直撃は跳ね、少し横は風圧で端を浮かせる。
   // ここをメンコの主ルールにして、バーの正解探しにはしない。
   let behavior="STOP",behaviorJP="静止";
   if(physical.centerPress>.45){behavior="PRESS";behaviorJP="押さえ"}
   else if(physical.offsetHit>.22&&impactPower>=.24){behavior="OFFSET_HIT";behaviorJP="半ずらし直撃"}
-  else if(physical.airLift>.17){behavior="AIR_LIFT";behaviorJP="風圧浮き"}
+  else if(physical.airLift>.17-.03*lowMidAssist){behavior="AIR_LIFT";behaviorJP="風圧浮き"}
   else if(sourceIndex>=0&&impactPower>=.10){behavior=physical.liftForce>.15?"AIR_LIFT":"NUDGE";behaviorJP=behavior==="AIR_LIFT"?"重なり浮き":"重なりずれ"}
   else if(impactPower>=.18&&inf.exposedImpactFraction>.08){behavior="NUDGE";behaviorJP="ずれ"}
 
