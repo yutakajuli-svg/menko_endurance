@@ -269,7 +269,8 @@ body.terrain-lab #progressFab,body.terrain-lab .clone-inline{display:none}
 <script>
 (()=>{
 const VERSION="MENKO ENDURANCE 01 / v28 / ROUTE RESULT INTEGRATION";
-const TERRAIN_LAB=location.pathname.toLowerCase().endsWith("/terrain_lab.html");
+// このファイルは新ルールの試遊モードとして固定する。
+const TERRAIN_LAB=true;
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
@@ -2596,12 +2597,105 @@ function loop(now){
 }
 countSelect.addEventListener("change",()=>{});
 window.addEventListener("resize",resize);canvas.addEventListener("click",()=>{});
+
+/* CAPTURE RULES LAB: MENKOを取って役を作る試遊ルール */
+const captureOriginalNewMatch=newMatch,captureOriginalResult=result,captureOriginalDeal=deal;
+const captureHands={player:[],cpu:[]},captureActions={player:null,cpu:null};
+const captureMaxHand=6;
+function captureCount(actor,color){return captureHands[actor].filter(x=>x===color).length}
+function captureOptions(actor){
+  const red=captureCount(actor,"red"),blue=captureCount(actor,"blue"),out=[{key:"none",label:"使わない"}];
+  if(red>=2)out.push({key:"attack",label:`赤 ${red}枚　攻撃 Lv${red-1}`});
+  if(blue>=2)out.push({key:"defense",label:`青 ${blue}枚　防御 Lv${blue-1}`});
+  if(red>=3&&blue>=3)out.push({key:"heal",label:"赤3＋青3　回復"});
+  return out;
+}
+function captureHandText(actor){const h=captureHands[actor];return `赤 ${h.filter(x=>x==="red").length}　青 ${h.filter(x=>x==="blue").length}　/ ${captureMaxHand}`}
+function captureSync(){
+  let status=document.getElementById("captureHandStatus");
+  if(!status){status=document.createElement("div");status.id="captureHandStatus";status.style.cssText="display:flex;justify-content:space-between;gap:8px;padding:6px 8px;border:2px solid #555;background:#181818;font-size:12px";document.getElementById("battleUi").appendChild(status)}
+  status.innerHTML=`<span style="color:#f66">RED 手札　${captureHandText("player")}</span><span style="color:#66f">BLUE 手札　${captureHandText("cpu")}</span>`;
+}
+function captureConsume(actor,key){
+  const h=captureHands[actor];
+  if(key==="attack"){const n=h.filter(x=>x==="red").length;for(let i=0;i<n;i++){const at=h.indexOf("red");if(at>=0)h.splice(at,1)}}
+  if(key==="defense"){const n=h.filter(x=>x==="blue").length;for(let i=0;i<n;i++){const at=h.indexOf("blue");if(at>=0)h.splice(at,1)}}
+  if(key==="heal"){for(let color of ["red","blue"])for(let i=0;i<3;i++){const at=h.indexOf(color);if(at>=0)h.splice(at,1)}}
+}
+function captureCpuAction(actor){
+  const opts=captureOptions(actor),hp=actor==="player"?redHP:blueHP;
+  if(opts.some(x=>x.key==="heal")&&hp<=4)return "heal";
+  if(opts.some(x=>x.key==="attack"))return "attack";
+  if(opts.some(x=>x.key==="defense"))return "defense";
+  return "none";
+}
+function captureChoose(actor,done){
+  const opts=captureOptions(actor);
+  if(actor==="cpu"){captureActions[actor]=captureCpuAction(actor);appendLog(`BLUE ACTION: ${captureActions[actor]}`);msg=`BLUE は ${captureActions[actor]==="none"?"役を温存":captureActions[actor]} を選択`;setTimeout(done,560);return}
+  const host=document.getElementById("playerLog");host.style.display="block";
+  host.innerHTML=`<span class="red">RED 手札：${captureHandText("player")}</span><div class="detail">このラウンドに使う役を選ぶ</div><div class="actions">${opts.map(x=>`<button data-capture-action="${x.key}">${x.label}</button>`).join("")}</div>`;
+  host.querySelectorAll("[data-capture-action]").forEach(b=>b.onclick=()=>{captureActions.player=b.dataset.captureAction;clearPlayerLog();appendLog(`RED ACTION: ${captureActions.player}`);done()});
+}
+function captureActionLevel(actor,key,kind){
+  const color=kind==="attack"?"red":"blue";
+  return key===kind?Math.max(0,captureCount(actor,color)-1):0;
+}
+async function captureResolve(){
+  const ra=captureActions.player||"none",ba=captureActions.cpu||"none";
+  const redAtk=captureActionLevel("player",ra,"attack"),blueAtk=captureActionLevel("cpu",ba,"attack");
+  const redDef=captureActionLevel("player",ra,"defense"),blueDef=captureActionLevel("cpu",ba,"defense");
+  const counter=redDef>blueAtk&&blueAtk>0?"player":blueDef>redAtk&&redAtk>0?"cpu":null;
+  if(ra!=="none")captureConsume("player",ra);if(ba!=="none")captureConsume("cpu",ba);
+  if(counter){const target=oppositeActor(counter);if(target==="player")redHP=Math.max(0,redHP-1);else blueHP=Math.max(0,blueHP-1);await playCounterEvent(counter,1)}
+  else{
+    const redDamage=Math.max(0,redAtk-blueDef),blueDamage=Math.max(0,blueAtk-redDef);
+    if(ra==="heal"){const before=redHP;redHP=Math.min(10,redHP+3);await playCloneHealEvent({actor:"player",amount:redHP-before})}
+    if(ba==="heal"){const before=blueHP;blueHP=Math.min(10,blueHP+3);await playCloneHealEvent({actor:"cpu",amount:blueHP-before})}
+    if(redDamage){blueHP=Math.max(0,blueHP-redDamage);if(redAtk>=3)await playCloneDamageEvent("player",redDamage);else await playNormalAttackEvent("player",redDamage,blueDef,redAtk,randInt(1,3))}
+    else if(redAtk>0&&blueDef>0)await playDefenseEvent("player",blueDef);
+    if(blueDamage&&redHP>0){redHP=Math.max(0,redHP-blueDamage);if(blueAtk>=3)await playCloneDamageEvent("cpu",blueDamage);else await playNormalAttackEvent("cpu",blueDamage,redDef,blueAtk,randInt(1,3))}
+    else if(blueAtk>0&&redDef>0)await playDefenseEvent("cpu",redDef);
+    if(!redDamage&&!blueDamage&&ra!=="heal"&&ba!=="heal"&&!(redAtk&&blueDef)&&!(blueAtk&&redDef))await playNoAttackEvent(roundStarter);
+  }
+  captureSync();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();captureActions.player=captureActions.cpu=null;state="roundResult";resultT=ROUND_SUMMARY_HOLD;
+}
+newMatch=function(){
+  captureHands.player.length=0;captureHands.cpu.length=0;captureActions.player=captureActions.cpu=null;
+  captureOriginalNewMatch();captureSync();
+};
+deck=function(){
+  const d=[];for(const color of ["red","blue","red","blue","red","blue"])d.push({team:"common",type:"capture",captureColor:color,isDifference:false});
+  for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;
+};
+const captureOriginalMenkoSpec=menkoSpec;
+menkoSpec=function(c){if(c.type==="capture")return {kind:"capture",level:0,color:c.captureColor==="red"?"#d71920":"#1769e0"};return captureOriginalMenkoSpec(c)};
+const captureOriginalDrawFaceDesign=drawFaceDesign;
+drawFaceDesign=function(r,spec,back){if(spec.kind==="capture"){if(back)return;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font=`900 ${Math.floor(r*.42)}px system-ui`;ctx.fillText(spec.color==="#d71920"?"赤":"青",0,0);ctx.restore();return}captureOriginalDrawFaceDesign(r,spec,back)};
+// 初期の通常技は、3系統×3段階の9種類だけを使う。
+normalMovePresentation=function(actor,level,type=randInt(1,3)){
+  const key=`${String(type).padStart(3,"0")}_${String(clamp(level,1,3)).padStart(3,"0")}_001`,stem=`move${key}`;
+  const files=(moveFrameNumbers[key]||Array.from({length:moveFrameCounts[key]},(_,i)=>i+1)).map(n=>`${MOVE_ROOT}/${stem}_${String(n).padStart(2,"0")}.png`);
+  return {files,mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key],colorSwap:actor==="cpu"};
+};
+result=function(){
+  captureOriginalResult();
+  for(const c of cards)if(c.type==="capture"&&c.face===1&&!c.captured){c.captured=true;const hand=captureHands[turn],color=c.captureColor;if(hand.length>=captureMaxHand)hand.shift();hand.push(color);appendLog(`${actorLabel(turn)} captured ${color}`)}
+  captureSync();
+};
+prepareThrowPhase=mainStaminaPrepareThrowPhase;
+throwMenko=mainStaminaThrow;
+advanceTurnAfterHold=function(){
+  const actor=turn;
+  if(roundThrow===0)captureChoose(actor,()=>mainAdvanceTurnAfterHold());
+  else captureChoose(actor,()=>captureResolve());
+};
+resolveRoundEffects=captureResolve;
 try{
   resize();
   if(TERRAIN_LAB){
     // 進行・報酬・敵生成を切り離した、盤面と投擲感だけを見る固定対戦モード。
     runState=null;
-    config={...config,name:"TERRAIN LAB",redMaxHP:15,blueMaxHP:15,redAttack:2,blueAttack:2,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3};
+    config={...config,name:"CAPTURE MENKO LAB",redMaxHP:10,blueMaxHP:10,redAttack:1,blueAttack:1,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3};
     document.body.classList.add("terrain-lab");
     setProgressScreen(false);
     newMatch();
