@@ -2664,13 +2664,9 @@ newMatch=function(){
   captureOriginalNewMatch();captureSync();
 };
 deck=function(){
-  const d=[];for(const color of ["red","blue","red","blue","red","blue"])d.push({team:"common",type:"capture",captureColor:color,isDifference:false});
+  const d=[];for(const color of ["red","blue","red","blue","red","blue"])d.push({team:"common",type:color==="red"?"attack":"defense",captureColor:color,isDifference:false});
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}return d;
 };
-const captureOriginalMenkoSpec=menkoSpec;
-menkoSpec=function(c){if(c.type==="capture")return {kind:"capture",level:0,color:c.captureColor==="red"?"#d71920":"#1769e0"};return captureOriginalMenkoSpec(c)};
-const captureOriginalDrawFaceDesign=drawFaceDesign;
-drawFaceDesign=function(r,spec,back){if(spec.kind==="capture"){if(back)return;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillStyle="#fff";ctx.font=`900 ${Math.floor(r*.42)}px system-ui`;ctx.fillText(spec.color==="#d71920"?"赤":"青",0,0);ctx.restore();return}captureOriginalDrawFaceDesign(r,spec,back)};
 // 初期の通常技は、3系統×3段階の9種類だけを使う。
 normalMovePresentation=function(actor,level,type=randInt(1,3)){
   const key=`${String(type).padStart(3,"0")}_${String(clamp(level,1,3)).padStart(3,"0")}_001`,stem=`move${key}`;
@@ -2679,7 +2675,7 @@ normalMovePresentation=function(actor,level,type=randInt(1,3)){
 };
 result=function(){
   captureOriginalResult();
-  for(const c of cards)if(c.type==="capture"&&c.face===1&&!c.captured){c.captured=true;const hand=captureHands[turn],color=c.captureColor;if(hand.length>=captureMaxHand)hand.shift();hand.push(color);appendLog(`${actorLabel(turn)} captured ${color}`)}
+  for(const c of cards)if(c.captureColor&&c.face===1&&!c.captured){c.captured=true;const hand=captureHands[turn],color=c.captureColor;if(hand.length>=captureMaxHand)hand.shift();hand.push(color);appendLog(`${actorLabel(turn)} captured ${color}`)}
   captureSync();
 };
 prepareThrowPhase=mainStaminaPrepareThrowPhase;
