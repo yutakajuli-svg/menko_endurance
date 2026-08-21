@@ -762,7 +762,7 @@ function targets(n,rad){
 }
 function makeCommonCard(t,d,i,rad){
   d=d||{team:"common",type:"attack",isDifference:false};
-  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?(d.attackLevel||1):0,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
+  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?(d.attackLevel||1):0,isDifference:!!d.isDifference,captureColor:d.captureColor||null,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
     z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25),bias:rand(-.35,.35)};
 }
 function makeCloneCard(team){
@@ -2567,8 +2567,8 @@ if(CAPTURE_MENKO_LAB){
       if(captureDiscardActor==="player")choice=`<div class="capture-note">手札が6枚です。捨てる札を選んでください。</div><div class="capture-actions">${redR?'<button class="red" data-discard="red">赤を捨てる</button>':""}${redB?'<button class="blue" data-discard="blue">青を捨てる</button>':""}</div>`;
       else{
         const buttons=[];
-        for(let n=2;n<=redR;n++)buttons.push(`<button class="red" data-action="attack:${n}">赤${n}枚・攻撃Lv${n-1}</button>`);
-        for(let n=2;n<=redB;n++)buttons.push(`<button class="blue" data-action="defense:${n}">青${n}枚・防御Lv${n-1}</button>`);
+        for(let n=2;n<=Math.min(3,redR);n++)buttons.push(`<button class="red" data-action="attack:${n}">赤${n}枚・攻撃Lv${n-1}</button>`);
+        for(let n=2;n<=Math.min(3,redB);n++)buttons.push(`<button class="blue" data-action="defense:${n}">青${n}枚・防御Lv${n-1}</button>`);
         if(redR>=3&&redB>=3)buttons.push('<button class="heal" data-action="heal:6">赤3＋青3・回復+3</button>');
         buttons.push('<button data-action="pass:0">今回は温存</button>');
         choice=`<div class="capture-note">使う役を選択（使わない札は持ち越し）</div><div class="capture-actions">${buttons.join("")}</div>`;
@@ -2654,6 +2654,9 @@ if(CAPTURE_MENKO_LAB){
     appendLog(`CAPTURE ROUND ${roundNo}: RED ${red.kind} Lv${red.level} / BLUE ${blue.kind} Lv${blue.level} / damage ${redDamage}-${blueDamage}`);
     msg=`RED ${red.kind} / BLUE ${blue.kind}`;captureSync("解決中……");capturePresent({red,blue,counter,redDamage,blueDamage,redHeal,blueHeal});
   }
+  // 上部ステータスも、このラウンドの旧集計ではなく現在のストックを表示する。
+  displayedAttackMenko=actor=>captureCount(actor,"red");
+  displayedDefense=actor=>captureCount(actor,"blue");
   deck=function(){return Array.from({length:6},()=>{const color=Math.random()<.5?"red":"blue";return {team:"common",type:color==="red"?"attack":"defense",attackLevel:1,isDifference:false,captureColor:color};});};
   prepareThrowPhase=mainStaminaPrepareThrowPhase;
   throwMenko=mainStaminaThrow;
