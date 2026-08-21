@@ -2631,7 +2631,7 @@ if(CAPTURE_MENKO_LAB){
           else await playDefenseEvent(actor,action.level);
         }
       }
-      if(!redHeal&&!blueHeal&&!counter&&redDamage===0&&blueDamage===0)await playNoAttackEvent(roundStarter);
+      if(red.kind==="pass"&&blue.kind==="pass")await playNoAttackEvent(roundStarter);
       displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=.9;
     })();
   }
@@ -2744,7 +2744,7 @@ try{
     // 進行・報酬・敵生成を切り離した、盤面と投擲感だけを見る固定対戦モード。
     runState=null;
     config=CAPTURE_MENKO_LAB
-      ? {...config,name:"CAPTURE MENKO LAB",redMaxHP:10,blueMaxHP:10,redAttack:1,blueAttack:1,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3}
+      ? {...config,name:"CAPTURE MENKO LAB",redMaxHP:5,blueMaxHP:5,redAttack:1,blueAttack:1,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3}
       : {...config,name:"TERRAIN LAB",redMaxHP:15,blueMaxHP:15,redAttack:2,blueAttack:2,redAttackCards:3,blueAttackCards:3,redDefenseCards:3,blueDefenseCards:3};
     document.body.classList.add("terrain-lab");
     setProgressScreen(false);
