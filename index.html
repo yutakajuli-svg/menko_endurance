@@ -113,13 +113,14 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 .status-group.red .hp-fill{background:#f00}.status-group.blue .hp-fill{background:#00f}
 .stat-line{font-size:18px;line-height:1;white-space:nowrap}
 .menko-line{margin-top:6px;color:#aaa;font-size:14px;line-height:1;white-space:nowrap}
-.stamina-inline{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#aaa;font-size:10px;vertical-align:2px}.stamina-pips{display:inline-flex;gap:3px}.stamina-pip{width:11px;height:7px;border:1px solid #777;background:#252525}.stamina-pip.red.on{background:#f00;border-color:#f66}.stamina-pip.blue.on{background:#00f;border-color:#66f}.clone-inline{display:none}
+.stamina-inline{display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:#aaa;font-size:10px;vertical-align:2px}.stamina-pips{display:inline-flex;gap:3px}.stamina-pip{width:11px;height:7px;border:1px solid #777;background:#252525}.stamina-pip.red.on{background:#f00;border-color:#f66}.stamina-pip.blue.on{background:#00f;border-color:#66f}.clone-inline{margin-left:8px;color:#c5b36a;font-size:10px;white-space:nowrap}
 #strengthWrap{position:relative;z-index:6;width:100%;display:grid;gap:4px}
 #strengthCaption{display:flex;justify-content:space-between;height:14px;padding:0 3px;color:#aaa;font-size:10px;line-height:1}
-#bar{position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
-#bar::after{content:"";position:absolute;left:4px;right:4px;top:50%;height:4px;transform:translateY(-50%);background:#555}
+#bar{--power-cap:100%;position:relative!important;left:auto!important;top:auto!important;width:100%!important;height:24px!important;border:3px solid #fff;background:#151515;overflow:hidden;pointer-events:none}
+#bar::after{content:"";position:absolute;z-index:0;left:4px;right:4px;top:50%;height:4px;transform:translateY(-50%);background:#555}
+#bar::before{content:"";position:absolute;z-index:2;left:var(--power-cap);right:0;top:0;bottom:0;border-left:2px solid #777;background:repeating-linear-gradient(135deg,#080808 0 5px,#202020 5px 10px);opacity:.92}
 .power-mark{position:absolute;z-index:1;top:2px;bottom:2px;width:2px;background:#888;transform:translateX(-50%)}.power-mark.cost-2{left:50%}.power-mark.cost-3{left:75%}.power-mark.all-in{left:90%;width:3px;background:#f00}
-#needle{z-index:2;top:2px;width:18px;height:14px;background:#fff;transform:translateX(-50%);will-change:left}
+#needle{z-index:3;top:2px;width:18px;height:14px;background:#fff;transform:translateX(-50%);will-change:left}
 #ringArea{position:relative;z-index:1;width:100%;height:auto;aspect-ratio:420/430;overflow:hidden;background:#111}
 #ringVisual,#c{position:absolute;inset:0;width:100%;height:100%;display:block}
 #ringVisual{z-index:0}#c{z-index:1;background:transparent;touch-action:none}
@@ -155,7 +156,7 @@ button,select,input{font-family:MisakiGothic,ui-monospace,monospace}
 #testToolsMenu{display:none;align-items:center;gap:5px}
 #testTools.open #testToolsMenu{display:flex}
 #testTools button{position:static;min-height:26px;padding:4px 7px;border:1px solid #777;background:#111;color:#aaa;font-size:10px;opacity:.72}
-body.terrain-lab #progressFab{display:none}
+body.terrain-lab #progressFab,body.terrain-lab .clone-inline{display:none}
 #testTools button:hover,#testTools button:focus-visible{color:#fff;opacity:1}
 #testToolsToggle{min-width:42px}
 #playerLog{left:50%;top:50%;bottom:auto;max-height:70vh;overflow:auto;transform:translate(-50%,-50%);background:#111;color:#fff;border-color:#fff}
@@ -183,7 +184,7 @@ body.terrain-lab #progressFab{display:none}
   </section>
 
   <div id="strengthWrap">
-    <div id="strengthCaption"><span>POWER　ST消費: 1（〜50）/ 2（〜75）/ 3（〜89）/ ALL（90〜・ST5）</span><span id="turnCaption">ROUND 1</span></div>
+    <div id="strengthCaption"><span id="powerRule">POWER　ST消費: 1（〜50）/ 2（〜75）/ 3（〜89）/ ALL（90〜・ST5）</span><span id="turnCaption">ROUND 1</span></div>
     <div id="bar"><i class="power-mark cost-2" aria-hidden="true"></i><i class="power-mark cost-3" aria-hidden="true"></i><i class="power-mark all-in" aria-hidden="true"></i><div id="needle"></div></div>
   </div>
 
@@ -191,7 +192,7 @@ body.terrain-lab #progressFab{display:none}
     <svg id="ringVisual" viewBox="0 0 420 430" role="img" aria-labelledby="ringTitle ringDesc">
       <title id="ringTitle">MENKOを置くリング</title>
       <desc id="ringDesc">真上から見た正方形のリング面。上辺三本、左右二本のロープと四本のポストがあります。</desc>
-      <rect x="15" y="20" width="390" height="390" rx="3" fill="#2a2a2a" stroke="#555" stroke-width="2"/>
+      <rect x="15" y="20" width="390" height="390" rx="3" fill="#404040" stroke="#888" stroke-width="2"/>
       <g fill="none" stroke="#fff" stroke-width="2" opacity=".82">
         <path d="M15 20H405"/><path d="M15 30H405"/><path d="M15 40H405"/>
         <path d="M15 20V410"/><path d="M25 20V410"/><path d="M395 20V410"/><path d="M405 20V410"/>
@@ -263,7 +264,7 @@ body.terrain-lab #progressFab{display:none}
   <details id="progressUtility"><summary>設定・通算戦績</summary><h3>差分MENKO設定</h3><label class="ruleRow"><span>差分MENKOを先攻判定枚数に含める</span><select id="differenceInitiativeMode"><option value="on">両者とも含める</option><option value="off">両者とも含めない</option></select></label><p>カード効果は固定です。共用カードは両者が使用でき、差分カードは所有者だけが使用できます。</p><h3>通算戦績</h3><div id="careerRecords"></div></details>
 </div></div>
 <div id="playerLog" aria-live="polite"></div>
-<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">通常ダメージ：有効攻撃Lvは「めくった有効な攻撃MENKO枚数－相手がそのラウンドに得た防御Lv」です。有効攻撃Lvが0以下なら完全防御でダメージ0、1以上なら「攻撃力＋有効攻撃Lv」がダメージになります。通常ダメージに上限はありません。両者に攻撃がある場合は先攻順で解決し、先攻の攻撃で後攻がHP0になった場合、後攻の攻撃とダメージは無効です。防御は取得したラウンドだけ有効で、次ラウンドへの持ち越しはありません。技レベルも防御後の有効攻撃Lvを使い、Lv3以上はLv3のイラストを表示します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用でき、相手所有の差分MENKOをめくっても効果は発動しません。分身は試合開始時から双方1枚ずつ場にあり、投げる側の分身だけ一時的に場から外れます。持ち主がHP1/4以下の時だけ、完成した通常めくれ率の45%を使う専用の1回抽選を行い、めくれた場合は追加抽選なしで効果が確定します。相手分身をめくった投擲側が「自分を最大HPの1/3回復／相手へ防御貫通の最大ダメージ」を発動します。分身最大ダメージは防御を無視し、「攻撃力＋その選手が持つ攻撃MENKO総数」を与えます。効果発動は1試合合計2回まで、発動後は3ラウンドの共通クールタイムです。同一ラウンドで両方がめくれた場合は抽選で片方だけ発動します。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
+<div id="balancePanel"><div id="balanceBox"><h2 style="margin:0 0 12px">バランス検証設定</h2><div id="presetRow"><button data-preset="initial">初期</button><button data-preset="attack">攻撃全振り</button><button data-preset="mixed">半々</button><button data-preset="cards">カード全振り</button><button data-boss="boss1">第1ボスと戦う</button><button data-boss="boss2">第2ボスと戦う</button><button data-boss="boss3">第3ボスと戦う</button></div><div id="balanceGrid"><label>プレイヤー最大HP<input id="cfgRedHP" type="number" min="1" max="999" value="20"></label><label>相手最大HP<input id="cfgBlueHP" type="number" min="1" max="999" value="18"></label><label>プレイヤー攻撃力<input id="cfgRedAtk" type="number" min="0" max="99" value="5"></label><label>相手攻撃力<input id="cfgBlueAtk" type="number" min="0" max="99" value="3"></label><label>プレイヤー攻撃MENKO<input id="cfgRedAttackCards" type="number" min="0" max="48" value="3"></label><label>相手攻撃MENKO<input id="cfgBlueAttackCards" type="number" min="0" max="48" value="3"></label><label>プレイヤー防御MENKO<input id="cfgRedDefenseCards" type="number" min="0" max="48" value="3"></label><label>相手防御MENKO<input id="cfgBlueDefenseCards" type="number" min="0" max="48" value="3"></label></div><p style="font-size:12px;line-height:1.5">TERRAIN LAB新攻防：場は攻撃6枚／防御4枚。攻撃MENKOは見えるLvを持ち、通常ダメージは「基礎ダメージ＋めくった攻撃札Lv合計－相手の防御枚数」です。攻撃札を1枚以上めくった攻撃は最低1ダメージを与えます。防御同士の相殺はなく、防御は取得ラウンドだけ有効です。相手が攻撃札をめくり、自分の防御枚数が相手の攻撃札枚数と自分の攻撃札枚数の両方を上回るとカウンターが成立し、双方の通常攻撃をキャンセルして固定1ダメージだけを返します。共用カードは白／グレー、RED差分は赤、BLUE差分は青です。差分MENKOは所有者だけが効果を使用できます。</p><div id="balanceActions"><button id="closeBalance">閉じる</button><button id="applyBalance">この数値で再試合</button></div></div></div><div id="debugPanel"><div id="debugBox"><div id="debugHead"><strong>検証ログ</strong><button id="closeLog">閉じる</button></div><textarea id="debugLog" readonly></textarea><div id="debugActions"><button id="copyLog">全部コピー</button><button id="selectLog">文字を選択</button><span id="copyStatus"></span></div></div></div>
 <div id="ui"><label style="display:none">手札合計・初期場 <select id="countSelect"><option value="8">8枚</option><option value="16" selected>16枚</option><option value="24">24枚</option><option value="32">32枚</option><option value="40">40枚</option><option value="48">48枚</option></select></label><span>投擲側の分身を場から取り、同じ1枚を投擲／ラウンド終了時に先攻順で解決</span></div>
 <script>
 (()=>{
@@ -297,14 +298,15 @@ let differenceCardsCountForInitiative=true;
 const CLONE_RESCUE_HP_RATIO=1/4;
 const CLONE_RESCUE_COOLDOWN_ROUNDS=3;
 const CLONE_FLIP_RATE=.45;
-const MENKO_SIZE_SCALE=.90;
-// animation_lab_v5_final.html でFIXした「調整案」の値。
-// 再生速度は等倍のまま、高さ／滞空時間／移動距離／影／縦付近の間を本編へ移植する。
-const MENKO_ANIMATION_LIFT_SCALE=1.25;
-const MENKO_ANIMATION_DURATION_SCALE=1.05;
+// TERRAIN LAB: 場の広さは維持し、札を大きくして重なりと衝撃の伝わり方を見やすくする。
+const MENKO_SIZE_SCALE=1.12;
+// TERRAIN LAB: 積層物理は維持したまま、成功時の浮きと速度をゲーム向けに強調する。
+// 横移動は通り抜け感を再発させないため据え置き、高さと傾きだけを大きくする。
+const MENKO_ANIMATION_LIFT_SCALE=1.52;
+const MENKO_ANIMATION_DURATION_SCALE=1.10;
 const MENKO_ANIMATION_TRAVEL_SCALE=1;
 const MENKO_ANIMATION_SHADOW_MIN_SCALE=.70;
-const MENKO_ANIMATION_EDGE_FRAMES=1.75;
+const MENKO_ANIMATION_EDGE_FRAMES=1.55;
 const CLONE_RESCUE_MAX_ACTIVATIONS=2;
 let cloneRescueCooldown=0;
 let cloneRescueActivations=0;
@@ -597,7 +599,7 @@ function newMatch(){
   kickoutUsed={player:false,cpu:false};
   cloneRescueCooldown=0;
   cloneRescueActivations=0;
-  matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},flow:{both:0,playerOnly:0,cpuOnly:0,none:0},attacks:{player:0,cpu:0},fullDefense:0,counters:0,firstKoCancels:0,rounds:[]};
+  matchStats={throws:{player:0,cpu:0},damage:{player:0,cpu:0},zero:{player:0,cpu:0},flow:{both:0,playerOnly:0,cpuOnly:0,none:0},attacks:{player:0,cpu:0},guarded:0,counters:0,firstKoCancels:0,rounds:[]};
   displayedHP={player:redHP,cpu:blueHP};
   logEntries=[];debugLog.value="";clearPlayerLog();appendLog("FLIP RULE: COMMON PHYSICS / FOCUS = INPUT ERROR ONLY");startToss();syncBattleUi();
 }
@@ -643,8 +645,16 @@ function landingTopCardIndex(x,y){
   for(let i=cards.length-1;i>=0;i--)if(cards[i].type!=="clone"&&pointInPolygon(x,y,cardFootprint(cards[i])))return i;
   return -1;
 }
-const MIN_STACK_OVERLAP=.08;
+const MIN_STACK_OVERLAP=.015;
+const MIN_RELAY_OVERLAP=MIN_STACK_OVERLAP;
 function stackCardsOverlap(a,b){return cardsOverlap(a,b)&&overlapAmount(a,b)>=MIN_STACK_OVERLAP}
+function stackCoupling(a,b){
+  const overlap=overlapAmount(a,b);
+  if(overlap<MIN_STACK_OVERLAP)return 0;
+  const q=clamp((overlap-MIN_STACK_OVERLAP)/(1-MIN_STACK_OVERLAP),0,1);
+  // わずかな重なりも接触ゼロにはせず、最低8%の重し・連動として扱う。
+  return .08+.92*q*q*(3-2*q);
+}
 function updateStackDepths(){
   // cards配列の後ろほど後から場に置かれた＝上にある。
   // coverDepthは、そのカードの上に直接または連鎖的に何枚重なっているか。
@@ -658,22 +668,17 @@ function updateStackDepths(){
     cards[i].layerFactor=1/(1+depth*.28);
   }
 }
-function buildDirectBelow(){
-  // 各カードから衝撃を渡す相手は「すぐ下の1枚」だけ。
-  // 重なりグラフ全体へ枝分かれしないよう、最も上に近い下カードを選ぶ。
-  const below=new Array(cards.length).fill(-1);
-  for(let i=cards.length-1;i>=0;i--){
-    let best=-1,bestScore=Infinity;
-    for(let j=i-1;j>=0;j--){
-      if(!stackCardsOverlap(cards[i],cards[j]))continue;
-      const d=Math.hypot(cards[i].x-cards[j].x,cards[i].y-cards[j].y);
-      const layerGap=i-j;
-      const score=layerGap*1000+d;
-      if(score<bestScore){bestScore=score;best=j}
-    }
-    below[i]=best;
+function buildOverlapLinks(){
+  // 衝撃範囲の内外では切らず、実際に重なっている札どうしを接続する。
+  // 位置関係は双方向に持ち、どの側から押されたかを動きへ反映する。
+  const links=cards.map(()=>[]);
+  for(let i=0;i<cards.length;i++)for(let j=i+1;j<cards.length;j++){
+    if(!stackCardsOverlap(cards[i],cards[j]))continue;
+    const coupling=stackCoupling(cards[i],cards[j]);
+    links[i].push({index:j,coupling});
+    links[j].push({index:i,coupling});
   }
-  return below;
+  return links;
 }
 
 function sampleCardPoints(c,count=24){
@@ -687,6 +692,35 @@ function sampleCardPoints(c,count=24){
     }
   }
   return pts;
+}
+function impactProfileForCard(c,wave,inf,impactPower){
+  // 着地点が札のどこへ入ったか。中心は押さえ込み、中心から半分ほど
+  // 外れた所は回転の支点になりやすい、として扱う。
+  const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),dx=wave.x-c.x,dy=wave.y-c.y;
+  const localX=dx*cs-dy*sn,localY=dx*sn+dy*cs;
+  const contact=pointInPolygon(wave.x,wave.y,cardFootprint(c));
+  const contactOffset=Math.hypot(localX,localY)/Math.max(1,c.r);
+  const centerPress=contact?clamp(1-contactOffset/.36,0,1):0;
+  // 半ずらし直撃の狙い目は一点ではなく、中心から少し外れた帯として扱う。
+  const offsetHit=contact?Math.exp(-Math.pow((contactOffset-.58)/.30,2)):0;
+
+  // 地面へ叩きつけた札が生む風圧は、札の「衝撃側で露出した端」から
+  // 入りやすい。上に覆われた端は入口として数えない。
+  const edgePoints=sampleCardPoints(c,16).slice(9);
+  let pressureTotal=0,pressureCount=0;
+  for(const p of edgePoints){
+    if(inf.uppers.some(u=>pointCoveredByCard(p,cards[u])))continue;
+    const fromImpactX=p.x-wave.x,fromImpactY=p.y-wave.y,fromImpactLen=Math.max(1,Math.hypot(fromImpactX,fromImpactY));
+    const outwardX=p.x-c.x,outwardY=p.y-c.y,outwardLen=Math.max(1,Math.hypot(outwardX,outwardY));
+    const facing=clamp((1-(outwardX/outwardLen)*(fromImpactX/fromImpactLen)-(outwardY/outwardLen)*(fromImpactY/fromImpactLen))/2,0,1);
+    const distance=clamp(1-fromImpactLen/Math.max(1,wave.maxRadius),0,1);
+    pressureTotal+=Math.pow(distance,.72)*(.22+.78*facing);
+    pressureCount++;
+  }
+  const airEntry=pressureCount?pressureTotal/pressureCount:0;
+  const airLift=airEntry*clamp(impactPower*1.25,0,1.35);
+  const liftForce=clamp(airLift*1.03+offsetHit*impactPower*.78-centerPress*impactPower*.38,0,1.25);
+  return {contact,contactOffset,centerPress,offsetHit,airEntry,airLift,liftForce};
 }
 function pointCoveredByCard(p,c){
   const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),dx=p.x-c.x,dy=p.y-c.y;
@@ -727,9 +761,8 @@ function targets(n,rad){
 }
 function makeCommonCard(t,d,i,rad){
   d=d||{team:"common",type:"attack",isDifference:false};
-  const level=d.type==="attack"?(d.attackLevel||1):(d.defenseLevel||1),isLv2=level===2;
-  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?level:0,defenseLevel:d.type==="defense"?level:0,pairColor:d.pairColor||null,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
-    z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25)*(isLv2?1.16:1),bias:rand(-.35,.35)};
+  return {cardId:i+1,team:d.team||"common",type:d.type||"attack",attackLevel:d.type==="attack"?(d.attackLevel||1):0,isDifference:!!d.isDifference,x:t.x+rand(-60,60),y:-80-i*22-rand(0,120),tx:t.x,ty:t.y,r:rad,rot:rand(-.6,.6),spin:rand(-.035,.035),
+    z:0,vz:0,tilt:0,tv:0,face:0,flip:false,settled:true,dealing:true,delay:i*.045,weight:rand(.85,1.25),bias:rand(-.35,.35)};
 }
 function makeCloneCard(team){
   const R=ring(),r=Math.min(R.s*.105,36)*MENKO_SIZE_SCALE;
@@ -743,8 +776,10 @@ function deal(){
   linkedCount=ds.length;
   const ts=targets(linkedCount,rad);
   for(let i=0;i<ds.length;i++)cards.push(makeCommonCard(ts[i],ds[i],i,rad));
-  // 分身は盤面から外し、通常MENKOだけを読む10枚盤面にする。
-  aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……`;
+  // 場に置かれるのは常に相手の分身だけ。投げた側の分身は着地後に残らない。
+  // TERRAIN LABでは分身の例外を切り離し、通常MENKOだけの盤面を見る。
+  if(!TERRAIN_LAB)cards.push(makeCloneCard(oppositeActor(turn)));
+  aim.x=R.x+R.s/2;aim.y=R.y+R.s/2;state="deal";dropper=null;impact=null;shake=0;resultT=0;msg=`通常MENKO ${linkedCount}枚を再配置中……（青色は相手専用）`;
 }
 function pos(e){const r=canvas.getBoundingClientRect(),p=e.touches?e.touches[0]:e;return{x:p.clientX-r.left,y:p.clientY-r.top}}
 function nearestSelectableCard(p){
@@ -774,7 +809,8 @@ window.addEventListener("keydown",e=>{if(e.key.toLowerCase()==="r")newMatch()});
 // バーの左端（画面上端）が20%、右端（画面下端）が100%。全幅を使う。
 function gaugeStrength(){
   const t=(Math.sin(phase*Math.PI*2-Math.PI/2)+1)/2;
-  return t;
+  const cap=typeof mainStamina!=="undefined"&&typeof staminaGaugeCap==="function"?staminaGaugeCap(mainStamina[turn]??5):1;
+  return t*cap;
 }
 function gaugePosition(g){return clamp(g,0,1)}
 function classifyGauge(g){
@@ -845,26 +881,43 @@ function cpuThrow(){
   throwMenko(gauge,a);
 }
 function chooseCpuThrow(){
-  const R=ring(),boardCards=cards.filter(c=>c.type!=="clone"),center={x:R.x+R.s*.5,y:R.y+R.s*.5},scanRadius=R.s*.24;
-  // CPU sees only current positions, density, and visible color marks.  It
-  // receives no flip probabilities or outcome information.
-  const choices=boardCards.map(anchor=>{
+  const R=ring(),boardCards=cards.filter(c=>c.type!=="clone"),normalCards=boardCards.filter(c=>c.team!=="player"),center={x:R.x+R.s*.5,y:R.y+R.s*.5};
+  const enemyClone=cards.find(c=>c.type==="clone"&&c.team!=="cpu");
+  const canCloneAllIn=!!enemyClone&&typeof mainStamina!=="undefined"&&mainStamina.cpu>=5&&typeof cloneCharge!=="undefined"&&cloneCharge.cpu>=cloneChargeThreshold("cpu");
+  const roll=Math.random();
+  const stamina=mainStamina.cpu,intent=canCloneAllIn&&roll<.18?"clone_all_in":"rough_cluster";
+  // 攻撃／防御の個別最適解は探さず、見えている札が集まっている辺りだけをざっくり見る。
+  // 相手差分も物理的な密集として少し数えるが、有効札ほど強くは評価しない。
+  const scanRadius=R.s*.24;
+  const clusterChoices=normalCards.map(anchor=>{
     const members=boardCards.filter(c=>Math.hypot(c.x-anchor.x,c.y-anchor.y)<=scanRadius);
-    let x=0,y=0,weight=0;
-    for(const c of members){const d=Math.hypot(c.x-anchor.x,c.y-anchor.y),w=d<R.s*.10?1:d<R.s*.17?.72:.42;weight+=w;x+=c.x*w;y+=c.y*w}
-    const pairBonus=["red","blue","yellow"].reduce((sum,color)=>sum+(members.filter(c=>c.pairColor===color).length>=2?.55:0),0);
-    return {x:weight?x/weight:anchor.x,y:weight?y/weight:anchor.y,members,score:weight+pairBonus+rand(-.18,.18)};
+    let weight=0,x=0,y=0;
+    for(const c of members){
+      const distance=Math.hypot(c.x-anchor.x,c.y-anchor.y),distanceWeight=distance<R.s*.10?1:distance<R.s*.17?.72:.42;
+      const usableWeight=c.team==="player"?.30:1;
+      const w=distanceWeight*usableWeight;
+      weight+=w;x+=c.x*w;y+=c.y*w;
+    }
+    const attackSeen=members.some(c=>c.type==="attack"&&c.team!=="player"),defenseSeen=members.some(c=>c.type==="defense"&&c.team!=="player");
+    const roughScore=weight+(attackSeen&&defenseSeen?.20:0)+rand(-.18,.18);
+    return {x:weight?x/weight:anchor.x,y:weight?y/weight:anchor.y,r:anchor.r||Math.min(R.s*.08,30),score:roughScore,members};
   }).sort((a,b)=>b.score-a.score);
-  const best=choices[0]?.score??0,top=choices.filter((c,i)=>i<3&&c.score>=best*.76);
-  const target=top[Math.floor(Math.random()*Math.max(1,top.length))]||center,idealAim={x:target.x,y:target.y};
-  const stamina=mainStamina.cpu;
+  // 最高点へ固定せず、上位かつ大差のない候補を最大3か所残してランダムに選ぶ。
+  const bestScore=clusterChoices[0]?.score??0;
+  const roughCandidates=clusterChoices.filter((c,i)=>i<3&&c.score>=bestScore*.76);
+  const clusterTarget=roughCandidates[Math.floor(Math.random()*Math.max(1,roughCandidates.length))]||center;
+  const target=intent==="clone_all_in"?enemyClone:clusterTarget;
+  const aimStyle=intent==="clone_all_in"?"clone":"rough";
+  const aimAngle=Math.random()*Math.PI*2;
+  const aimOffset=intent==="clone_all_in"?0:rand(R.s*.018,R.s*.065);
+  const idealAim={x:target.x+Math.cos(aimAngle)*aimOffset,y:target.y+Math.sin(aimAngle)*aimOffset};
   const powerRoll=Math.random();
-  const powerBand=stamina<=2
-    ? (powerRoll<.46?"precision":powerRoll<.84?"stable":"spread")
-    : (powerRoll<.24?"precision":powerRoll<.58?"stable":powerRoll<.86?"spread":"force");
-  const bandRange={precision:[.26,.40],stable:[.46,.60],spread:[.64,.78],force:[.81,.89]};
-  const [bandLo,bandHi]=bandRange[powerBand];
-  const idealPower=rand(bandLo,bandHi);
+  // 力加減は密集度にもスタミナ戦略にも合わせず、毎投ごとの勘で選ぶ。
+  // スタミナはプレイヤーと同じく、選べるバー上限にだけ作用する。
+  const powerBand=powerRoll<.24?"precision":powerRoll<.58?"stable":powerRoll<.86?"spread":"force";
+  const powerCap=staminaGaugeCap(stamina),bandRange={precision:[.26,.40],stable:[.43,.60],spread:[.64,.78],force:[.81,.89]};
+  const [bandLo,bandHi]=intent==="clone_all_in"?[.92,.98]:bandRange[powerBand];
+  const idealPower=rand(Math.min(bandLo,powerCap),Math.min(bandHi,powerCap));
   const fatigue=1-(concentration.cpu??100)/100,missRoll=Math.random();
   const errorType=missRoll<.58-fatigue*.12?"NORMAL":missRoll<.76?"UNDERPOWER":missRoll<.91?"OVERPOWER":missRoll<.98?"AIM_MISS":"BIG_MISS";
   const positionScale=R.s*({NORMAL:.015,UNDERPOWER:.026,OVERPOWER:.026,AIM_MISS:.080,BIG_MISS:.14}[errorType])*(1+fatigue*.60);
@@ -874,9 +927,10 @@ function chooseCpuThrow(){
   if(errorType==="OVERPOWER")powerError=rand(.06,.13)*(1+fatigue*.30);
   if(errorType==="BIG_MISS")powerError=rand(-.20,.20);
   const aim={x:clamp(idealAim.x+Math.cos(angle)*positionError,R.x+R.s*.10,R.x+R.s*.90),y:clamp(idealAim.y+Math.sin(angle)*positionError,R.y+R.s*.10,R.y+R.s*.90)};
-  let gauge=clamp(idealPower+powerError,0,1);
+  let gauge=clamp(idealPower+powerError,0,powerCap);
   // 分身は通常投擲で捲れない。狙うならALL-IN圏を必ず維持する。
-  appendLog(`CPU THROW: visible cluster=${target.members?.length||0} / candidates=${top.length||0} target=${powerBand.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
+  if(intent==="clone_all_in")gauge=Math.max(.90,gauge);
+  appendLog(`CPU THROW: intent=${intent.toUpperCase()} cluster=${intent==="clone_all_in"?"CLONE":`${target.members?.length||0} cards / ${roughCandidates.length||0} choices`} aim=${aimStyle.toUpperCase()} target=${powerBand.toUpperCase()} ideal=(${idealAim.x.toFixed(0)},${idealAim.y.toFixed(0)}) actual=(${aim.x.toFixed(0)},${aim.y.toFixed(0)}) power=${idealPower.toFixed(2)} -> ${gauge.toFixed(2)} cap=${powerCap.toFixed(2)} error=${errorType} focus=${(concentration.cpu??100).toFixed(0)}`);
   return {aim,gauge};
 }
 function cpuThrow(){
@@ -900,60 +954,144 @@ function overlapAmount(a,b){
   const support=(c,dirX,dirY)=>{const rot=-(c.rot||0),cs=Math.cos(rot),sn=Math.sin(rot),x=Math.abs(dirX*cs-dirY*sn),y=Math.abs(dirX*sn+dirY*cs),corner=c.r*.10;return c.r*(x+y)-corner*Math.min(x,y)};
   return clamp(1-d/(support(a,ux,uy)+support(b,-ux,-uy)),0,1);
 }
-function beginCardMotion(i,impulse,sourceLabel){
+function debugBoardZone(x,y){
+  const R=ring(),cx=R.x+R.s/2,cy=R.y+R.s/2,band=R.s*.16;
+  const horizontal=x<cx-band?"LEFT":x>cx+band?"RIGHT":"CENTER";
+  const vertical=y<cy-band?"TOP":y>cy+band?"BOTTOM":"MIDDLE";
+  return `${horizontal}-${vertical}`;
+}
+function debugCardIdentity(i,c){
+  const owner=c.isDifference?(c.team==="player"?"RED DIFF":"BLUE DIFF"):"COMMON";
+  const kind=c.type==="attack"?"ATTACK":c.type==="defense"?"DEFENSE":"CLONE";
+  return `Card ${i+1} / ${owner} ${kind}${c.cardId?` / ID ${c.cardId}`:""}`;
+}
+function debugStackLinks(i,wave){
+  const links=wave?.overlapLinks?.[i]||[];
+  if(!links.length)return "none";
+  return links.map(link=>`Card ${link.index+1} ${link.index>i?"ABOVE":"BELOW"} ${(link.coupling*100).toFixed(0)}%`).join(", ");
+}
+function beginCardMotion(i,impulse,sourceLabel,sourceIndex=-1,directionShare=0,motionScale=1,startDelay=0,coupling=0,relayHops=0){
   const wave=pendingLayerWave,c=cards[i],zone=wave.zone;
   const impactPower=clamp(impulse/c.weight,0,1.35);
   const d=Math.hypot(c.x-wave.x,c.y-wave.y);
-  const dx=c.x-wave.x,dy=c.y-wave.y,dirLen=Math.max(1,d),ux=dx/dirLen,uy=dy/dirLen;
-  const directReach=c.r+(wave.strikerRadius||0);
-  const directOverlap=clamp(1-d/directReach,0,1);
+  const dx=c.x-wave.x,dy=c.y-wave.y,dirLen=Math.max(1,d);
+  let ux=dx/dirLen,uy=dy/dirLen;
+  // 重なりから伝わった動きは、衝撃中心から新しく散らさず、
+  // 力を渡した直下札の移動方向を受け継ぐ。
+  let contactTurn=0,contactSide="-";
+  if(sourceIndex>=0){
+    const source=cards[sourceIndex];
+    const plannedDirection=wave.planDirection?.[sourceIndex];
+    const sx=plannedDirection?.x??((source.animEndX??source.x)-(source.animStartX??source.x));
+    const sy=plannedDirection?.y??((source.animEndY??source.y)-(source.animStartY??source.y));
+    const sourceLen=Math.hypot(sx,sy);
+    if(sourceLen>.01){
+      const sourceUx=sx/sourceLen,sourceUy=sy/sourceLen;
+      const cx=c.x-source.x,cy=c.y-source.y,contactLen=Math.max(1,Math.hypot(cx,cy));
+      const contactUx=cx/contactLen,contactUy=cy/contactLen;
+      // 深く重なるほど直下札と一緒に進み、浅い重なりほど接触面から外へ弾かれる。
+      const contactShare=.18+.28*(1-coupling);
+      const linkedX=sourceUx*(1-contactShare)+contactUx*contactShare;
+      const linkedY=sourceUy*(1-contactShare)+contactUy*contactShare;
+      const mixedX=ux*(1-directionShare)+linkedX*directionShare;
+      const mixedY=uy*(1-directionShare)+linkedY*directionShare;
+      const mixedLen=Math.max(.001,Math.hypot(mixedX,mixedY));
+      ux=mixedX/mixedLen;uy=mixedY/mixedLen;
+      const cross=sourceUx*contactUy-sourceUy*contactUx;
+      if(Math.abs(cross)>.08){contactTurn=cross>=0?1:-1;contactSide=cross>=0?"RIGHT":"LEFT";}
+      else contactSide="CENTER";
+    }
+  }
   const upperCount=currentUpperCards(i).length;
+  const {inf}=wave.initialImpact[i];
+  const coverLoad=inf.uppers.reduce((sum,u)=>sum+stackCoupling(c,cards[u]),0);
+  // 上札との重なり中心を「押さえられている側」として求める。
+  // 中心回転ではなく、重なった側を支点に露出側から持ち上げるために使う。
+  let overlapPivotX=0,overlapPivotY=0,overlapPivotStrength=0,coverSide="-";
+  if(coverLoad>0){
+    let anchorDx=0,anchorDy=0,total=0;
+    for(const u of inf.uppers){
+      const link=stackCoupling(c,cards[u]);if(link<=0)continue;
+      anchorDx+=(cards[u].x-c.x)*link;anchorDy+=(cards[u].y-c.y)*link;total+=link;
+    }
+    const anchorLen=Math.hypot(anchorDx,anchorDy);
+    if(total>0&&anchorLen>.01){
+      const globalNx=anchorDx/anchorLen,globalNy=anchorDy/anchorLen;
+      const cr=Math.cos(-(c.rot||0)),sr=Math.sin(-(c.rot||0));
+      const localNx=globalNx*cr-globalNy*sr,localNy=globalNx*sr+globalNy*cr;
+      const pivotDistance=c.r*clamp(.46+.24*Math.min(1,coverLoad),.46,.70);
+      overlapPivotX=localNx*pivotDistance;overlapPivotY=localNy*pivotDistance;
+      overlapPivotStrength=clamp(.30+.70*Math.min(1,coverLoad),.30,1);
+      coverSide=Math.abs(localNx)>Math.abs(localNy)?(localNx>0?"RIGHT":"LEFT"):(localNy>0?"BOTTOM":"TOP");
+      // 重しの真下へ進まず、押さえられていない側へ動き出す。
+      const escapeShare=clamp(.24+.38*Math.min(1,coverLoad),.24,.62);
+      const escapeX=-globalNx,escapeY=-globalNy;
+      const escapedX=ux*(1-escapeShare)+escapeX*escapeShare;
+      const escapedY=uy*(1-escapeShare)+escapeY*escapeShare;
+      const escapedLen=Math.max(.001,Math.hypot(escapedX,escapedY));
+      ux=escapedX/escapedLen;uy=escapedY/escapedLen;
+    }
+  }
+  let physical=impactProfileForCard(c,wave,inf,impactPower);
+  if(sourceIndex>=0){
+    // 衝撃範囲外でも、重なった札から受けた持ち上げは運動として残す。
+    const coupledLift=impactPower*(.20+.45*coupling);
+    physical={...physical,airLift:Math.max(physical.airLift,coupledLift*.78),liftForce:Math.max(physical.liftForce,coupledLift)};
+  }
 
-  // 衝撃値は「めくれる角度」ではなく、まず挙動の種類に変換する。
-  // 動画の特徴（片側から浮く・横へ逃げる・飛ぶ時だけ大きく動く）を、ゲーム向けに誇張する。
+  // 50%前後は「狙った周辺が少し浮く」投げ。中心への直撃は押さえ込みのまま、
+  // 端へ入った風圧だけを僅かに増やして、NUDGEだけで終わり続けるのを防ぐ。
+  const lowMidAssist=clamp(1-Math.abs(wave.gauge-.48)/.27,0,1);
+  if(!physical.contact&&sourceIndex<0&&lowMidAssist>0&&physical.airEntry>.10){
+    const assistedAirLift=physical.airLift*(1+.32*lowMidAssist);
+    physical={...physical,airLift:assistedAirLift,liftForce:clamp(physical.liftForce+(assistedAirLift-physical.airLift)*1.03,0,1.25)};
+  }
+
+  // 中心は押し込み、半分ずらした直撃は跳ね、少し横は風圧で端を浮かせる。
+  // ここをメンコの主ルールにして、バーの正解探しにはしない。
   let behavior="STOP",behaviorJP="静止";
-  if(directOverlap>.08){behavior="DIRECT_HIT";behaviorJP="直撃"}
-  else if(impactPower>=.70){behavior="HIGH_HOP";behaviorJP="高い飛び"}
-  else if(impactPower>=.40){behavior="SHORT_HOP";behaviorJP="低い飛び"}
-  else if(impactPower>=.22){behavior="EDGE_LIFT";behaviorJP="角浮き"}
+  if(physical.centerPress>.45){behavior="PRESS";behaviorJP="押さえ"}
+  else if(physical.offsetHit>.22&&impactPower>=.24){behavior="OFFSET_HIT";behaviorJP="半ずらし直撃"}
+  else if(physical.airLift>.17-.03*lowMidAssist){behavior="AIR_LIFT";behaviorJP="風圧浮き"}
+  else if(sourceIndex>=0&&impactPower>=.10){behavior=physical.liftForce>.15?"AIR_LIFT":"NUDGE";behaviorJP=behavior==="AIR_LIFT"?"重なり浮き":"重なりずれ"}
+  else if(impactPower>=.18&&inf.exposedImpactFraction>.08){behavior="NUDGE";behaviorJP="ずれ"}
 
-  const labRadial=clamp(1-d/Math.max(1,wave.maxRadius),0,1);
-  const forcedLandingFlip=wave.guaranteedTarget===i&&c.type!=="clone";
-  if(behavior==="STOP"&&(labRadial>.06||forcedLandingFlip||(wave.allIn&&i===wave.allInTarget))){behavior="EDGE_LIFT";behaviorJP="edge lift";}
+  const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
+  if(behavior==="STOP"&&forcedAllInFlip){behavior="AIR_LIFT";behaviorJP="ALL-IN";}
   wave.processed[i]=true;
   if(behavior==="STOP"){
-    const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
-    wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : STOP`,`  State         : STOPPED`].join("\n"));
+    const cardLabel=debugCardIdentity(i,c);
+    wave.lines.push([cardLabel,`  Start position: (${c.x.toFixed(1)}, ${c.y.toFixed(1)}) / ${debugBoardZone(c.x,c.y)}`,`  Start face    : ${c.face?"BACK":"FRONT"}`,`  Stack links   : ${debugStackLinks(i,wave)}`,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : STOP`,`  State         : STOPPED`].join("\n"));
     return false;
   }
 
-  // めくれは挙動と別抽選。上に乗っている枚数は成功率を下げ、直撃は上げる。
-  // POWER is now a straight trade: more output reaches farther and makes each
-  // exposed card easier to turn over. The remaining variance is only texture
-  // and card layering, not a hidden "correct" point on the bar.
-  // 着地点からの距離が抽選率の土台。強投ほど広く、外周まで期待値を残す。
-  const distanceChance=Math.pow(labRadial,1.30-.55*wave.gauge);
-  let flipChance=distanceChance*(.36+.60*wave.gauge);
+  // めくれは距離だけでは決めない。風が端へ入った量と、半ずらし直撃の
+  // 回転力が土台になる。中心への直撃は強くても押し込みとして減点する。
+  let flipChance=.06+physical.liftForce*.82;
   // ALL-IN直後で相手が息切れ中なら、無防備な隙として少し捲れやすくなる。
   const opponentExhausted=typeof mainStamina!=="undefined"&&mainStamina[oppositeActor(turn)]===0;
   if(opponentExhausted&&c.type!=="clone")flipChance*=1.15;
   // 分身は通常の物理めくれ率を完成させた後、専用補正を掛けた1回の抽選だけを行う。
   // この抽選でめくれた分身は、追加抽選なしで効果が確定発動する。
   const cloneFlipAllowed=c.type!=="clone"||!!c.cloneCanFlip;
-  // Range and distance define the baseline; motion only supplies the animation.
-  // Trial balance: keep motion and reach intact, but convert impact into flips much less often.
   // One throw has a small shared catch quality.  Clones use the same physical roll.
   flipChance *= wave.texture.stability;
-  // A full-power impact can peel a stack, while a careful low throw still
-  // struggles with cards that are properly covered.
+  // 重なりは風の入口を狭め、さらに上層の重さがめくれを抑える。
   const layerResistance=.16*(1-.50*wave.gauge);
-  flipChance *= 1/(1+upperCount*layerResistance);
+  flipChance *= 1/(1+coverLoad*layerResistance);
+  // 強投擲は巻き込み範囲だけでなく、実際に大きく浮いた札の期待値も僅かに上げる。
+  // 50%で急に性質が変わらないよう、低〜中出力にもごく薄い助走を持たせる。
+  // PRESS／NUDGEには掛けず、強さだけで捲れ枚数が決まる状態にはしない。
+  if(behavior==="AIR_LIFT"||behavior==="OFFSET_HIT"){
+    flipChance+=Math.max(0,wave.gauge-.25)*.05+Math.max(0,wave.gauge-.50)*.13;
+  }
   if(c.face===1)flipChance*=.72; // 既に裏の札は表へ戻りにくくする。
+  if(behavior==="PRESS")flipChance*=.18;
+  if(behavior==="NUDGE")flipChance*=.42;
   flipChance=clamp(flipChance,.01,.88);
   if(c.type==="clone")flipChance=0; // 分身はALL-INの確定対象になった時だけめくれる。
   const animationPower=["tooWeak","weak","normal","just","strong","tooStrong"][wave.zone.index]||"normal";
   let willFlip=false;
-  const forcedAllInFlip=wave.allIn&&i===wave.allInTarget;
   if(c.type==="clone"){
     if(forcedAllInFlip&&wave.cloneAllIn){
       c.cloneRescueRolled=true;
@@ -961,38 +1099,60 @@ function beginCardMotion(i,impulse,sourceLabel){
       appendLog(`分身めくれ抽選 ${c.team==="player"?"RED":"BLUE"}: ALL-IN確定・効果確定`);
     }
   }else{
-    willFlip=forcedLandingFlip||forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
+    willFlip=forcedAllInFlip||(animationPower!=="tooWeak"&&Math.random()<flipChance);
+  }
+  let coverConstraintNote=null;
+  if(willFlip&&!forcedAllInFlip&&inf.uppers.length){
+    // 上札を押し退ける予定の力が足りない場合、下札だけの貫通回転を
+    // 最後に戻すのではなく、アニメーション開始前から抑止する。
+    const blockingUpper=inf.uppers.find(u=>{
+      const overlap=stackCoupling(c,cards[u]);
+      if(overlap<=0)return false;
+      const upperPower=(wave.plannedImpulse?.[u]||0)/Math.max(.01,cards[u].weight||1);
+      const required=Math.max(.18,impactPower*(.50+.35*overlap));
+      return upperPower<required;
+    });
+    if(blockingUpper!=null){
+      willFlip=false;
+      coverConstraintNote=`  Cover weight  : Card ${blockingUpper+1} blocks pass-through flip`;
+    }
   }
   const targetFace=willFlip?1-c.face:c.face;
 
   // FIX版と同じく、回転方向は投擲側で固定する（REDとBLUEは左右反対）。
-  const side=turn==="player"?1:-1;
+  let side=turn==="player"?1:-1;
+  if(contactTurn)side=contactTurn;
   const tangentX=-uy*side,tangentY=ux*side;
-  const animationProfiles={
-    tooWeak:{lift:2.75,travel:1.10,duration:.68},
-    weak:{lift:4.40,travel:0,duration:.82},
-    normal:{lift:22,travel:15,duration:.74},
-    just:{lift:48,travel:30,duration:.66},
-    strong:{lift:72.45,travel:43,duration:.58},
-    tooStrong:{lift:95,travel:62,duration:.52}
+  // 動きの大きさはバーの区分ではなく、上で計算した浮きの力そのものから決める。
+  const sizeScale=c.r/54,variation=rand(.96,1.04),force=physical.liftForce;
+  const motionProfiles={
+    PRESS:{travel:1.5+3*impactPower,lift:1.5+2.5*impactPower,duration:.40},
+    NUDGE:{travel:4+11*force,lift:3+9*force,duration:.48},
+    AIR_LIFT:{travel:7+34*force,lift:10+58*force,duration:.62},
+    OFFSET_HIT:{travel:9+39*force,lift:15+76*force,duration:.56}
   };
-  const profile=animationProfiles[animationPower],sizeScale=c.r/54,variation=rand(.96,1.04);
-  let travel=profile.travel*sizeScale*variation*MENKO_ANIMATION_TRAVEL_SCALE;
-  let lift=profile.lift*sizeScale*variation*MENKO_ANIMATION_LIFT_SCALE;
+  const profile=motionProfiles[behavior]||motionProfiles.NUDGE;
+  const coupledFlight=sourceIndex>=0?clamp(.15+coupling*.85,0,1):0;
+  const flightScale=motionScale*(1+coupledFlight*.22);
+  const travel=profile.travel*sizeScale*variation*flightScale*MENKO_ANIMATION_TRAVEL_SCALE;
+  const lift=profile.lift*sizeScale*variation*flightScale*MENKO_ANIMATION_LIFT_SCALE;
   const duration=profile.duration*MENKO_ANIMATION_DURATION_SCALE;
 
   // 波から外へ逃げる成分を主にし、少しだけ横方向を混ぜる。
-  const lateral=behavior==="EDGE_LIFT"?.18:rand(.16,.36);
+  const lateral=behavior==="OFFSET_HIT"?.28:behavior==="PRESS"?.08:rand(.16,.36);
   const moveX=ux*(1-lateral)+tangentX*lateral;
   const moveY=uy*(1-lateral)+tangentY*lateral;
   const mlen=Math.max(.001,Math.hypot(moveX,moveY));
 
   c.flip=true;c.settled=false;c.animStarted=true;c.z=0;c.vz=0;
-  c.motionType=behavior;c.motionJP=behaviorJP;c.willFlip=willFlip;
-  c.animationPower=animationPower;c.animationSide=side;c.animRoll=0;
-  c.animT=0;c.animDuration=duration;
+  c.motionType=behavior;c.motionJP=behaviorJP;c.willFlip=willFlip;c.coupledFlight=coupledFlight;
+  c.overlapPivotX=overlapPivotX;c.overlapPivotY=overlapPivotY;c.overlapPivotStrength=overlapPivotStrength;
+  c.animationPower="physical";c.animationSide=side;c.animRoll=0;
+  c.animT=0;c.animDuration=duration;c.animDelay=startDelay;
   c.animStartX=c.x;c.animStartY=c.y;c.animStartTilt=c.tilt;c.animStartRot=c.rot||0;
   c.animEndX=c.x+moveX/mlen*travel;c.animEndY=c.y+moveY/mlen*travel;
+  const board=ring();
+  c.ringOut=c.animEndX-c.r<board.x||c.animEndX+c.r>board.x+board.s||c.animEndY-c.r<board.y||c.animEndY+c.r>board.y+board.s;
   c.animLift=lift;
   c.targetTilt=targetFace?Math.PI:0;
   c.animRotDelta=side*.08;
@@ -1001,11 +1161,84 @@ function beginCardMotion(i,impulse,sourceLabel){
   c.motionTravel=travel;
   c.targetFace=targetFace;c.flipChance=flipChance;
   wave.moved[i]=true;
-  const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"} CLONE`:`Card ${i+1}`;
-  const landingNote=forcedLandingFlip?`  LANDING       : GUARANTEED FLIP`:null;
+  const cardLabel=debugCardIdentity(i,c);
   const allInNote=wave.allIn&&i===wave.allInTarget?`  ALL-IN        : GUARANTEED FLIP`:null;
-  wave.lines.push([cardLabel,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Direct overlap: ${(directOverlap*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,landingNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
+  const ringOutNote=c.ringOut?`  Ring out     : YES`:null;
+  wave.lines.push([cardLabel,`  Start position: (${c.animStartX.toFixed(1)}, ${c.animStartY.toFixed(1)}) / ${debugBoardZone(c.animStartX,c.animStartY)}`,`  Planned end  : (${c.animEndX.toFixed(1)}, ${c.animEndY.toFixed(1)}) / ${debugBoardZone(c.animEndX,c.animEndY)}`,`  Start face    : ${c.face?"BACK":"FRONT"}`,`  Stack links   : ${debugStackLinks(i,wave)}`,`  Dynamic layer : ${c.coverDepth||0}`,`  Source        : ${sourceLabel}`,`  Relay hops    : ${relayHops}`,`  Coupling      : ${(coupling*100).toFixed(0)}%`,`  Contact side  : ${contactSide}`,`  Impact        : ${(impactPower*100).toFixed(1)}`,`  Cover load    : ${(coverLoad*100).toFixed(0)}%`,`  Cover pivot   : ${coverSide}${overlapPivotStrength?` / ${(overlapPivotStrength*100).toFixed(0)}% / local (${overlapPivotX.toFixed(1)}, ${overlapPivotY.toFixed(1)})`:""}`,`  Motion load   : ${(motionScale*100).toFixed(0)}%`,`  Start delay   : ${(startDelay*1000).toFixed(0)} ms`,`  Duration      : ${(duration*1000).toFixed(0)} ms`,`  Motion        : ${behavior} / ${behaviorJP}`,`  Contact       : ${physical.contact?"YES":"NO"} / offset ${(physical.contactOffset*100).toFixed(0)}%`,`  Air entry     : ${(physical.airEntry*100).toFixed(1)}%`,`  Lift force    : ${(physical.liftForce*100).toFixed(1)}%`,`  Upper cards   : ${upperCount}`,`  Travel        : ${travel.toFixed(1)} px`,`  Lift          : ${lift.toFixed(1)} px`,ringOutNote,`  Flip chance   : ${(flipChance*100).toFixed(1)}%`,coverConstraintNote,allInNote,`  Flip result   : ${willFlip?"FLIP":"NO FLIP"}`,`  Candidate     : ${targetFace?"BACK":"FRONT"}`].filter(Boolean).join("\n"));
   return true;
+}
+function applyStackMotionConstraints(wave){
+  // 抽選後の札を個別に飛ばしたままにせず、初期状態で重なっていた上下札を
+  // 一つの運動として整える。裏返らない横滑りでも、重なりが解ける前に
+  // 下札だけが上札より高く抜けたり、上札が先に着地したりしないようにする。
+  for(const c of cards){
+    c.stackCarrier=-1;c.stackClearance=0;c.stackClearedUpperIndices=[];
+  }
+  const startPassiveRider=(upper,lower,coupling)=>{
+    // 衝撃が弱く静止予定だった上札にも、下札から受ける最小限の視覚運動を与える。
+    // 面や効果は変えず、積層の通り抜け防止だけに使う。
+    upper.flip=true;upper.settled=false;upper.animStarted=true;upper.z=0;upper.vz=0;
+    upper.motionType="NUDGE";upper.motionJP="重なり追従";upper.willFlip=false;upper.coupledFlight=clamp(.12+coupling*.55,0,1);
+    upper.animationPower="physical";upper.animationSide=lower.animationSide||1;upper.animRoll=0;
+    upper.animT=0;upper.animDuration=lower.animDuration||.5;upper.animDelay=lower.animDelay||0;
+    upper.animStartX=upper.x;upper.animStartY=upper.y;upper.animStartTilt=upper.tilt;upper.animStartRot=upper.rot||0;
+    upper.animEndX=upper.x;upper.animEndY=upper.y;upper.animLift=Math.max(3,lower.animLift*(.28+.30*coupling));
+    upper.targetTilt=upper.face?Math.PI:0;upper.targetFace=upper.face;upper.animRotDelta=(lower.animRotDelta||0)*.35;
+    upper.pivotUx=0;upper.pivotUy=0;upper.motionTravel=0;upper.flipChance=0;
+  };
+  for(let lowerIndex=0;lowerIndex<cards.length;lowerIndex++){
+    const lower=cards[lowerIndex];
+    if(!lower.flip)continue;
+    const lowerDx=(lower.animEndX??lower.x)-(lower.animStartX??lower.x);
+    const lowerDy=(lower.animEndY??lower.y)-(lower.animStartY??lower.y);
+    const lowerTravel=Math.hypot(lowerDx,lowerDy),lowerLift=lower.animLift||0;
+    const significantMotion=lower.willFlip||lowerTravel>lower.r*.075||lowerLift>lower.r*.11;
+    if(!significantMotion)continue;
+    const uppers=wave.initialImpact[lowerIndex]?.inf?.uppers||[];
+    for(const upperIndex of uppers){
+      const upper=cards[upperIndex],coupling=stackCoupling(lower,upper);
+      if(coupling<=0)continue;
+      // 上札が静止したままなら、その下を中層だけが回転して抜けることはできない。
+      if(!upper.flip){
+        if(lower.willFlip){
+          lower.willFlip=false;
+          lower.targetFace=lower.face;
+          lower.targetTilt=lower.face?Math.PI:0;
+          wave.lines.push(`Card ${lowerIndex+1} stack constraint: Card ${upperIndex+1} stayed down / flip cancelled before animation`);
+          break;
+        }
+        startPassiveRider(upper,lower,coupling);
+        wave.lines.push(`Card ${upperIndex+1} passive stack ride: moved by Card ${lowerIndex+1}`);
+      }
+
+      if(lower.willFlip)lower.stackClearedUpperIndices.push(upperIndex);
+      const upperDx=(upper.animEndX??upper.x)-(upper.animStartX??upper.x);
+      const upperDy=(upper.animEndY??upper.y)-(upper.animStartY??upper.y);
+      const initialDx=upper.x-lower.x,initialDy=upper.y-lower.y,initialDistance=Math.hypot(initialDx,initialDy);
+      const finalDx=initialDx+upperDx-lowerDx,finalDy=initialDy+upperDy-lowerDy,finalDistance=Math.hypot(finalDx,finalDy);
+      const closing=clamp((initialDistance-finalDistance)/Math.max(1,lower.r*.28),0,1);
+      // 離れて重なりを解く時は横追従を弱く、上札側へ潜り込む時は強く追従させる。
+      const follow=lower.willFlip ? .30+.52*coupling : clamp(.20+.42*coupling+.30*closing,.20,.70);
+      upper.animEndX=(upper.animStartX??upper.x)+upperDx*(1-follow)+lowerDx*follow;
+      upper.animEndY=(upper.animStartY??upper.y)+upperDy*(1-follow)+lowerDy*follow;
+      upper.animDelay=Math.min(upper.animDelay||0,lower.animDelay||0);
+      const landingLag=lower.willFlip ? .055+.035*coupling : .025+.025*coupling;
+      upper.animDuration=Math.max(upper.animDuration||.5,(lower.animDuration||.5)+landingLag);
+      const clearance=lower.r*(lower.willFlip ? .08+.16*coupling : .025+.075*coupling);
+      upper.animLift=Math.max(upper.animLift||0,lowerLift+clearance);
+      // 3層時は上から設定された制約を優先し、最も高い支持札を保持する。
+      if((upper.stackClearance||0)<clearance){
+        upper.stackCarrier=lowerIndex;
+        upper.stackClearance=clearance;
+      }
+      wave.lines.push(`Card ${upperIndex+1} stack ride: above Card ${lowerIndex+1} / ${lower.willFlip?"flip":"slide"} / clearance ${upper.stackClearance.toFixed(1)} px / follow ${(follow*100).toFixed(0)}% / closing ${(closing*100).toFixed(0)}%`);
+    }
+  }
+  wave.lines.push(["---- FINAL MOTION POSITIONS ----",...cards.map((c,i)=>{
+    const sx=c.animStartX??c.x,sy=c.animStartY??c.y,ex=c.animEndX??c.x,ey=c.animEndY??c.y;
+    const carrier=c.stackCarrier>=0?` / rides Card ${c.stackCarrier+1}`:"";
+    return `${debugCardIdentity(i,c)}: (${sx.toFixed(1)}, ${sy.toFixed(1)}) ${debugBoardZone(sx,sy)} -> (${ex.toFixed(1)}, ${ey.toFixed(1)}) ${debugBoardZone(ex,ey)} / move ${(ex-sx).toFixed(1)}, ${(ey-sy).toFixed(1)}${carrier}`;
+  }),"--------------------------------"].join("\n"));
 }
 function exposedImpactNow(i,wave){
   const inf=layerImpactInfo(i,wave.x,wave.y,wave.maxRadius);
@@ -1021,43 +1254,81 @@ function advanceLayerWave(){
   const wave=pendingLayerWave;if(!wave||wave.complete)return;
   updateStackDepths();
 
-  // 衝撃は投擲時の一度だけで確定する。上層の着地後に下層を再起動しない。
-  for(let i=cards.length-1;i>=0;i--){
-    if(wave.processed[i])continue;
-    const {inf,spatial}=wave.initialImpact[i];
-    // Covered cards only receive relayed force from upper cards that moved.
-    const directImpulse=wave.power*wave.efficiency*spatial;
-    let relayed=0;
-    for(const u of inf.uppers)if(wave.moved[u])relayed+=(wave.cardImpulse[u]||0)*overlapAmount(cards[i],cards[u])*.46;
-    const relayedImpulse=directImpulse+relayed;
-    if(relayedImpulse>.02){
-      const moved=beginCardMotion(i,relayedImpulse,relayed>directImpulse?"relayed upper layer":"initial exposed layer");
-      if(moved)wave.cardImpulse[i]=relayedImpulse;
-    }else{
-      wave.processed[i]=true;
-      wave.lines.push(`Card ${i+1}: STOPPED / no exposed impact or moving upper layer`);
-    }
-    continue;
-    // 元版と同じく、下層でも34%以上露出していれば上層と同じフレームで動く。
-    // 34%未満しか見えていない札（完全に覆われた札を含む）は今回は動かさない。
-    if(inf.uppers.length>0&&inf.exposedImpactFraction<.34){
-      wave.processed[i]=true;
-      wave.lines.push(`Card ${i+1}: STOPPED / covered at impact (${(inf.exposedImpactFraction*100).toFixed(1)}% exposed)`);
-      continue;
-    }
+  const count=cards.length;
+  const direct=wave.initialImpact.map(({spatial})=>wave.power*wave.efficiency*spatial);
+  const planned=direct.slice(),bestRelay=new Array(count).fill(0),source=new Array(count).fill(-1),sourceCoupling=new Array(count).fill(0);
+  const hops=direct.map(v=>v>.02?0:Infinity);
 
-    const impulse=wave.power*wave.efficiency*spatial;
-    if(impulse>0.02){
-      beginCardMotion(i,impulse,"initial exposed layer");
+  // 衝撃範囲内の札を起点に、重なりグラフが続く限り場の全体へ減衰伝播する。
+  // 距離ではなく実際の重なりを通るため、範囲外でも接触していれば動ける。
+  for(let pass=0;pass<Math.max(1,count-1);pass++){
+    const prev=planned.slice(),prevHops=hops.slice();
+    let changed=false;
+    for(let from=0;from<count;from++){
+      if(prev[from]<=.02||!Number.isFinite(prevHops[from])||prevHops[from]>=count-1)continue;
+      for(const link of wave.overlapLinks[from]){
+        const to=link.index;
+        const candidate=prev[from]*(.18+.52*link.coupling);
+        if(candidate<=bestRelay[to]+.002)continue;
+        bestRelay[to]=candidate;source[to]=from;sourceCoupling[to]=link.coupling;
+        planned[to]=Math.max(direct[to],candidate);
+        hops[to]=Math.min(hops[to],prevHops[from]+1);
+        changed=true;
+      }
+    }
+    if(!changed)break;
+  }
+
+  wave.plannedImpulse=planned.slice();
+
+  wave.planDirection=cards.map(c=>{
+    const dx=c.x-wave.x,dy=c.y-wave.y,len=Math.max(1,Math.hypot(dx,dy));
+    return {x:dx/len,y:dy/len};
+  });
+  // 多段連動でも、直前の札が向かった方向と接触位置を次の札へ渡す。
+  const directionOrder=[...Array(count).keys()].sort((a,b)=>(hops[a]??99)-(hops[b]??99));
+  for(const i of directionOrder){
+    const from=source[i];if(from<0)continue;
+    const relayRatio=bestRelay[i]/Math.max(.001,direct[i]+bestRelay[i]);
+    if(relayRatio<=.12)continue;
+    const coupling=sourceCoupling[i],share=clamp(coupling*(.28+.72*relayRatio),.08,.90);
+    const sourceDir=wave.planDirection[from],base=wave.planDirection[i];
+    const cx=cards[i].x-cards[from].x,cy=cards[i].y-cards[from].y,contactLen=Math.max(1,Math.hypot(cx,cy));
+    const contactShare=.18+.28*(1-coupling);
+    const linkedX=sourceDir.x*(1-contactShare)+cx/contactLen*contactShare;
+    const linkedY=sourceDir.y*(1-contactShare)+cy/contactLen*contactShare;
+    const mixedX=base.x*(1-share)+linkedX*share,mixedY=base.y*(1-share)+linkedY*share,mixedLen=Math.max(.001,Math.hypot(mixedX,mixedY));
+    wave.planDirection[i]={x:mixedX/mixedLen,y:mixedY/mixedLen};
+  }
+
+  for(let i=0;i<count;i++){
+    if(wave.processed[i])continue;
+    const {inf}=wave.initialImpact[i];
+    const relayed=bestRelay[i],relayRatio=relayed/Math.max(.001,direct[i]+relayed);
+    const useSource=source[i]>=0&&relayRatio>.12;
+    const coupling=useSource?sourceCoupling[i]:0;
+    const directionShare=useSource?clamp(coupling*(.28+.72*relayRatio),.08,.90):0;
+    const upperLoad=inf.uppers.reduce((sum,u)=>sum+stackCoupling(cards[i],cards[u]),0);
+    const motionScale=1/(1+upperLoad*.42);
+    const relayHops=Number.isFinite(hops[i])?hops[i]:0;
+    const startDelay=useSource?Math.min(.06,relayHops*(.012+.012*coupling)*relayRatio):0;
+    wave.startDelay[i]=startDelay;
+    const sourceLabel=useSource?(direct[i]>.02?"impact + overlap propagation":"overlap propagation outside impact"):"initial exposed layer";
+    const impulse=planned[i];
+    if(impulse>.02){
+      const moved=beginCardMotion(i,impulse,sourceLabel,useSource?source[i]:-1,directionShare,motionScale,startDelay,coupling,relayHops);
+      if(moved)wave.cardImpulse[i]=impulse;
     }else{
       wave.processed[i]=true;
-      wave.lines.push(`Card ${i+1}: STOPPED / insufficient initial impact (${(spatial*100).toFixed(1)}%)`);
+      const c=cards[i];
+      wave.lines.push([debugCardIdentity(i,c),`  Start position: (${c.x.toFixed(1)}, ${c.y.toFixed(1)}) / ${debugBoardZone(c.x,c.y)}`,`  Start face    : ${c.face?"BACK":"FRONT"}`,`  Stack links   : ${debugStackLinks(i,wave)}`,`  Dynamic layer : ${c.coverDepth||0}`,`  Motion        : STOP`,`  State         : no impact or connected overlap propagation`].join("\n"));
     }
   }
+  applyStackMotionConstraints(wave);
 
   if(wave.processed.every(Boolean)){
     wave.complete=true;
-    const entry=["===== THROW LOG =====",`Round     : ${roundNo} / ${roundThrow===0?"FIRST":"SECOND"}`,`Actor     : ${wave.actor}`,`Zone      : ${wave.zoneName}`,`Gauge     : ${(wave.gauge*100).toFixed(1)}`,`Texture   : range ${(wave.texture.range*100).toFixed(0)}% / force ${(wave.texture.power*100).toFixed(0)}% / stability ${(wave.texture.stability*100).toFixed(0)}%`,"Rule      : SINGLE IMPACT -> EXPOSED CARDS MOVE TOGETHER -> RESULT",...wave.lines,"====================="].join("\n");
+    const entry=["===== THROW LOG =====",`Round     : ${roundNo} / ${roundThrow===0?"FIRST":"SECOND"}`,`Actor     : ${wave.actor}`,`Zone      : ${wave.zoneName}`,`Gauge     : ${(wave.gauge*100).toFixed(1)}`,`Texture   : range ${(wave.texture.range*100).toFixed(0)}% / force ${(wave.texture.power*100).toFixed(0)}% / stability ${(wave.texture.stability*100).toFixed(0)}%`,"Rule      : IMPACT -> SIMULTANEOUS OVERLAP COUPLING -> RESULT",...wave.lines,"====================="].join("\n");
     appendLog(entry);
   }
 }
@@ -1065,16 +1336,18 @@ function hit(x,y,power,gauge,zone){
   // A subtle shared texture makes each throw land a little differently without
   // letting randomness overpower strength, aim, exposure, or card layering.
   const texture={range:rand(.94,1.06),power:rand(.95,1.05),direction:rand(0,Math.PI*2),bias:rand(.05,.12),stability:rand(.94,1.06)};
-  // Restore the lab-sized reach; distance now determines how much force survives at the edge.
-  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),impactRadius=R.s*(.18+.78*gauge)*(288/390)*weightProfile.range*texture.range;power*=weightProfile.power*texture.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
+  // 低〜中出力にも狙った近傍へ届く最低限の衝撃を残す。100%時の最大範囲は従来と同じ。
+  // 0〜70%だけ少し丸みを持たせ、50%前後で「近くの札に届かない」感を減らす。
+  // 距離で力が減衰するため、弱投げが複数枚確定になるわけではない。
+  const R=ring(),weightProfile=mainWeightImpact(dropper?.actor||turn,gauge),lowMidReach=.035*Math.sin(Math.PI*clamp(gauge/.70,0,1)),impactRadius=R.s*(.20+.76*gauge+lowMidReach)*(288/390)*weightProfile.range*texture.range;power*=weightProfile.power*texture.power;if(dropper)dropper.hide=true;impact={x,y,r:1,max:impactRadius,life:1};shake=[2,4,7,10,13,18][zone.index];
   updateStackDepths();
   const zoneNames=["WEAKEST","WEAK","NORMAL","JUST","STRONG","TOO_STRONG"];
   for(const c of cards){
     c.faceBeforeThrow=c.face;c.throwStartX=c.x;c.throwStartY=c.y;c.provisionalFace=null;
+    c.overlapPivotX=0;c.overlapPivotY=0;c.overlapPivotStrength=0;
     c.flip=false;c.settled=true;
   }
   const allIn=!!dropper?.allIn;
-  const guaranteedTarget=landingTopCardIndex(x,y);
   let allInTarget=-1;
   if(allIn){
     const aimedCloneIndex=dropper?.cloneAllIn&&dropper?.aimedClone?cards.indexOf(dropper.aimedClone):-1;
@@ -1097,10 +1370,10 @@ function hit(x,y,power,gauge,zone){
   }
   pendingLayerWave={
     x,y,maxRadius:impactRadius,power,gauge,zone,texture,strikerRadius:Math.min(R.s*.08,30),
-    allIn,cloneAllIn:!!dropper?.cloneAllIn,allInTarget,guaranteedTarget,
+    allIn,cloneAllIn:!!dropper?.cloneAllIn,allInTarget,
     efficiency:1,
-    processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),cardImpulse:new Array(cards.length).fill(0),
-    initialImpact:[],lines:[],complete:false,
+    processed:new Array(cards.length).fill(false),moved:new Array(cards.length).fill(false),cardImpulse:new Array(cards.length).fill(0),startDelay:new Array(cards.length).fill(0),
+    overlapLinks:buildOverlapLinks(),initialImpact:[],lines:[],complete:false,
     actorKey:turn,actor:turn==="player"?"RED":"BLUE",zoneName:zoneNames[zone.index]
   };
   pendingLayerWave.initialImpact=cards.map((_,i)=>exposedImpactNow(i,pendingLayerWave));
@@ -1110,24 +1383,29 @@ function hit(x,y,power,gauge,zone){
 }
 function resolveStackFaces(){
   // cards配列の後ろほど上。候補面を上から確定する。
-  const finalFaces=cards.map(c=>c.provisionalFace==null?c.face:c.provisionalFace);
-  const releaseDistanceFactor=.16;
+  const candidateFaces=cards.map(c=>c.provisionalFace==null?c.face:c.provisionalFace),finalFaces=candidateFaces.slice(),resolutionNotes=[];
 
   for(let i=cards.length-1;i>=0;i--){
     const c=cards[i];
-    c.coverBlocked=false;
+    c.coverBlocked=false;c.coverBlockedBy=-1;
     // 表から裏へ行く候補だけ「上蓋」を確認する。
     if(finalFaces[i]!==1 || c.faceBeforeThrow===1)continue;
 
-    for(let j=i+1;j<cards.length;j++){
+    // 貫通防止に使うのは投擲開始時から上に載っていた札だけ。
+    // 飛翔後に新しく近づいた札で、成立済みのめくれを後から取り消さない。
+    const initialUppers=pendingLayerWave?.initialImpact?.[i]?.inf?.uppers||[];
+    for(const j of initialUppers){
       const upper=cards[j];
-      if(!stackCardsOverlap(c,upper))continue;
-      const moved=Math.hypot((upper.x-(upper.throwStartX??upper.x)),(upper.y-(upper.throwStartY??upper.y)));
-      const released=moved>upper.r*releaseDistanceFactor;
+      if(!stackCardsOverlap(c,upper)||overlapAmount(c,upper)<MIN_RELAY_OVERLAP)continue;
+      // 投擲中に上札を持ち上げて通り道を作れた組は、元の上下順を保ったまま
+      // 下札が裏返ってよい。静止した上札だけを最終的な蓋として扱う。
+      if(c.stackClearedUpperIndices?.includes(j))continue;
       const upperReturnedFront=finalFaces[j]===0;
-      if(upperReturnedFront&&!released){
+      // 上札が最終位置でも重なって表のままなら、下札だけが貫通して
+      // 裏返ったことにはしない。移動量ではなく実際の残存被覆で判定する。
+      if(upperReturnedFront){
         finalFaces[i]=c.faceBeforeThrow??c.face;
-        c.coverBlocked=true;
+        c.coverBlocked=true;c.coverBlockedBy=j;
         break;
       }
     }
@@ -1135,10 +1413,14 @@ function resolveStackFaces(){
 
   for(let i=0;i<cards.length;i++){
     const c=cards[i];
+    if(candidateFaces[i]===1&&c.faceBeforeThrow!==1){
+      resolutionNotes.push(`Card ${i+1} final face: ${finalFaces[i]===1?"BACK / COUNTED":`FRONT / CANCELLED BY INITIAL UPPER Card ${c.coverBlockedBy+1}`}`);
+    }
     c.face=finalFaces[i];
     c.tilt=c.face?Math.PI:0;
     c.provisionalFace=null;
   }
+  return resolutionNotes;
 }
 function appendLog(entry){
   logEntries.unshift(entry);
@@ -1152,22 +1434,18 @@ function clearPlayerLog(){
 function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
   const redFormula=red.attackCancelledByKO
     ? `先攻側のKOにより攻撃中止 → 0ダメージ`
-    : red.attackLevel===0
-    ? `攻撃Lv 0 → 0ダメージ`
-    : red.effectiveAttackLevel<=0
-      ? `攻撃Lv ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ 完全防御・0ダメージ`
-      : `基礎攻撃力 ${config.redAttack} × 0.5（${scaledBaseAttack(config.redAttack)}）＋ 有効攻撃Lv ${red.effectiveAttackLevel} ＝ ${redDamage}ダメージ`;
+    : (red.attackCardCount??red.attackLevel)===0
+    ? `攻撃札 0枚 → 0ダメージ`
+    : `基礎 ${scaledBaseAttack(config.redAttack)} ＋ 攻撃札Lv合計 ${red.attackLevel} － 青の防御 ${blue.defenseUsed??0} ＝ ${redDamage}ダメージ（最低1）`;
   const blueFormula=blue.attackCancelledByKO
     ? `先攻側のKOにより攻撃中止 → 0ダメージ`
-    : blue.attackLevel===0
-    ? `攻撃Lv 0 → 0ダメージ`
-    : blue.effectiveAttackLevel<=0
-      ? `攻撃Lv ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ 完全防御・0ダメージ`
-      : `基礎攻撃力 ${config.blueAttack} × 0.5（${scaledBaseAttack(config.blueAttack)}）＋ 有効攻撃Lv ${blue.effectiveAttackLevel} ＝ ${blueDamage}ダメージ`;
+    : (blue.attackCardCount??blue.attackLevel)===0
+    ? `攻撃札 0枚 → 0ダメージ`
+    : `基礎 ${scaledBaseAttack(config.blueAttack)} ＋ 攻撃札Lv合計 ${blue.attackLevel} － 赤の防御 ${red.defenseUsed??0} ＝ ${blueDamage}ダメージ（最低1）`;
   const redDefDetail=`赤防御：取得 ${red.defenseLevel} ／ 使用 ${red.defenseUsed??0} ／ 未使用 ${red.defenseUnused??red.defenseLevel}（ラウンド終了で消滅）${red.disabledDefense?` ／ 相手所有カードで無効 ${red.disabledDefense}`:""}`;
   const blueDefDetail=`青防御：取得 ${blue.defenseLevel} ／ 使用 ${blue.defenseUsed??0} ／ 未使用 ${blue.defenseUnused??blue.defenseLevel}（ラウンド終了で消滅）${blue.disabledDefense?` ／ 相手所有カードで無効 ${blue.disabledDefense}`:""}`;
-  const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
-  const blueFlipDetail=`青めくり：${blue.physicalFlippedCount??blue.flippedCount}枚 ／ 有効 ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} ／ 無効 ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)}`;
+  const redFlipDetail=`赤めくり：${red.physicalFlippedCount??red.flippedCount}枚 ／ 有効 ${red.effectiveFlippedCount??((red.attackCardCount??red.attackLevel)+red.defenseLevel+red.cloneFlips)} ／ 無効 ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)}`;
+  const blueFlipDetail=`青めくり：${blue.physicalFlippedCount??blue.flippedCount}枚 ／ 有効 ${blue.effectiveFlippedCount??((blue.attackCardCount??blue.attackLevel)+blue.defenseLevel+blue.cloneFlips)} ／ 無効 ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)}`;
   playerLog.innerHTML=`<div class="detail">${redFlipDetail}<br>${blueFlipDetail}</div><div class="red">赤：${redFormula}</div><div class="blue">青：${blueFormula}</div><div class="detail">${redDefDetail}<br>${blueDefDetail}</div><div class="total">合計ダメージ　赤→青 ${redDamage} ／ 青→赤 ${blueDamage} ／ 両者合計 ${redDamage+blueDamage}</div><div class="actions"><button id="copyRoundLogBtn" type="button">このログをコピー</button>${isFinal?'<button id="showResultBtn" type="button">リザルトへ</button>':''}</div>`;
   playerLog.style.display="block";
   playerLogVisible=true;
@@ -1179,9 +1457,8 @@ function showPlayerRoundLog(red,blue,redDamage,blueDamage,isFinal=false){
 function result(){
   // 投擲中にグローバルの手番が変化しても効果対象を取り違えないよう、衝撃開始時の投擲者を使う。
   const resultActor=pendingLayerWave?.actorKey||turn;
-  for(const c of cards){if(c.provisionalFace!=null)c.face=c.provisionalFace;c.provisionalFace=null;}
+  const faceResolutionNotes=resolveStackFaces();
   let attackLevel=0,attackCardCount=0,defenseLevel=0,rawAttackLevel=0,rawAttackCardCount=0,rawDefenseLevel=0,disabledAttack=0,disabledDefense=0,cloneFlips=0,flippedCount=0,physicalFlippedCount=0,effectiveFlippedCount=0,invalidFlippedCount=0,cloneOwners=[],cloneEvents=[],effectDetails=[];
-  const pairCounts={red:0,blue:0,yellow:0};
   for(const c of cards){
     c.z=0;c.vz=0;c.flip=false;c.settled=true;c.tilt=c.face?Math.PI:0;c.tv=0;c.spin=0;
     const newlyFlippedToBack=c.face===1&&c.faceBeforeThrow!==1;
@@ -1195,7 +1472,7 @@ function result(){
     const typeLabel=c.type==="attack"?"攻撃":c.type==="defense"?"防御":"分身";
     const cardLabel=c.type==="clone"?`${c.team==="player"?"RED":"BLUE"}分身`:`Card ${c.cardId||"?"}`;
     if(c.type==="attack"){rawAttackLevel+=c.attackLevel||1;rawAttackCardCount++}
-    else if(c.type==="defense")rawDefenseLevel+=c.defenseLevel||1;
+    else if(c.type==="defense")rawDefenseLevel++;
     if(!effectEnabled){
       invalidFlippedCount++;
       effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} → 無効（相手所有カード）`);
@@ -1204,27 +1481,22 @@ function result(){
       continue;
     }
     effectiveFlippedCount++;
-    effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel} Lv${c.type==="attack"?(c.attackLevel||1):(c.defenseLevel||1)}${c.pairColor?` / ${c.pairColor.toUpperCase()}`:""} → 有効`);
+    effectDetails.push(`${cardLabel} : ${ownerLabel} ${typeLabel}${c.type==="attack"?` Lv${c.attackLevel||1}`:""} → 有効`);
     if(c.type==="attack"){attackLevel+=c.attackLevel||1;attackCardCount++}
-    else if(c.type==="defense")defenseLevel+=c.defenseLevel||1;
-    if(c.pairColor)pairCounts[c.pairColor]++;
+    else if(c.type==="defense")defenseLevel++;
     else if(c.type==="clone"){
       cloneFlips++;
       cloneOwners.push(c.team);
       cloneEvents.push({owner:c.team,actor:resultActor,round:roundNo,throwIndex:roundThrow});
     }
   }
-  attackLevel=Math.min(3,attackLevel);defenseLevel=Math.min(3,defenseLevel);
-  const pairEffects={red:pairCounts.red>=2,blue:pairCounts.blue>=2,yellow:pairCounts.yellow>=2};
-  for(const color of Object.keys(pairEffects))if(pairEffects[color])effectDetails.push(`${color.toUpperCase()} PAIR : 成立`);
   updateStackDepths();
-  roundResults[resultActor]={attackLevel,attackCardCount,defenseLevel,rawAttackLevel,rawAttackCardCount,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,pairCounts,pairEffects,zone:zoneResult};
+  roundResults[resultActor]={attackLevel,attackCardCount,defenseLevel,rawAttackLevel,rawAttackCardCount,rawDefenseLevel,disabledAttack,disabledDefense,cloneFlips,cloneOwners,cloneEvents,flippedCount,physicalFlippedCount,effectiveFlippedCount,invalidFlippedCount,effectDetails,zone:zoneResult};
   matchStats.throws[resultActor]++;
   lastAttackLevel=attackLevel;lastDefenseLevel=defenseLevel;lastDamage=0;
   resultT=1.05;state="result";
-  const pairText=Object.entries(pairEffects).filter(([,on])=>on).map(([color])=>`${color.toUpperCase()} PAIR`).join(" / ");
-  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃Lv ${attackLevel} / 防御Lv ${defenseLevel}${pairText?` / ${pairText}`:""} を保留`;
-  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack Lv   : ${attackLevel}`,`Defense Lv  : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
+  msg=`めくり ${physicalFlippedCount}枚（有効${effectiveFlippedCount}・無効${invalidFlippedCount}） / 攻撃 ${attackCardCount}枚・Lv合計${attackLevel} / 防御 ${defenseLevel}枚 を保留${cloneFlips?` / 分身めくれ ${cloneFlips}`:""}`;
+  appendLog(["===== THROW RESULT =====",`Round       : ${roundNo}`,`Actor       : ${resultActor==="player"?"RED":"BLUE"}`,`Attack cards: ${attackCardCount}`,`Attack Lv   : ${attackLevel}`,`Defense     : ${defenseLevel}`,`Defense raw : ${rawDefenseLevel}`,`Defense off : ${disabledDefense}`,`Clone flips : ${cloneFlips}`,`Flipped     : ${physicalFlippedCount}`,`Effective   : ${effectiveFlippedCount}`,`Invalid     : ${invalidFlippedCount}`,`Initiative  : ${flippedCount}`,"--- FINAL FACE RESOLUTION ---",...(faceResolutionNotes.length?faceResolutionNotes:["No flip candidates"]),"--- FLIPPED CARD EFFECTS ---",...(effectDetails.length?effectDetails:["なし"]),`Status      : HELD UNTIL BOTH THROWS`,"========================"].join("\n"));
 }
 function beginExpel(){
   // 通常メンコの裏向きだけ排出。分身は場に残る。
@@ -1311,16 +1583,8 @@ async function playCloneHealEvent(rescue){
   const actor=rescue.actor,label=actorLabel(actor);
   await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,colorSwap:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +${rescue.amount}`],tall:true,alt:`${label}の回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+rescue.amount,520)}});
 }
-async function playBluePairHealEvent(actor){
-  const label=actorLabel(actor);
-  await playIllustration({files:frameFiles("ex_move_heal",4),mirrored:actor==="player"?redEventMirrored.ex_move_heal:!redEventMirrored.ex_move_heal,colorSwap:actor==="cpu",lines:[`${label}は呼吸を整えている！`,`${label}の体力が回復！`,`体力 +3`],tall:true,alt:`${label}の青ペア回復`,feedback:()=>{restartStatusFeedback(actor,"feedback-white-double",520);return animateDisplayedHp(actor,displayedHP[actor]+3,520)}});
-}
-async function playYellowPairDefenseEvent(actor){
-  const defender=oppositeActor(actor),label=actorLabel(defender);
-  await playIllustration({files:frameFiles("ex_move_no_attack",3),mirrored:defender==="player"?redEventMirrored.ex_move_no_attack:!redEventMirrored.ex_move_no_attack,colorSwap:defender==="cpu",lines:[`${label} YELLOW PAIR！`,`${label}は完全防御！`,`ダメージ 0`],tall:true,alt:`${label}の完全防御`,feedback:()=>{restartStatusFeedback(defender,"feedback-white-double",440);return wait(440)}});
-}
 async function playRoundPresentations(data){
-  const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,pinfall,counter}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},overrides={player:redCloneOverride,cpu:blueCloneOverride};
+  const {red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,pinfall,counter}=data,results={player:red,cpu:blue},damages={player:data.roundRedDamage,cpu:data.roundBlueDamage},normalDamages=data.normalDamage||damages,overrides={player:redCloneOverride,cpu:blueCloneOverride};
   const order=[roundStarter,oppositeActor(roundStarter)];
   if(cloneExclusive){
     const rescue=rescued[0];
@@ -1336,13 +1600,11 @@ async function playRoundPresentations(data){
       appendLog(`攻撃演出省略: ${actorLabel(actor)}は先攻側の攻撃演出でHP0`);
       continue;
     }
-    const resultData=results[actor],damage=damages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel,defenderData=results[oppositeActor(actor)];
+    const resultData=results[actor],damage=damages[actor],normalDamage=normalDamages[actor],effectiveLevel=resultData.effectiveAttackLevel??resultData.attackLevel;
     let actionShownThisTurn=false;
     if(resultData.attackCancelledByKO)continue;
-    if(resultData.pairEffects?.blue){actionShownThisTurn=true;await playBluePairHealEvent(actor)}
-    else if(defenderData.pairEffects?.yellow&&resultData.attackLevel>0){actionShownThisTurn=true;await playYellowPairDefenseEvent(actor)}
-    else if(overrides[actor]!=null){actionShownThisTurn=true;await playCloneDamageEvent(actor,damage)}
-    else if(resultData.attackLevel>0){if(effectiveLevel>0&&damage>0){actionShownThisTurn=true;if(resultData.pairEffects?.red)await playCloneDamageEvent(actor,damage);else await playNormalAttackEvent(actor,damage,results[oppositeActor(actor)].defenseUsed||0,effectiveLevel,resultData.moveType);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(counter?.target!==actor){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
+    if(overrides[actor]!=null){actionShownThisTurn=true;await playCloneDamageEvent(actor,damage)}
+    else if(resultData.attackLevel>0){if(normalDamage>0){actionShownThisTurn=true;await playNormalAttackEvent(actor,normalDamage,results[oppositeActor(actor)].defenseUsed||0,Math.max(1,effectiveLevel),resultData.moveType||1);if(pinfall?.attacker===actor){await playFinishEvent(pinfall);if(pinfall.kickoutSuccess)await playKickoutEvent(pinfall.defender)}}else if(!counter){actionShownThisTurn=true;await playDefenseEvent(actor,resultData.attackLevel)}}
     if(counter?.target===actor){actionShownThisTurn=true;await playCounterEvent(counter.actor,counter.damage)}
     if(actionShownThisTurn){actionShown=true;await wait(BETWEEN_BATTLE_EVENTS_HOLD)}
   }
@@ -1351,8 +1613,8 @@ async function playRoundPresentations(data){
 }
 function resolveRoundEffects(){
   const roundStartRedHP=displayedHP.player,roundStartBlueHP=displayedHP.cpu;
-  const red=roundResults.player||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
-  const blue=roundResults.cpu||{attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
+  const red=roundResults.player||{attackLevel:0,attackCardCount:0,defenseLevel:0,rawAttackLevel:0,rawAttackCardCount:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
+  const blue=roundResults.cpu||{attackLevel:0,attackCardCount:0,defenseLevel:0,rawAttackLevel:0,rawAttackCardCount:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0};
   if(cloneRescueCooldown>0)cloneRescueCooldown--;
   const rescued=[];
   let cloneEvents=[...(red.cloneEvents||[]),...(blue.cloneEvents||[])];
@@ -1371,27 +1633,20 @@ function resolveRoundEffects(){
   }
   const cloneExclusive=rescued.length>0;
   if(cloneExclusive)appendLog(`分身専用ラウンド: ${actorLabel(rescued[0].actor)}の分身効果だけを発動し、両者の通常攻撃・通常防御をキャンセル`);
-  // 防御はダメージだけを減らす。攻撃Lvは技Lv・フォール判定でもそのまま残す。
+  // 新防御ルール：防御同士は相殺しない。防御1枚につき最終ダメージを1軽減する。
+  // 攻撃札を1枚以上取れた攻撃は最低1ダメージを残す。
   const redDefenseAvailable=red.defenseLevel;
   const blueDefenseAvailable=blue.defenseLevel;
-  const redAttackCards=red.attackCardCount??red.attackLevel,blueAttackCards=blue.attackCardCount??blue.attackLevel;
+  const redAttackCards=red.attackCardCount??red.attackLevel;
+  const blueAttackCards=blue.attackCardCount??blue.attackLevel;
   const redDamageBeforeDefense=redAttackCards>0?scaledBaseAttack(config.redAttack)+red.attackLevel:0;
   const blueDamageBeforeDefense=blueAttackCards>0?scaledBaseAttack(config.blueAttack)+blue.attackLevel:0;
   const blueDefenseUsed=redDamageBeforeDefense>0?Math.min(blueDefenseAvailable,Math.max(0,redDamageBeforeDefense-1)):0;
   const redDefenseUsed=blueDamageBeforeDefense>0?Math.min(redDefenseAvailable,Math.max(0,blueDamageBeforeDefense-1)):0;
-  const redEffectiveAttackLevel=redAttackCards>0?red.attackLevel:0;
-  const blueEffectiveAttackLevel=blueAttackCards>0?blue.attackLevel:0;
-  let redNormalDamage=redDamageBeforeDefense>0?Math.max(1,redDamageBeforeDefense-blueDefenseAvailable):0;
-  let blueNormalDamage=blueDamageBeforeDefense>0?Math.max(1,blueDamageBeforeDefense-redDefenseAvailable):0;
-  const redPairs=red.pairEffects||{},bluePairs=blue.pairEffects||{};
-  // Red ignores defense, yellow blocks only the opponent's normal damage, and
-  // blue trades its own normal attack for its later recovery presentation.
-  if(redPairs.red&&redDamageBeforeDefense>0)redNormalDamage=redDamageBeforeDefense;
-  if(bluePairs.red&&blueDamageBeforeDefense>0)blueNormalDamage=blueDamageBeforeDefense;
-  if(bluePairs.yellow)redNormalDamage=0;
-  if(redPairs.yellow)blueNormalDamage=0;
-  if(redPairs.blue)redNormalDamage=0;
-  if(bluePairs.blue)blueNormalDamage=0;
+  const redEffectiveAttackLevel=redAttackCards>0?Math.max(0,red.attackLevel-blueDefenseUsed):0;
+  const blueEffectiveAttackLevel=blueAttackCards>0?Math.max(0,blue.attackLevel-redDefenseUsed):0;
+  const redNormalDamage=redDamageBeforeDefense>0?Math.max(1,redDamageBeforeDefense-blueDefenseAvailable):0;
+  const blueNormalDamage=blueDamageBeforeDefense>0?Math.max(1,blueDamageBeforeDefense-redDefenseAvailable):0;
   // Type 003 is a submission.  Only types 001/002 can lead into a pinfall.
   red.moveType=redAttackCards>0?randInt(1,3):null;
   blue.moveType=blueAttackCards>0?randInt(1,3):null;
@@ -1405,7 +1660,8 @@ function resolveRoundEffects(){
   const normalDamage={player:roundRedDamage,cpu:roundBlueDamage};
   const counterDamage={player:0,cpu:0};
 
-  // Either attack can be countered once per round. A remaining normal attack always takes priority.
+  // 防御優勢カウンター：相手に攻撃札があり、自分の防御枚数が
+  // 「相手の攻撃札枚数」と「自分の攻撃札枚数」の両方を上回った時だけ固定1ダメージ。
   const openingResult=roundStarter==="player"?red:blue;
   const respondingActor=oppositeActor(roundStarter);
   const respondingResult=respondingActor==="player"?red:blue;
@@ -1417,13 +1673,18 @@ function resolveRoundEffects(){
   for(let pairIndex=0;pairIndex<counterPairs.length;pairIndex++){
     if(pairIndex===1&&openingWouldKO)continue;
     const pair=counterPairs[pairIndex];
-    const eligible=!cloneExclusive&&pair.attackerResult.attackLevel>0&&pair.defenderResult.defenseLevel>pair.attackerResult.attackLevel&&pair.defenderResult.effectiveAttackLevel<=0;
+    const attackerCards=pair.attackerResult.attackCardCount??pair.attackerResult.attackLevel;
+    const defenderAttackCards=pair.defenderResult.attackCardCount??pair.defenderResult.attackLevel;
+    const eligible=!cloneExclusive&&attackerCards>0&&pair.defenderResult.defenseLevel>attackerCards&&pair.defenderResult.defenseLevel>defenderAttackCards;
     if(!eligible)continue;
     counter={actor:pair.defender,target:pair.attacker,damage:1};
     counterDamage[counter.actor]=counter.damage;
-    if(counter.actor==="player")roundRedDamage+=counter.damage;
-    else roundBlueDamage+=counter.damage;
-    appendLog(`COUNTER: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK ${pair.attackerResult.attackLevel} / ${actorLabel(counter.actor)} deals ${counter.damage}`);
+    // カウンター成立ラウンドは双方の通常攻撃を止め、反撃1ダメージだけを解決する。
+    normalDamage[pair.attacker]=0;
+    normalDamage[pair.defender]=0;
+    roundRedDamage=counter.actor==="player"?counter.damage:0;
+    roundBlueDamage=counter.actor==="cpu"?counter.damage:0;
+    appendLog(`COUNTER EXCLUSIVE: ${actorLabel(counter.actor)} DEF ${pair.defenderResult.defenseLevel} > ${actorLabel(counter.target)} ATK cards ${attackerCards} and own ATK cards ${defenderAttackCards} / both normal attacks cancelled / ${actorLabel(counter.actor)} deals ${counter.damage}`);
     break;
   }
 
@@ -1447,7 +1708,7 @@ function resolveRoundEffects(){
   const firstWouldKO=!cloneExclusive&&firstDamage>0&&firstDamage>=secondHP;
   const secondAttackCancelled=firstWouldKO;
   let pinfall=null;
-  const pinfallEligible=firstWouldKO&&[1,2].includes(firstResult.moveType);
+  const pinfallEligible=firstWouldKO&&firstResult.effectiveAttackLevel>0&&[1,2].includes(firstResult.moveType);
   if(pinfallEligible){
     const level=clamp(firstResult.effectiveAttackLevel,1,3);
     const chance=[0,.45,.25,.10][level];
@@ -1461,7 +1722,7 @@ function resolveRoundEffects(){
     const retaliatoryDamage=secondActor==="player"?roundRedDamage:roundBlueDamage;
     const starterHP=roundStarter==="player"?redHP:blueHP;
     const retaliatoryResult=secondActor==="player"?red:blue;
-    const retaliationEligible=!cloneExclusive&&retaliatoryDamage>0&&retaliatoryDamage>=starterHP&&[1,2].includes(retaliatoryResult.moveType);
+    const retaliationEligible=!cloneExclusive&&retaliatoryDamage>0&&retaliatoryDamage>=starterHP&&retaliatoryResult.effectiveAttackLevel>0&&[1,2].includes(retaliatoryResult.moveType);
     if(retaliationEligible){
       const level=clamp(retaliatoryResult.effectiveAttackLevel,1,3);
       const chance=[0,.45,.25,.10][level];
@@ -1483,20 +1744,20 @@ function resolveRoundEffects(){
     `Round             : ${roundNo}`,
     `Config RED ATK    : ${config.redAttack}`,
     `Config BLUE ATK   : ${config.blueAttack}`,
-    `RED attack raw Lv : ${red.attackLevel}`,
-    `BLUE defense got  : ${blueDefenseAvailable}`,
+    `RED attack cards  : ${redAttackCards}`,
+    `RED attack Lv sum : ${red.attackLevel}`,
+    `BLUE defense got  : ${blue.defenseLevel}`,
     `BLUE defense used : ${blueDefenseUsed}`,
-    `RED effective Lv  : ${redEffectiveAttackLevel}`,
-    `RED damage formula: ${redEffectiveAttackLevel>0?`ceil(${config.redAttack} * 0.5) + ${redEffectiveAttackLevel} = ${redNormalDamage}`:"FULL DEFENSE = 0"}`,
+    `RED damage formula: ${redAttackCards>0?`max(1, ${scaledBaseAttack(config.redAttack)} base + ${red.attackLevel} ATK Lv - ${blueDefenseAvailable} DEF) = ${redNormalDamage}`:"NO ATTACK = 0"}`,
     `RED counter damage: ${counterDamage.player}`,
     `RED clone override: ${redCloneOverride==null?"none":redCloneOverride}`,
     `RED final damage  : ${roundRedDamage}`,
     `RED KO cancelled  : ${red.attackCancelledByKO?"yes":"no"}`,
-    `BLUE attack raw Lv: ${blue.attackLevel}`,
-    `RED defense got   : ${redDefenseAvailable}`,
+    `BLUE attack cards : ${blueAttackCards}`,
+    `BLUE attack Lv sum: ${blue.attackLevel}`,
+    `RED defense got   : ${red.defenseLevel}`,
     `RED defense used  : ${redDefenseUsed}`,
-    `BLUE effective Lv : ${blueEffectiveAttackLevel}`,
-    `BLUE damage formula: ${blueEffectiveAttackLevel>0?`ceil(${config.blueAttack} * 0.5) + ${blueEffectiveAttackLevel} = ${blueNormalDamage}`:"FULL DEFENSE = 0"}`,
+    `BLUE damage formula: ${blueAttackCards>0?`max(1, ${scaledBaseAttack(config.blueAttack)} base + ${blue.attackLevel} ATK Lv - ${redDefenseAvailable} DEF) = ${blueNormalDamage}`:"NO ATTACK = 0"}`,
     `BLUE counter damage: ${counterDamage.cpu}`,
     `BLUE clone override: ${blueCloneOverride==null?"none":blueCloneOverride}`,
     `BLUE final damage : ${roundBlueDamage}`,
@@ -1511,10 +1772,6 @@ function resolveRoundEffects(){
   const beforeRed=roundStartRedHP,beforeBlue=roundStartBlueHP;
   redHP=clamp(redHP-roundBlueDamage,0,config.redMaxHP);
   blueHP=clamp(blueHP-roundRedDamage,0,config.blueMaxHP);
-  // Blue pair heals at its owner's turn in the presentation order.  It cannot
-  // revive a player already reduced to zero by an earlier attack.
-  if(redPairs.blue&&redHP>0)redHP=Math.min(config.redMaxHP,redHP+3);
-  if(bluePairs.blue&&blueHP>0)blueHP=Math.min(config.blueMaxHP,blueHP+3);
   if(pinfall?.kickoutSuccess){
     if(pinfall.defender==="player")redHP=1;
     else blueHP=1;
@@ -1527,24 +1784,24 @@ function resolveRoundEffects(){
   else if(roundRedDamage>0)matchStats.flow.playerOnly++;
   else if(roundBlueDamage>0)matchStats.flow.cpuOnly++;
   else matchStats.flow.none++;
-  if(redEffectiveAttackLevel>0)matchStats.attacks.player++;
-  if(blueEffectiveAttackLevel>0)matchStats.attacks.cpu++;
-  if((red.attackLevel>0&&redEffectiveAttackLevel===0)||(blue.attackLevel>0&&blueEffectiveAttackLevel===0))matchStats.fullDefense++;
+  if(normalDamage.player>0)matchStats.attacks.player++;
+  if(normalDamage.cpu>0)matchStats.attacks.cpu++;
+  if(redDefenseUsed>0||blueDefenseUsed>0)matchStats.guarded++;
   if(counter)matchStats.counters++;
   if(secondAttackCancelled)matchStats.firstKoCancels++;
   applyRoundConcentration("player",roundStarter,red.physicalFlippedCount??red.flippedCount,roundRedDamage);
   applyRoundConcentration("cpu",roundStarter,blue.physicalFlippedCount??blue.flippedCount,roundBlueDamage);
   const nextStarter=pinfall?.kickoutSuccess?pinfall.defender:(counter?.actor??(red.flippedCount>blue.flippedCount?"player":blue.flippedCount>red.flippedCount?"cpu":roundStarter));
   matchStats.rounds.push({round:roundNo,red,blue,roundRedDamage,roundBlueDamage,beforeRed,beforeBlue,redHP,blueHP,nextStarter});
-  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(red.attackLevel+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blue.attackLevel+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED  ATK Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} = Lv ${redEffectiveAttackLevel} => ${normalDamage.player} normal + ${counterDamage.player} counter = ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK Lv ${blue.attackLevel} - RED  DEF ${redDefenseUsed} = Lv ${blueEffectiveAttackLevel} => ${normalDamage.cpu} normal + ${counterDamage.cpu} counter = ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
+  appendLog(["===== ROUND RESULT =====",`Round : ${roundNo}`,`RED flips  : ${red.physicalFlippedCount??red.flippedCount} (effective ${red.effectiveFlippedCount??(redAttackCards+red.defenseLevel+red.cloneFlips)} / invalid ${red.invalidFlippedCount??(red.disabledAttack+red.disabledDefense)})`,`BLUE flips : ${blue.physicalFlippedCount??blue.flippedCount} (effective ${blue.effectiveFlippedCount??(blueAttackCards+blue.defenseLevel+blue.cloneFlips)} / invalid ${blue.invalidFlippedCount??(blue.disabledAttack+blue.disabledDefense)})`,`DEFENSE RULE : -1 damage each / attack minimum 1`,`Next first : ${nextStarter==="player"?"RED":"BLUE"}${red.flippedCount===blue.flippedCount?" (tie: keep)":""}`,cloneExclusive?`RED normal action cancelled by clone effect`:red.attackCancelledByKO?`RED attack cancelled by first KO => 0 damage`:`RED ATK ${redAttackCards} cards / Lv ${red.attackLevel} - BLUE DEF ${blueDefenseUsed} => ${normalDamage.player} normal + ${counterDamage.player} counter = ${roundRedDamage} damage`,cloneExclusive?`BLUE normal action cancelled by clone effect`:blue.attackCancelledByKO?`BLUE attack cancelled by first KO => 0 damage`:`BLUE ATK ${blueAttackCards} cards / Lv ${blue.attackLevel} - RED DEF ${redDefenseUsed} => ${normalDamage.cpu} normal + ${counterDamage.cpu} counter = ${roundBlueDamage} damage`,`DEF carry  : none (round only)`,`RED HP  : ${beforeRed} -> ${redHP}`,`BLUE HP : ${beforeBlue} -> ${blueHP}`,"========================"].join("\n"));
   state="presentation";resultT=0;clearPlayerLog();
   msg=`赤めくり${red.physicalFlippedCount??red.flippedCount}（有効${red.effectiveFlippedCount??0}・無効${red.invalidFlippedCount??0}） / 青めくり${blue.physicalFlippedCount??blue.flippedCount}（有効${blue.effectiveFlippedCount??0}・無効${blue.invalidFlippedCount??0}） → 次の先攻 ${nextStarter==="player"?"赤":"青"}${red.flippedCount===blue.flippedCount?"（先攻判定同数・維持）":""}`;
-  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD});
+  playRoundPresentations({red,blue,rescued,redCloneOverride,blueCloneOverride,cloneExclusive,roundRedDamage,roundBlueDamage,normalDamage,pinfall,counter}).catch(error=>{appendLog(`PRESENTATION ERROR: ${error?.message||error}`);hidePresentation();displayedHP={player:redHP,cpu:blueHP};syncBattleUi();state="roundResult";resultT=ROUND_SUMMARY_HOLD});
 }
 function finishMatch(){
-  appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} fullDefense=${matchStats.fullDefense} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
+  appendLog(`FLOW SUMMARY: both=${matchStats.flow.both} redOnly=${matchStats.flow.playerOnly} blueOnly=${matchStats.flow.cpuOnly} none=${matchStats.flow.none} attacks=${matchStats.attacks.player}/${matchStats.attacks.cpu} reducedRounds=${matchStats.guarded} counters=${matchStats.counters} firstKoStops=${matchStats.firstKoCancels}`);
   let winner=redHP<=0?"BLUE":blueHP<=0?"RED":"BLUE";
-  appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,"========================="].join("\n"));
+  appendLog(["===== BATTLE RESULT =====",`Winner       : ${winner}`,`Rounds       : ${roundNo}`,`RED HP       : ${redHP} / ${config.redMaxHP}`,`BLUE HP      : ${blueHP} / ${config.blueMaxHP}`,`RED damage   : ${matchStats.damage.player}`,`BLUE damage  : ${matchStats.damage.cpu}`,`RED throws   : ${matchStats.throws.player}`,`BLUE throws  : ${matchStats.throws.cpu}`,`RED zero dmg : ${matchStats.zero.player}`,`BLUE zero dmg: ${matchStats.zero.cpu}`,`Clone rescue : ${cloneRescueActivations} / ${CLONE_RESCUE_MAX_ACTIVATIONS}`,"========================="].join("\n"));
   state="gameover";msg=`${winner} WIN`;
   pendingIntegratedResult=winner==="RED";
   clearPlayerLog();presentationLayer.classList.add("show");illustrationWindow.style.display="none";messageWindow.textContent=`${winner} WIN!\nタップで結果へ`;messageWindow.classList.add("show");
@@ -1581,6 +1838,7 @@ function updateCards(){
     const c=cards[i];
     if(!c.settled)moving=true;
     if(!c.flip)continue;
+    if((c.animDelay||0)>0){c.animDelay=Math.max(0,c.animDelay-1/60);continue;}
     c.animT=clamp((c.animT||0)+1/(60*(c.animDuration||.5)),0,1);
     const p=c.animT;
     const moveEase=1-Math.pow(1-p,3);
@@ -1590,7 +1848,20 @@ function updateCards(){
     const power=c.animationPower||"normal",side=c.animationSide||1,ease=q=>q*q*(3-2*q);
     const startTilt=c.animStartTilt??0;
     let relativeTilt=0,z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.62);
-    if(power==="strong"||power==="tooStrong"){
+    if(c.motionType==="PRESS"){
+      // 真上寄りは地面へ押し込むだけ。小さく沈んで戻る。
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),1.45);
+      relativeTilt=Math.PI/22*Math.sin(Math.PI*p);
+    }else if(c.motionType==="NUDGE"){
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),1.15);
+      relativeTilt=c.willFlip?Math.PI*ease(Math.pow(p,.92)):Math.PI*.18*Math.sin(Math.PI*p);
+    }else if(c.motionType==="AIR_LIFT"){
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.72);
+      relativeTilt=c.willFlip?Math.PI*ease(Math.pow(p,.86)):Math.PI*.66*Math.sin(Math.PI*p);
+    }else if(c.motionType==="OFFSET_HIT"){
+      z=(c.animLift||0)*Math.pow(Math.max(0,Math.sin(Math.PI*p)),.56);
+      relativeTilt=c.willFlip?Math.PI*ease(Math.pow(p,.76)):Math.PI*.88*Math.sin(Math.PI*p);
+    }else if(power==="strong"||power==="tooStrong"){
       const contactP=power==="strong"?.72:.66;
       if(p<contactP){
         const q=p/contactP;relativeTilt=Math.PI*1.5*ease(q);
@@ -1627,8 +1898,9 @@ function updateCards(){
     // FIX版では3Dの立ち上がり方向は両者共通。RED/BLUEの違いは
     // 横移動と画面面内の回転だけに持たせる。
     c.z=z;c.tilt=startTilt+relativeTilt;
-    const rollTarget=c.willFlip?({just:0,strong:Math.PI/7.2,tooStrong:Math.PI/3.3}[power]||0):0;
-    c.animRoll=side*rollTarget*ease(Math.pow(p,power==="strong"?.86:power==="tooStrong"?.78:1));
+    const motionRoll={OFFSET_HIT:Math.PI/5.4,AIR_LIFT:Math.PI/10.5,NUDGE:Math.PI/18};
+    const rollTarget=c.willFlip?(motionRoll[c.motionType]??({just:0,strong:Math.PI/7.2,tooStrong:Math.PI/3.3}[power]||0)):0;
+    c.animRoll=side*rollTarget*ease(Math.pow(p,c.motionType==="OFFSET_HIT"?.82:1));
     c.rot=(c.animStartRot??c.rot)+(c.animRotDelta||0)*Math.sin(Math.PI*p);
 
     if(p>=1){
@@ -1646,10 +1918,22 @@ function updateCards(){
       c.tilt=c.targetTilt??(c.face?Math.PI:0);
       c.provisionalFace=c.targetFace??c.face;
 
-      c.targetFace=null;c.targetTilt=null;c.motionTravel=0;c.animT=0;c.animDuration=0;
+      c.targetFace=null;c.targetTilt=null;c.motionTravel=0;c.animT=0;c.animDuration=0;c.animDelay=0;
       c.animStartX=null;c.animStartY=null;c.animEndX=null;c.animEndY=null;c.animStartTilt=null;c.animStartRot=null;c.animLift=0;c.animRotDelta=0;c.animPeakTilt=0;
-      c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;c.animationPower=null;c.animationSide=0;c.animRoll=0;
+      c.motionType=null;c.motionJP=null;c.willFlip=false;c.flipChance=0;c.pivotUx=0;c.pivotUy=0;c.animationPower=null;c.animationSide=0;c.animRoll=0;c.coupledFlight=0;
+      c.overlapPivotX=0;c.overlapPivotY=0;c.overlapPivotStrength=0;
     }
+  }
+  // 個々の放物線を計算した後、重なりグループ内の高さだけを拘束する。
+  // これにより中層の回転面を上層が横切らず、3層でも下から順に空間が開く。
+  for(let i=0;i<cards.length;i++){
+    const upper=cards[i],carrierIndex=upper.stackCarrier;
+    if(carrierIndex==null||carrierIndex<0||!upper.flip)continue;
+    const lower=cards[carrierIndex];
+    if(!lower?.flip)continue;
+    const lowerP=clamp(lower.animT||0,0,1);
+    const clearance=(upper.stackClearance||0)*Math.pow(Math.max(0,Math.sin(Math.PI*lowerP)),.70);
+    upper.z=Math.max(upper.z||0,(lower.z||0)+clearance);
   }
   if(pendingLayerWave&&!pendingLayerWave.complete)advanceLayerWave();
   moving=cards.some(c=>!c.settled||c.flip);
@@ -1661,6 +1945,10 @@ function updateCards(){
 function update(){
   time+=1/60;
   if(state==="aim")phase=(phase+.012*concentrationGaugeSpeed(turn))%1;
+  const powerCap=typeof mainStamina!=="undefined"&&typeof staminaGaugeCap==="function"?staminaGaugeCap(mainStamina[turn]??5):1;
+  const powerBar=needle.parentElement,powerRule=document.getElementById("powerRule");
+  powerBar.style.setProperty("--power-cap",`${Math.round(powerCap*100)}%`);
+  if(powerRule)powerRule.textContent=`POWER MAX ${Math.round(powerCap*100)}%　ST消費: 1 / 2 / 3 / ALL`;
   const gauge=gaugeStrength();
   needle.style.left=`${gaugePosition(gauge)*100}%`;
   if(shake>0)shake*=.88;
@@ -1785,23 +2073,13 @@ function createBalanceIcon(){
   const icon=document.createElement("canvas");icon.width=18;icon.height=18;const ic=icon.getContext("2d");ic.fillStyle="#fff";[[8,0,2,4],[6,4,6,2],[4,6,10,2],[0,8,18,2],[4,10,10,2],[6,12,6,2],[8,14,2,4]].forEach(r=>ic.fillRect(...r));ic.fillStyle="#969696";ic.fillRect(4,8,5,2);ic.fillRect(6,10,3,2);ic.fillRect(8,12,1,2);return icon;
 }
 const attackIcon=createAttackIcon(),defenseIcon=createDefenseIcon(),heartIcon=createHeartIcon(),balanceIcon=createBalanceIcon();
-function menkoSpec(c){return {kind:c.type,level:c.type==="attack"?(c.attackLevel||1):(c.defenseLevel||1),pairColor:c.pairColor||null,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
+function menkoSpec(c){return {kind:c.type,level:c.type==="attack"?(c.attackLevel||1):0,color:c.type==="clone"||c.isDifference?(c.team==="player"?"#f00":"#00f"):"rgb(40 40 40)"}}
 function drawCloneFace(r){
   const scale=r/62;ctx.save();ctx.scale(scale,scale);ctx.translate(-90,-90);ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(90,90,38,0,Math.PI*2);ctx.fill();ctx.fillStyle="#000";ctx.fill(new Path2D("M64 68H72V64H80V72H72V76H64ZM100 64H108V68H116V76H108V72H100ZM68 76H74V80H80V88H74V92H68V88H74V84H68ZM106 76H112V84H106V88H112V92H106V88H100V80H106Z"));ctx.save();ctx.translate(18,21.2);ctx.scale(.8,.8);ctx.fill(new Path2D("M64 108H72V100H80V96H100V100H108V108H116V116H108V112H100V108H80V112H72V116H64Z"));ctx.restore();ctx.restore();
 }
-function drawFaceDesign(r,spec,back){
-  const show=spec.kind==="clone"?back:!back;if(!show)return;
-  if(spec.kind==="clone"){drawCloneFace(r);return}
-  const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;
-  ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size);
-  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";
-  const marks={red:"●",blue:"◆",yellow:"▲"},colors={red:"#f04444",blue:"#3f8cff",yellow:"#f2c94c"};
-  if(spec.pairColor){ctx.font=`900 ${Math.floor(r*.28)}px system-ui`;ctx.lineWidth=Math.max(2,r*.05);ctx.strokeStyle="#111";ctx.fillStyle=colors[spec.pairColor];const mark=marks[spec.pairColor].repeat(spec.level||1);ctx.strokeText(mark,0,-r*.59);ctx.fillText(mark,0,-r*.59)}
-  ctx.font=`900 ${Math.floor(r*.19)}px system-ui`;ctx.lineWidth=Math.max(2,r*.045);ctx.strokeStyle="#fff";ctx.fillStyle="#111";ctx.strokeText(`Lv${spec.level||1}`,0,r*.52);ctx.fillText(`Lv${spec.level||1}`,0,r*.52);ctx.restore();
-  if(spec.pairColor&&spec.level===2){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=`900 ${Math.floor(r*.12)}px system-ui`;ctx.fillStyle="#222";ctx.fillText("HEAVY",0,-r*.80);ctx.restore()}
-}
+function drawFaceDesign(r,spec,back){const show=spec.kind==="clone"?back:!back;if(!show)return;if(spec.kind==="clone"){drawCloneFace(r);return}const icon=spec.kind==="attack"?attackIcon:defenseIcon,size=spec.kind==="attack"?r*1.18:r*1.02;ctx.imageSmoothingEnabled=false;ctx.drawImage(icon,-size/2,-size/2,size,size);if(spec.kind==="attack"){ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.lineJoin="round";ctx.font=`900 ${Math.floor(r*.25)}px system-ui`;ctx.lineWidth=Math.max(2,r*.055);ctx.strokeStyle="#fff";ctx.fillStyle="#111";ctx.strokeText(`Lv${spec.level||1}`,0,r*.51);ctx.fillText(`Lv${spec.level||1}`,0,r*.51);ctx.restore()}}
 function roundedShadowPath(w,h,r){ctx.beginPath();ctx.moveTo(-w/2+r,-h/2);ctx.lineTo(w/2-r,-h/2);ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);ctx.lineTo(w/2,h/2-r);ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);ctx.lineTo(-w/2+r,h/2);ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);ctx.lineTo(-w/2,-h/2+r);ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);ctx.closePath()}
-function drawCardShadow(c){
+function drawCardShadow(c,idleStackShadow=false){
   if(c.exiting)return;const r=c.r;
   if(c.animationPower==="weak"){
     const upright=Math.abs(Math.sin(c.tilt||0));if(upright<.01)return;const halfHeight=r*upright;
@@ -1810,19 +2088,37 @@ function drawCardShadow(c){
     const baseRot=c.animStartRot??c.rot??0,side=c.animationSide||1;
     ctx.save();ctx.globalAlpha=.30*Math.pow(upright,.72);ctx.translate(c.x,c.y);ctx.rotate(baseRot+side*.035*Math.sin(Math.PI*(c.animT||0)));ctx.translate(3,shadowCenterY);ctx.fillStyle="#777";roundedShadowPath(r*2,halfHeight*2,r*.07);ctx.fill();ctx.restore();return;
   }
+  // 静止した上札にも接地影を残す。下札の上では少し広く・濃く描き、
+  // 積層が動いていない時も重なりの高さを読み取れるようにする。
+  if(idleStackShadow&&c.settled&&!c.flip){
+    ctx.save();ctx.translate(c.x+6,c.y+7);ctx.rotate(c.rot||0);
+    ctx.globalAlpha=.34;ctx.fillStyle="#080808";roundedShadowPath(r*1.72,r*1.30,r*.11);ctx.fill();
+    ctx.translate(-3,-3);ctx.globalAlpha=.20;roundedShadowPath(r*1.62,r*1.22,r*.10);ctx.fill();
+    ctx.restore();return;
+  }
   const z=c.z||0,reference=Math.max(1,48*MENKO_ANIMATION_LIFT_SCALE*(r/54)),height=clamp(z/reference,0,1),scale=1-height*(1-MENKO_ANIMATION_SHADOW_MIN_SCALE);
-  ctx.save();ctx.globalAlpha=1;ctx.translate(c.x+8+height*10,c.y+7+height*7);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(scale,scale*(.18+.82*Math.abs(Math.cos(c.tilt||0))));ctx.fillStyle="#4a4a4a";roundedShadowPath(r*1.56,r*1.16,r*.10);ctx.fill();ctx.restore();
+  ctx.save();ctx.globalAlpha=clamp(.48-height*.20,.24,.48);ctx.translate(c.x+8+height*10,c.y+7+height*7);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(scale,scale*(.18+.82*Math.abs(Math.cos(c.tilt||0))));ctx.fillStyle="#111";roundedShadowPath(r*1.56,r*1.16,r*.10);ctx.fill();ctx.restore();
 }
 function drawCard(c,isDrop=false){
-  const r=c.r,z=c.z||0,spec=menkoSpec(c),tilt=isDrop?0:(c.tilt||0),cos=Math.cos(tilt),sin=Math.sin(tilt),back=cos<0;
-  const height=clamp(z/Math.max(1,48*MENKO_ANIMATION_LIFT_SCALE*(r/54)),0,1),layerScale=(c.coverDepth||0)>0?Math.max(.45,c.layerFactor||1):1,airScale=1+height*.30*layerScale,depth=Math.max(.8,2.25*(r/54)),corner=r*.10,camera=Math.max(160,420*(r/54));
+  const r=c.r,z=c.z||0,spec=menkoSpec(c),tilt=isDrop?0:(c.tilt||0),cos=Math.cos(tilt),back=cos<0;
+  const height=clamp(z/Math.max(1,48*MENKO_ANIMATION_LIFT_SCALE*(r/54)),0,1),layerScale=(c.coverDepth||0)>0?Math.max(.45,c.layerFactor||1):1,coupledFront=clamp(c.coupledFlight||0,0,1),airScale=1+height*(.34+.28*coupledFront)*layerScale,depth=Math.max(.8,2.25*(r/54)),corner=r*.10,camera=Math.max(160,420*(r/54));
   ctx.save();if(c.exiting)ctx.globalAlpha=1-(c.exitT||0);ctx.translate(c.x,c.y-z);ctx.rotate((c.rot||0)+(c.animRoll||0));ctx.scale(airScale,airScale);ctx.lineJoin="bevel";ctx.miterLimit=1;
-  const weakPivot=!isDrop&&c.animationPower==="weak",pivotY=weakPivot?-r:0;
-  // 既に裏向きの札から始まる場合も、アニメ開始時の位置を変えずに
-  // 同じ一辺を固定できるよう、開始姿勢ぶんの中心移動を差し引く。
-  const baseTilt=weakPivot?(c.animStartTilt??0):0,baseCenterY=weakPivot?(-pivotY)*Math.cos(baseTilt)+pivotY:0,baseCenterZ=weakPivot?(-pivotY)*Math.sin(baseTilt):0;
+  const weakPivot=!isDrop&&c.animationPower==="weak";
+  // 重なり支点は持ち上がり前半だけ固定し、札が十分に抜けた後は解放する。
+  // 最後まで固定すると着地時に中心が跳ぶため、回転後半で滑らかに中央へ戻す。
+  const animP=clamp(c.animT||0,0,1),release=1-clamp((animP-.46)/.42,0,1),pivotStrength=!isDrop?(c.overlapPivotStrength||0)*release:0;
+  const pivotX=weakPivot?0:(c.overlapPivotX||0)*pivotStrength,pivotY=weakPivot?-r:(c.overlapPivotY||0)*pivotStrength;
+  const pivotLen=Math.hypot(pivotX,pivotY),normalX=pivotLen>.01?pivotX/pivotLen:0,normalY=pivotLen>.01?pivotY/pivotLen:1,tangentX=-normalY,tangentY=normalX;
+  // 任意方向の重なりを支点にできるよう、支点からの法線成分だけを3D回転する。
+  const rawProject=(px,py,pz,angle)=>{
+    const rx=px-pivotX,ry=py-pivotY,tangent=rx*tangentX+ry*tangentY,normal=rx*normalX+ry*normalY;
+    const ca=Math.cos(angle),sa=Math.sin(angle),rotatedNormal=normal*ca-pz*sa,rz=normal*sa+pz*ca;
+    return{x:pivotX+tangent*tangentX+rotatedNormal*normalX,y:pivotY+tangent*tangentY+rotatedNormal*normalY,z:rz};
+  };
+  // 既に裏向きから始まる場合も、開始姿勢ぶんの中心移動を相殺する。
+  const baseTilt=(weakPivot||pivotStrength>0)?(c.animStartTilt??0):0,baseCenter=rawProject(0,0,0,baseTilt);
   const outline=[[-r+corner,-r],[r-corner,-r],[r,-r+corner],[r,r-corner],[r-corner,r],[-r+corner,r],[-r,r-corner],[-r,-r+corner]];
-  const project=(px,py,pz)=>{const ly=py-pivotY,ry=ly*cos-pz*sin+pivotY-baseCenterY,rz=ly*sin+pz*cos-baseCenterZ,k=camera/(camera-rz);return{x:px*k,y:ry*k,z:rz,k}};
+  const project=(px,py,pz)=>{const rotated=rawProject(px,py,pz,tilt),rx=rotated.x-baseCenter.x,ry=rotated.y-baseCenter.y,rz=rotated.z-baseCenter.z,k=camera/(camera-rz);return{x:rx*k,y:ry*k,z:rz,k}};
   const plane=pz=>outline.map(([px,py])=>project(px,py,pz)),front=plane(depth),rear=plane(-depth),polygon=pts=>{ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.closePath()};
   outline.map((_,i)=>{const j=(i+1)%outline.length,pts=[front[i],front[j],rear[j],rear[i]];return{pts,z:pts.reduce((s,p)=>s+p.z,0)/4,index:i}}).sort((a,b)=>a.z-b.z).forEach(side=>{polygon(side.pts);const shade=Math.round(255*Math.min(.92,.68+(side.index%4)*.055));ctx.fillStyle=`rgb(${shade},${shade},${shade})`;ctx.strokeStyle="#777";ctx.lineWidth=.8;ctx.fill();ctx.stroke()});
   const face=back?rear:front,visibleZ=back?-depth:depth;polygon(face);ctx.fillStyle=spec.color;ctx.strokeStyle="#fff";ctx.lineWidth=1.5+2.5*Math.min(1,Math.abs(cos)*3);ctx.fill();ctx.stroke();
@@ -1857,8 +2153,23 @@ function hud(){syncBattleUi()}
 function render(){
   const bar=document.getElementById("bar");bar.style.visibility=turn==="cpu"?"hidden":"visible";bar.style.opacity=state==="aim"&&turn==="player"?"1":".22";
   ctx.clearRect(0,0,W,H);ctx.save();if(shake>.2&&state!=="result"&&state!=="gameover"&&state!=="presentation")ctx.translate(rand(-shake,shake),rand(-shake,shake));drawTable();drawToss();
-  // cards配列は下層から上層の順。位置で並べ直すと、移動中に前後が入れ替わって見える。
-  const ordered=[...cards];ordered.forEach(c=>drawCardShadow(c));ordered.forEach(c=>drawCard(c));
+  // 接地中は元の積層順を守る。十分に浮いた札だけを高さ順で最後に描き、
+  // 上の層を越えて画面手前へ飛び出したように見せる。
+  const originalOrder=new Map(cards.map((c,i)=>[c,i]));
+  const ordered=[...cards].sort((a,b)=>{
+    // 下層・中層は上札と重なっている間、飛翔高さだけで前後を追い越さない。
+    const aAir=a.flip&&(a.z||0)>4&&(a.coverDepth||0)===0,bAir=b.flip&&(b.z||0)>4&&(b.coverDepth||0)===0;
+    if(aAir!==bAir)return aAir?1:-1;
+    if(aAir&&bAir){const heightDiff=(a.z||0)-(b.z||0);if(Math.abs(heightDiff)>.5)return heightDiff;}
+    return originalOrder.get(a)-originalOrder.get(b);
+  });
+  // 下層札を描いた後、次の上層札の影を描く。これにより影がテーブルだけでなく
+  // 実際に下へ重なっているメンコの表面にも落ちる。
+  for(const c of ordered){
+    const cardIndex=originalOrder.get(c);
+    const idleStackShadow=c.settled&&!c.flip&&cards.some((lower,lowerIndex)=>lowerIndex<cardIndex&&stackCardsOverlap(lower,c));
+    drawCardShadow(c,idleStackShadow);drawCard(c);
+  }
   // 着弾した分身は見た目だけ最上面に置き、衝撃計算が終わるまでcards配列へ混ぜない。
   if(pendingLandedCard)drawCard(pendingLandedCard);
   drawImpact();
@@ -1917,7 +2228,7 @@ function describeProgressEnemy(enemy,area){
   const type=scores[0].score-scores[1].score<1.5?"balance":scores[0].key;
   return {...enemy,weight,type};
 }
-function routeRewardKeys(enemy){return rewardDefs.map(x=>x.key)}
+function routeRewardKeys(enemy){return enemy.isBoss?rewardDefs.map(x=>x.key):shuffled(rewardDefs).slice(0,2).map(x=>x.key)}
 function withRouteRewards(enemy,area){const data=describeProgressEnemy(enemy,area);return {...data,rewardOptions:routeRewardKeys(data)}}
 function normalizeRouteRewards(route,area){for(const row of route.rounds||[])for(const enemy of row)if(enemy&&!Array.isArray(enemy.rewardOptions))enemy.rewardOptions=routeRewardKeys(enemy);if(route.boss&&!Array.isArray(route.boss.rewardOptions))route.boss.rewardOptions=routeRewardKeys(route.boss);return route}
 function createAreaRoute(area){
@@ -1990,13 +2301,15 @@ function handleIntegratedBattleResult(playerWon){
   if(runState.match===15){records.clears++;saveProgressRecords();clearRunProgress();runSaveMode="clear";renderProgressPanel("clear");setProgressScreen(true);return}
   saveProgressRecords();pendingRewardOptions=createPendingRewardOptions();saveRunProgress("reward");renderProgressPanel("reward");setProgressScreen(true);
 }
-const rewardDefs=[{key:"hp",label:"最大HP",value:"+2"},{key:"lighter",label:"重量を軽くする",value:"-1 STEP"},{key:"heavier",label:"重量を重くする",value:"+1 STEP"}];
+const rewardDefs=[{key:"atkMenko",label:"攻撃MENKO",value:"+1"},{key:"defMenko",label:"防御MENKO",value:"+1"},{key:"hp",label:"最大HP",value:"+2"}];
 function shuffled(a){const r=[...a];for(let i=r.length-1;i>0;i--){const j=randInt(0,i);[r[i],r[j]]=[r[j],r[i]]}return r}
-function createPendingRewardOptions(){const saved=runState.enemy?.rewardOptions;return Array.isArray(saved)&&saved.length===rewardDefs.length?[...saved]:rewardDefs.map(x=>x.key)}
+function createPendingRewardOptions(){
+  return Array.isArray(runState.enemy?.rewardOptions)?[...runState.enemy.rewardOptions]:(runState.enemy.isBoss?rewardDefs:shuffled(rewardDefs).slice(0,2)).map(x=>x.key);
+}
 function normalizePendingRewardOptions(){
   const validKeys=new Set(rewardDefs.map(x=>x.key));
   pendingRewardOptions=[...new Set((Array.isArray(pendingRewardOptions)?pendingRewardOptions:[]).filter(k=>validKeys.has(k)))];
-  const expected=rewardDefs.length;
+  const expected=runState.enemy.isBoss?rewardDefs.length:2;
   if(pendingRewardOptions.length!==expected)pendingRewardOptions=createPendingRewardOptions();
 }
 function progressRouteIconUrl(type){return type==="attack"?attackIcon.toDataURL():type==="defense"?defenseIcon.toDataURL():type==="hp"?heartIcon.toDataURL():balanceIcon.toDataURL()}
@@ -2004,7 +2317,7 @@ function progressRouteNodeMarkup(data,row,side,status){
   const boss=!!data.isBoss,tag=!boss&&status==="current"?"button":"div",stage=boss?"BOSS":`M${row+1}-${side===0?"A":"B"}`;
   const mini=boss?"":`<span class="progress-mini ${data.weight}" aria-hidden="true"><i class="head"></i><i class="body"></i><i class="leg left"></i><i class="leg right"></i></span>`;
   const icon=`<span class="progress-type-icon"><img src="${progressRouteIconUrl(data.type)}" alt=""></span>`;
-  const rewardNames={hp:"HP",lighter:"LIGHT",heavier:"HEAVY"},rewardPreview=(data.rewardOptions||[]).map(key=>rewardNames[key]).filter(Boolean).join(" / ");
+  const rewardNames={atkMenko:"ATK",defMenko:"DEF",hp:"HP"},rewardPreview=(data.rewardOptions||[]).map(key=>rewardNames[key]).filter(Boolean).join(" / ");
   const copy=boss?`<span class="progress-boss-name"><span>AREA</span><span>BOSS</span></span><span class="progress-boss-sub"><span>${progressWeightNames[data.weight]}</span><span>${progressTypeNames[data.type]}</span><span>REWARD ALL</span></span>`:`<span class="progress-weight">${progressWeightNames[data.weight]}</span><span class="progress-type-name">${progressTypeNames[data.type]}</span><span class="progress-reward-preview">REWARD ${rewardPreview}</span>`;
   const aria=tag==="button"?` aria-label="MATCH ${row+1} ${progressWeightNames[data.weight]} ${progressTypeNames[data.type]}を選択"`:"";
   return `<${tag}${tag==="button"?' type="button"':''} class="progress-route-node ${status}${boss?" boss":""}" data-row="${row}" data-side="${side}"${aria}><span class="progress-node-stage">${stage}</span>${mini}${icon}<span class="progress-node-copy">${copy}</span></${tag}>`;
@@ -2043,7 +2356,7 @@ function renderProgressPanel(mode="match"){
     title.textContent="RESULT";subhead.textContent=`AREA ${area} / ${isBoss?"BOSS MATCH":`MATCH ${areaMatch}`}`;record.innerHTML=`${runState.wins} WIN<br><span>NEXT MATCH ${match+1}</span>`;
     sum.innerHTML=`<strong>RED WIN!</strong><span>${isBoss?"エリアボス撃破ボーナス":"成長を1つ選択してください"}</span>`;
     stats.innerHTML=statCard("red","RED STATUS",p)+statCard("blue","BLUE / DEFEATED",e);
-    growthRule.textContent=isBoss?"ボス撃破：ATK +1 ＋ 3種から1つ":"3種から成長を1つ選択";
+    growthRule.textContent=isBoss?"3種からさらに1つ":"抽選された2種から1つ";
   }else if(mode==="match"){
     title.textContent=choosingWeight?"CHOOSE WEIGHT":`AREA ${area}`;subhead.textContent=choosingWeight?"SELECT RED STYLE FOR THIS RUN":isBoss?"AREA BOSS BATTLE":"ROAD TO AREA BOSS";record.innerHTML=choosingWeight?"RUN START<br><span>WEIGHT LOCKED FOR RUN</span>":`${runState?.wins||0} WIN<br><span>${isBoss?"NEXT AREA BOSS":`NEXT MATCH ${match}`}</span>`;
     if(choosingWeight){sum.style.display="block";sum.innerHTML="<strong>RED WEIGHT</strong><span>LIGHT: low-power precision / MIDDLE: balanced / HEAVY: high-power range</span>";}
@@ -2058,8 +2371,8 @@ function renderProgressPanel(mode="match"){
   else if(mode==="lose"||mode==="clear")actions.innerHTML='';
   else if(mode==="reward"){
     normalizePendingRewardOptions();
-    selectedRewards=new Set();const need=1,weightAt=playerWeightKeys.indexOf(runState.playerWeight||"middle"),opts=pendingRewardOptions.map(k=>rewardDefs.find(x=>x.key===k)).filter(x=>x&&(x.key!=="lighter"||weightAt>0)&&(x.key!=="heavier"||weightAt<playerWeightKeys.length-1));
-    const iconUrl=k=>k==="hp"?heartIcon.toDataURL():k==="lighter"?attackIcon.toDataURL():defenseIcon.toDataURL();
+    selectedRewards=new Set();const need=1,opts=pendingRewardOptions.map(k=>rewardDefs.find(x=>x.key===k)).filter(Boolean);
+    const iconUrl=k=>k==="atkMenko"?attackIcon.toDataURL():k==="defMenko"?defenseIcon.toDataURL():heartIcon.toDataURL();
     choices.innerHTML=opts.map(x=>`<button class="reward-choice" type="button" data-reward="${x.key}" aria-pressed="false"><img src="${iconUrl(x.key)}" alt=""><span class="reward-choice-name">${x.label}</span><span class="reward-choice-value">${x.value}</span></button>`).join("");
     actions.innerHTML='<button class="progress-confirm" id="confirmGrowthBtn" disabled>成長を決定</button>';
     choices.querySelectorAll("[data-reward]").forEach(b=>b.onclick=()=>{const k=b.dataset.reward;if(selectedRewards.has(k))selectedRewards.delete(k);else{selectedRewards.clear();selectedRewards.add(k)}choices.querySelectorAll("[data-reward]").forEach(x=>{const selected=selectedRewards.has(x.dataset.reward);x.classList.toggle("selected",selected);x.setAttribute("aria-pressed",String(selected))});document.getElementById("confirmGrowthBtn").disabled=selectedRewards.size!==need});
@@ -2080,7 +2393,7 @@ function renderProgressPanel(mode="match"){
     el.addEventListener("touchend",run,{passive:false});
   };
 
-  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>{if(k==="hp")runState.player.hp+=2;else{const at=Math.max(0,playerWeightKeys.indexOf(runState.playerWeight||"middle")),step=k==="lighter"?-1:1;runState.playerWeight=playerWeightKeys[clamp(at+step,0,playerWeightKeys.length-1)]}});pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
+  bindTap("confirmGrowthBtn",()=>{if(runState.enemy.isBoss)runState.player.atk++;selectedRewards.forEach(k=>runState.player[k]+=(k==="hp"?2:1));pendingRewardOptions=[];runState.match++;prepareIntegratedMatch()});
   bindTap("chooseWeightLight",()=>selectPlayerWeight("light"));bindTap("chooseWeightLightMiddle",()=>selectPlayerWeight("light_middle"));bindTap("chooseWeightMiddle",()=>selectPlayerWeight("middle"));bindTap("chooseWeightMiddleHeavy",()=>selectPlayerWeight("middle_heavy"));bindTap("chooseWeightHeavy",()=>selectPlayerWeight("heavy"));
   const fixedStart=document.getElementById("fixedStartBattleBtn"),fixedRestart=document.getElementById("fixedRestartRunBtn");
   fixedStart.style.display=mode==="match"&&validPlayerWeight(runState?.playerWeight)&&!!runState?.enemy?"block":"none";
@@ -2150,7 +2463,6 @@ testToolsMenu.addEventListener("click",e=>{if(e.target.closest("button"))setTest
 document.getElementById("differenceInitiativeMode").onchange=e=>{differenceCardsCountForInitiative=e.target.value==="on";saveRunProgress(runSaveMode)};
 
 /* Five visible stamina pips pay for output before a MENKO is thrown. */
-const PAIR_BOARD=true;
 const mainStamina={player:5,cpu:5},mainWeight={player:"middle",cpu:"middle"};
 // 分身だけは通常スタミナとは別に、試合中に貯める専用チャージを使う。
 const cloneCharge={player:5,cpu:5};
@@ -2167,8 +2479,9 @@ function mainWeightImpact(actor){
   return {range:1,power:1,aim:1};
 }
 const staminaCostForGauge=g=>g>=.90?5:g>.75?3:g>.50?2:1;
-const staminaGaugeCap=stamina=>stamina>=5?1:stamina>=4?.90:stamina>=3?.75:.50;
-const mainBlankRoundResult=()=>({attackLevel:0,defenseLevel:0,rawAttackLevel:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
+// ST4は表示上90%まで使えるが、ALL-IN判定（90%以上・ST5限定）へ入らないよう僅かに手前で止める。
+const staminaGaugeCap=stamina=>stamina>=5?1:stamina>=4?.899:stamina>=3?.75:.50;
+const mainBlankRoundResult=()=>({attackLevel:0,attackCardCount:0,defenseLevel:0,rawAttackLevel:0,rawAttackCardCount:0,rawDefenseLevel:0,disabledAttack:0,disabledDefense:0,cloneFlips:0,cloneOwners:[],cloneEvents:[],flippedCount:0,physicalFlippedCount:0,effectiveFlippedCount:0,invalidFlippedCount:0,effectDetails:[],zone:null});
 const mainStaminaNewMatch=newMatch;
 newMatch=function(){mainStamina.player=5;mainStamina.cpu=5;cloneCharge.player=5;cloneCharge.cpu=5;mainAllInExhausted.player=false;mainAllInExhausted.cpu=false;mainStaminaTurnToken="";cloneChargeTurnToken="";mainWeight.player=validPlayerWeight(runState?.playerWeight)?runState.playerWeight:"middle";mainWeight.cpu=runState?.enemy?.weight||"middle";mainStaminaNewMatch();};
 const mainAdvanceTurnAfterHold=advanceTurnAfterHold;
@@ -2198,7 +2511,7 @@ prepareThrowPhase=function(){
       appendLog(`STAMINA READY: ${actorLabel(turn)} +1 / ${mainStamina[turn]} of 5`);
       syncBattleUi();
     }
-    if(!PAIR_BOARD&&cloneChargeTurnToken!==token){
+    if(!TERRAIN_LAB&&cloneChargeTurnToken!==token){
       cloneChargeTurnToken=token;
       // 開幕は5から開始。以後は自分の投擲準備ごとに1ずつ分身チャージが貯まる。
       if(!(roundNo===1&&roundThrow===0)){
@@ -2230,17 +2543,16 @@ throwMenko=function(forcedGauge=null,forcedAim=null){
 concentrationGaugeSpeed=()=>1;
 concentrationFlipMultiplier=()=>1;
 applyRoundConcentration=()=>{};
-// Fixed shared ten-card board: red attacks, blue/yellow defend, and four
-// neutral Lv1 attacks preserve the former six-attack/four-defense balance.
+// Board economy trial: every throw has its own fixed ten-card board.
+// Six common cards keep flips productive; four difference cards remain physical obstacles.
 deck=function(){
   const d=[];
-  d.push({team:"common",type:"attack",attackLevel:1,pairColor:"red",isDifference:false});
-  d.push({team:"common",type:"attack",attackLevel:2,pairColor:"red",isDifference:false});
-  d.push({team:"common",type:"defense",defenseLevel:1,pairColor:"blue",isDifference:false});
-  d.push({team:"common",type:"defense",defenseLevel:2,pairColor:"blue",isDifference:false});
-  d.push({team:"common",type:"defense",defenseLevel:1,pairColor:"yellow",isDifference:false});
-  d.push({team:"common",type:"defense",defenseLevel:2,pairColor:"yellow",isDifference:false});
   for(let i=0;i<4;i++)d.push({team:"common",type:"attack",attackLevel:1,isDifference:false});
+  for(let i=0;i<2;i++)d.push({team:"common",type:"defense",isDifference:false});
+  for(const team of ["player","cpu"]){
+    d.push({team,type:"attack",attackLevel:1,isDifference:true});
+    d.push({team,type:"defense",isDifference:true});
+  }
   for(let i=d.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
   return d;
 };
@@ -2261,7 +2573,10 @@ resolveRoundEffects=function(){
     if(defenseGain){
       mainStamina[actor]=Math.min(5,mainStamina[actor]+defenseGain);
       appendLog(`STAMINA DEFENSE: ${actorLabel(actor)} +${defenseGain} / defense MENKO gained`);
-      if(!PAIR_BOARD){cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);}
+      if(!TERRAIN_LAB){
+        cloneCharge[actor]=Math.min(10,cloneCharge[actor]+defenseGain);
+        appendLog(`CLONE CHARGE DEFENSE: ${actorLabel(actor)} +${defenseGain} / ${cloneCharge[actor]} of ${cloneChargeThreshold(actor)}`);
+      }
     }
   }
   syncBattleUi();
