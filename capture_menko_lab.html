@@ -2660,10 +2660,11 @@ if(CAPTURE_MENKO_LAB){
   normalMovePresentation=function(actor,level,type=randInt(1,3)){const key=`${String(type).padStart(3,"0")}_${String(clamp(level,1,3)).padStart(3,"0")}_001`,stem=`move${key}`,files=(moveFrameNumbers[key]||Array.from({length:moveFrameCounts[key]},(_,i)=>i+1)).map(n=>`${MOVE_ROOT}/${stem}_${String(n).padStart(2,"0")}.png`);return {files,mirrored:actor==="player"?redMoveMirrored[key]:!redMoveMirrored[key],colorSwap:actor==="cpu"};};
   newMatch=function(){captureHands.player.length=0;captureHands.cpu.length=0;captureActions.player=null;captureActions.cpu=null;captureDiscardActor=null;captureBaseNewMatch();captureSync("取った札で役を作ろう");};
   result=function(){
-    // result() が呼ばれる時点では c.face はすでに裏向きになっている。
-    // 投擲開始時の面を残す faceBeforeThrow で、今回めくれた札だけを先に確定する。
-    const captured=cards.filter(c=>c.captureColor&&c.face===1&&c.faceBeforeThrow!==1).map(c=>c.captureColor);
+    // 元の result() が重なり判定を含めた最終 face を確定する。
+    // この試遊版では、裏向き札は直後に必ず盤面から排出されるため、
+    // 最終 face が BACK の札をそのまま今回の獲得札として扱える。
     captureBaseResult();
+    const captured=cards.filter(c=>c.captureColor&&c.face===1).map(c=>c.captureColor);
     const actor=pendingLayerWave?.actorKey||turn;
     captured.forEach(color=>captureAdd(actor,color));
     captureSync(captured.length?`${captureLabel(actor)}が${captured.length}枚を獲得`:`${captureLabel(actor)}は札を獲得できなかった`);
