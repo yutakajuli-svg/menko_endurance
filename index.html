@@ -269,9 +269,9 @@ body.terrain-lab #progressFab,body.terrain-lab .clone-inline{display:none}
 <script>
 (()=>{
 const VERSION="MENKO ENDURANCE 01 / v28 / ROUTE RESULT INTEGRATION";
-const TERRAIN_LAB=location.pathname.toLowerCase().endsWith("/terrain_lab.html")||location.pathname.toLowerCase().endsWith("/capture_menko_lab.html");
-// この版はメインゲーム。terrain_lab.html 以外ではCAPTURE MENKOルールを使う。
+// index.html はスマホ公開用の CAPTURE MENKO 直行版。terrain_lab.html だけ従来の盤面テストを開く。
 const CAPTURE_MENKO_LAB=!location.pathname.toLowerCase().endsWith("/terrain_lab.html");
+const TERRAIN_LAB=CAPTURE_MENKO_LAB||location.pathname.toLowerCase().endsWith("/terrain_lab.html");
 const countSelect=document.getElementById("countSelect");
 const canvas=document.getElementById("c"),ctx=canvas.getContext("2d"),needle=document.getElementById("needle");
 const playerLog=document.getElementById("playerLog");
